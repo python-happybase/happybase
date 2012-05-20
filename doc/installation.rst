@@ -35,7 +35,8 @@ itself:
 
 .. code-block:: sh
 
-   (envname) $ pip install thrift happybase
+   (envname) $ pip install thrift
+   (envname) $ pip install happybase
 
 .. note::
 
