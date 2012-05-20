@@ -1,3 +1,4 @@
 include Makefile
+include requirements.txt
 include *.rst
 include doc/conf.py doc/*.rst
