@@ -11,6 +11,7 @@ setup(name='happybase',
       author="Wouter Bolsterlee",
       author_email="uws@xs4all.nl",
       url='https://github.com/wbolster/happybase',
+      install_requires=['thrift'],
       packages=find_packages(),
       license="MIT",
       classifiers=(
