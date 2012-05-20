@@ -30,18 +30,12 @@ If you use the `virtualenvwrapper` scripts, type this instead:
 Installing packages
 ===================
 
-The next step is to install the Thrift package for Python:
+The next step is to install the Thrift package for Python, and HappyBase
+itself:
 
 .. code-block:: sh
 
-   (envname) $ pip install thrift
-
-…and the HappyBase package:
-
-.. code-block:: sh
-
-   (envname) $ cd /path/to/happybase/
-   (envname) $ python setup.py install
+   (envname) $ pip install thrift happybase
 
 .. note::
 
