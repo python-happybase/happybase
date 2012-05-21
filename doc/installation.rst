@@ -49,7 +49,7 @@ Testing the installation
 ========================
 
 Verify that the packages are installed correctly by starting a ``python`` shell
-and entering the following statements::
+and entering the following statement::
 
    >>> import happybase
 
@@ -59,8 +59,8 @@ If you don't see any errors, the installation was successful. Congratulations!
 Next steps
 ==========
 
-Now that you have HappyBase installed on your machine, continue with the
-:doc:`tutorial <tutorial>` to learn how to use it.
+Now that you successfully installed HappyBase on your machine, continue with
+the :doc:`tutorial <tutorial>` to learn how to use it.
 
 
 .. vim: set spell spelllang=en:
