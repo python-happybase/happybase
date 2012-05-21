@@ -406,9 +406,18 @@ methods can be used to retrieve or set a counter value directly::
 
    table.counter_set('row-key', 'cf1:counter', 12)
 
-Note that an application should *never* :py:meth:`~Table.counter_get` the
-current value, modify it in code and then :py:meth:`~Table.counter_set` the
-modified value; use the atomic :py:meth:`~Table.counter_inc` and
-:py:meth:`~Table.counter_dec` instead!
+.. note::
+
+   An application should *never* :py:meth:`~Table.counter_get` the current
+   value, modify it in code and then :py:meth:`~Table.counter_set` the modified
+   value; use the atomic :py:meth:`~Table.counter_inc` and
+   :py:meth:`~Table.counter_dec` instead!
+
+
+Next steps
+----------
+
+The next step is to try it out for yourself. The :doc:`API documentation <api>`
+can be used as a reference.
 
 .. vim: set spell spelllang=en:
