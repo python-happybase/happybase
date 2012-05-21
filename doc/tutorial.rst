@@ -414,8 +414,7 @@ methods can be used to retrieve or set a counter value directly::
    :py:meth:`~Table.counter_dec` instead!
 
 
-Next steps
-==========
+.. rubric:: Next steps
 
 The next step is to try it out for yourself. The :doc:`API documentation <api>`
 can be used as a reference.

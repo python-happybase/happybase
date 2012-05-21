@@ -56,8 +56,7 @@ and entering the following statement::
 If you don't see any errors, the installation was successful. Congratulations!
 
 
-Next steps
-==========
+.. rubric:: Next steps
 
 Now that you successfully installed HappyBase on your machine, continue with
 the :doc:`tutorial <tutorial>` to learn how to use it.

@@ -104,11 +104,10 @@ luck maintaining your code ‒ or is it Thrift boilerplate? ‒ while your
 application evolves.
 
 
-Next steps
-==========
+.. rubric:: Next steps
 
-Follow the :doc:`installation guide <installation>` and read the :doc:`tutorial
-<tutorial>`.
+Follow the :doc:`installation guide <installation>` and continue with the
+:doc:`tutorial <tutorial>`.
 
 
 .. vim: set spell spelllang=en:
