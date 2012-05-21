@@ -1,5 +1,1 @@
-*******
-License
-*******
-
 .. include:: ../LICENSE.rst

@@ -1,3 +1,7 @@
+*******
+License
+*******
+
 HappyBase is licensed under a `MIT License <http://www.opensource.org/licenses/MIT>`_.
 
 Copyright © 2012 Wouter Bolsterlee
