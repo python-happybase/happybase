@@ -2,7 +2,8 @@
 HappyBase
 *********
 
-.. include:: ../README.rst
+**HappyBase** is a developer-friendly `Python <http://python.org/>`_ library to
+interact with `Apache HBase <http://hbase.apache.org/>`_.
 
 .. rubric:: Table of contents
 

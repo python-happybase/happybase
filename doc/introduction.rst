@@ -11,10 +11,10 @@ Introduction
 What is HappyBase?
 ==================
 
-.. include:: ../README.rst
-
-HappyBase is designed for for use in standard HBase setups, and offers
-application developers a Pythonic API to interact with HBase.
+**HappyBase** is a developer-friendly `Python <http://python.org/>`_ library to
+interact with `Apache HBase <http://hbase.apache.org/>`_. HappyBase is designed
+for use in standard HBase setups, and offers application developers a Pythonic
+API to interact with HBase.
 
 Below the surface, HappyBase uses the `Python Thrift library
 <http://pypi.python.org/pypi/thrift>`_ to connect to HBase's `Thrift
