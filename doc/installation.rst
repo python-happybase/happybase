@@ -30,12 +30,12 @@ If you use the `virtualenvwrapper` scripts, type this instead:
 Installing packages
 ===================
 
-The next step is to install the Thrift package for Python, and HappyBase
-itself:
+The next step is to install HappyBase. The easiest way is to use `pip` to fetch
+the package from the `Python Package Index<http://pypi.python.org/>`_ (PyPI).
+This will also install the Thrift package for Python.
 
 .. code-block:: sh
 
-   (envname) $ pip install thrift
    (envname) $ pip install happybase
 
 .. note::
@@ -51,10 +51,14 @@ Testing the installation
 Verify that the packages are installed correctly by starting a ``python`` shell
 and entering the following statements::
 
-   >>> import thrift
    >>> import happybase
 
 If you don't see any errors, the installation was successful. Congratulations!
+
+
+Next steps
+==========
+
 Now that you have HappyBase installed on your machine, continue with the
 :doc:`tutorial <tutorial>` to learn how to use it.
 
