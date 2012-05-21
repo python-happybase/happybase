@@ -14,6 +14,7 @@ interact with `Apache HBase <http://hbase.apache.org/>`_.
    installation
    tutorial
    api
+   development
    todo
    license
 
