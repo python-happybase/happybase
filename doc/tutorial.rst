@@ -17,8 +17,8 @@ documentation <api>`.
    :local:
 
 
-Opening a :py:class:`Connection`
-================================
+Opening a connection
+====================
 
 We'll get started by connecting to HBase::
 
@@ -42,6 +42,14 @@ tables using the :py:meth:`Connection.tables` method::
 
    print connection.tables()
 
+The :py:class:`Connection` class offers various other methods to interact with
+HBase, mostly to perform table management tasks like enabling and disabling
+tables. This tutorial does not cover those; the :doc:`API documentation <api>`
+for the :py:class:`Connection` class contains more information.
+
+Using a table name prefix
+-------------------------
+
 If a single HBase instance is used by multiple applications, table name
 collisions may occur because applications use the same table names. A solution
 is to add a ‘namespace’ prefix to the names of all tables ‘owned’ by a specific
@@ -53,27 +61,22 @@ that should have table names that look like ``myproject_XYZ``, use this::
 
    connection = happybase.Connection('somehost', table_prefix='myproject')
 
-:py:meth:`Connection.tables` no longer includes tables in other ‘namespaces’;
-it will only returns tables with a ``myproject_`` prefix in HBase, and also
-strips of the prefix::
+At this point, :py:meth:`Connection.tables` no longer includes tables in other
+‘namespaces’; it will only returns tables with a ``myproject_`` prefix in
+HBase, and also strips of the prefix::
 
    print connection.tables()  # Table "myproject_XYZ" in HBase will be
                               # returned as simply "XYZ"
 
-The :py:class:`Connection` class offers various other methods to interact with
-HBase, mostly to perform table management tasks like enabling and disabling
-tables. This tutorial does not cover those; the :doc:`API documentation <api>`
-for the :py:class:`Connection` class contains more information.
 
-
-Obtaining a :py:class:`Table` instance
-======================================
+Working with tables
+===================
 
 The :py:class:`Table` class provides the main API to retrieve and manipulate
 data in HBase. In the example above, we already asked for the available tables
-using the :py:meth:`Connection.tables` method, so the next step is to obtain a
-:py:class:`.Table` instance. This is done by calling
-:py:meth:`Connection.table` with the name of the table::
+using the :py:meth:`Connection.tables` method. The next step is to obtain a
+:py:class:`.Table` instance to work with. Obtain a table by calling
+:py:meth:`Connection.table`, passing it the table name::
 
    table = connection.table('mytable')
 
@@ -81,13 +84,13 @@ Obtaining a :py:class:`Table` instance does *not* result in a round-trip to the
 Thrift server, which means application code may ask the :py:class:`Connection`
 instance for a new :py:class:`Table` whenever it needs one, without negative
 performance consequences. A side effect is that no check is done to ensure that
-the table exists, since that would involve a round-trip, so expect errors if
-you try to interact with non-existing tables later in your code. For this
-tutorial, we assume the table exists.
+the table exists, since that would involve a round-trip. Expect errors if you
+try to interact with non-existing tables later in your code. For this tutorial,
+we assume the table exists.
 
 .. note::
 
-   The ‘heavy’ `HTable` HBase class from the Java HBase API, which does the
+   The ‘heavy’ `HTable` HBase class from the Java HBase API, which performs the
    real communication with the region servers, is at the other side of the
    Thrift connection. There is no direct mapping between :py:class:`Table`
    instances on the Python side and `HTable` instances on the server side.
