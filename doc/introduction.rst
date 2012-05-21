@@ -104,8 +104,8 @@ luck maintaining your code ‒ or is it Thrift boilerplate? ‒ while your
 application evolves.
 
 
-How do I get started?
-=====================
+Next steps
+==========
 
 Follow the :doc:`installation guide <installation>` and read the :doc:`tutorial
 <tutorial>`.

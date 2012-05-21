@@ -27,11 +27,11 @@ If you use the `virtualenvwrapper` scripts, type this instead:
    $ mkvirtualenv envname
 
 
-Installing packages
-===================
+Installing the HappyBase package
+================================
 
 The next step is to install HappyBase. The easiest way is to use `pip` to fetch
-the package from the `Python Package Index<http://pypi.python.org/>`_ (PyPI).
+the package from the `Python Package Index <http://pypi.python.org/>`_ (PyPI).
 This will also install the Thrift package for Python.
 
 .. code-block:: sh
