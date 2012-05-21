@@ -1,10 +1,10 @@
 from os.path import join, dirname
 from setuptools import find_packages, setup
 
-import happybase
+execfile('happybase/version.py')
 
 setup(name='happybase',
-      version=happybase.__version__,
+      version=__version__,
       description="A developer-friendly Python library to interact "
                   "with Apache HBase",
       long_description=open(join(dirname(__file__), 'README.rst')).read(),
