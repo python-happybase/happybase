@@ -392,6 +392,9 @@ class Table(object):
              include_timestamp=False, batch_size=1000, limit=None):
         """Create a scanner for data in the table.
 
+        *Note:* This function uses the `scannerOpenWithScan()` Thrift API
+        function, which was introduced in HBase 0.92.x.
+
         This method returns an iterable that can be used for looping over the
         matching rows. Scanners can be created in two ways:
 
