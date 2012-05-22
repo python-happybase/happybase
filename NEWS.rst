@@ -4,6 +4,12 @@
 Version history
 ***************
 
+HappyBase 0.3 (not yet released)
+================================
+
+* Documentation improvements
+
+
 HappyBase 0.2
 =============
 
