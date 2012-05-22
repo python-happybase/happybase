@@ -356,13 +356,16 @@ class Table(object):
         This method retrieves multiple versions of a cell (if any) and returns
         the result as a list of dictionaries, each with `value` and `timestamp`
         keys. The `versions` argument defines how many cell versions to
-        retrieve at most. The `timestamp` argument can be used to only return
-        cells with a version less than or equal to `timestamp`.
+        retrieve at most.
+
+        The `timestamp` and `include_timestamp` arguments behave exactly the
+        same as for :py:meth:`row`.
 
         :param str row: the row key
         :param str column: the column name
         :param int versions: the maximum number of versions to retrieve
         :param int timestamp: timestamp (optional)
+        :param bool include_timestamp: whether timestamps are returned
         """
         if versions is None:
             versions = (2 ** 31) - 1  # Thrift type is i32
