@@ -65,7 +65,7 @@ class Connection(object):
                  table_prefix=None):
 
         # Allow host and port to be None, which may be easier for
-        # applications wrapping a Connection object.
+        # applications wrapping a Connection instance.
         self.host = host or DEFAULT_HOST
         self.port = port or DEFAULT_PORT
 
@@ -117,7 +117,7 @@ class Connection(object):
 
         :param str name: the name of the table
         :param bool use_prefix: whether to use the table prefix (if any)
-        :return: Table object
+        :return: Table instance
         :rtype: :py:class:`Table`
         """
         if use_prefix:
@@ -214,6 +214,9 @@ class Connection(object):
         """Returns whether the specified table is enabled.
 
         :param str name: The table name
+
+        :return: whether the table is enabled
+        :rtype: bool
         """
         name = self._table_name(name)
         return self.client.isTableEnabled(name)
@@ -247,7 +250,11 @@ class Table(object):
                                     self.name)
 
     def families(self):
-        """Retrieves the column families for this table."""
+        """Retrieves the column families for this table.
+
+        :return: Mapping from column family name to settings dict
+        :rtype: dict
+        """
         descriptors = self.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
@@ -260,7 +267,11 @@ class Table(object):
         return self.client.getColumnDescriptors(self.name).keys()
 
     def regions(self):
-        """Retrieves the regions for this table."""
+        """Retrieves the regions for this table.
+
+        :return: regions for this table
+        :rtype: list of dicts
+        """
         regions = self.client.getTableRegions(self.name)
         return map(thrift_type_to_dict, regions)
 
@@ -291,6 +302,9 @@ class Table(object):
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
+
+        :return: Mapping of columns (both qualifier and family) to values
+        :rtype: dict
         """
         if columns is not None and not isinstance(columns, (tuple, list)):
             raise TypeError("'columns' must be a tuple or list")
@@ -323,6 +337,9 @@ class Table(object):
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
+
+        :return: List of mappings (columns to values)
+        :rtype: list of dicts
         """
         if columns is not None and not isinstance(columns, (tuple, list)):
             raise TypeError("'columns' must be a tuple or list")
@@ -353,9 +370,9 @@ class Table(object):
               include_timestamp=False):
         """Retrieves multiple versions of a single cell from the table.
 
-        This method retrieves multiple versions of a cell (if any) and returns
-        the result as a list of dictionaries, each with `value` and `timestamp`
-        keys. The `versions` argument defines how many cell versions to
+        This method retrieves multiple versions of a cell (if any).
+
+        The `versions` argument defines how many cell versions to
         retrieve at most.
 
         The `timestamp` and `include_timestamp` arguments behave exactly the
@@ -366,6 +383,9 @@ class Table(object):
         :param int versions: the maximum number of versions to retrieve
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
+
+        :return: cell values
+        :rtype: list of values
         """
         if versions is None:
             versions = (2 ** 31) - 1  # Thrift type is i32
@@ -435,6 +455,9 @@ class Table(object):
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
         :param int batch_size: batch size for retrieving resuls
+
+        :return: generator yielding the rows matching the scan
+        :rtype: iterable of `(row_key, row_data)` tuples
         """
         if batch_size < 1:
             raise ValueError("'batch_size' must be >= 1")
@@ -562,6 +585,9 @@ class Table(object):
                                  a transaction (only useful when used as a
                                  context manager)
         :param int timestamp: timestamp (optional)
+
+        :return: Batch instance
+        :rtype: :py:class:`Batch`
         """
         return Batch(self, timestamp, batch_size, transaction)
 
@@ -582,6 +608,9 @@ class Table(object):
 
         :param str row: the row key
         :param str column: the column name
+
+        :return: counter value
+        :rtype: int
         """
         # Don't query directly, but increment with value=0 so that the counter
         # is correctly initialised if didn't exist yet.
@@ -616,6 +645,9 @@ class Table(object):
         :param str row: the row key
         :param str column: the column name
         :param int value: the amount to increment or decrement by (optional)
+
+        :return: counter value after incrementing
+        :rtype: int
         """
         return self.client.atomicIncrement(self.name, row, column, value)
 
@@ -624,6 +656,9 @@ class Table(object):
 
         This method is a shortcut for calling :py:meth:`Table.counter_inc` with
         the value negated.
+
+        :return: counter value after decrementing
+        :rtype: int
         """
         return self.counter_inc(row, column, -value)
 
