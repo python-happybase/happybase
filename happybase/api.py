@@ -262,7 +262,7 @@ class Table(object):
     def regions(self):
         """Retrieves the regions for this table."""
         regions = self.client.getTableRegions(self.name)
-        return [thrift_type_to_dict(region) for region in regions]
+        return map(thrift_type_to_dict, regions)
 
     #
     # Data retrieval
