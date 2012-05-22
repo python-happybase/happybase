@@ -7,6 +7,7 @@ Version history
 HappyBase 0.3 (not yet released)
 ================================
 
+* Lower Thrift dependency to 0.7
 * Documentation improvements
 
 
