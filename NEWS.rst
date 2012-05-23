@@ -4,9 +4,12 @@
 Version history
 ***************
 
+.. py:currentmodule:: happybase
+
 HappyBase 0.3 (not yet released)
 ================================
 
+* The `row_prefix` argument to :py:meth:`Table.scan` can now be used together with `filter` and `timestamp` arguments.
 * Lower Thrift dependency to 0.6
 * Documentation improvements
 
