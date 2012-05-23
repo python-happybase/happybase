@@ -108,7 +108,7 @@ class Connection(object):
 
     def __del__(self):
         if hasattr(self, '_utterly_broken'):
-            # Failure from constructor 
+            # Failure from constructor
             return
 
         self.close()
@@ -134,7 +134,7 @@ class Connection(object):
         """
         if use_prefix:
             name = self._table_name(name)
-        return Table(name, self.client)
+        return Table(name, self)
 
     #
     # Table administration and maintenance
@@ -252,9 +252,10 @@ class Table(object):
     This class cannot be instantiated directly; use :py:meth:`Connection.table`
     instead.
     """
-    def __init__(self, name, client):
+    def __init__(self, name, connection):
         self.name = name
-        self.client = client
+        self.connection = connection
+        self.client = connection.client
 
     def __repr__(self):
         return '<%s.%s name=%r>' % (__name__,
@@ -484,17 +485,23 @@ class Table(object):
             row_start = row_prefix
             row_stop = str_increment(row_prefix)
 
-        # The scan's caching size is set to the batch_size, so that
-        # the HTable on the Java side retrieves rows from the region
-        # servers in the same chunk sizes that it sends out over
-        # Thrift.
-        scan = TScan(startRow=row_start,
-                     stopRow=row_stop,
-                     timestamp=timestamp,
-                     columns=columns,
-                     caching=batch_size,
-                     filterString=filter)
-        scan_id = self.client.scannerOpenWithScan(self.name, scan)
+        if self.connection.compat == '0.90':
+            # TODO: scannerOpenWithScan() is not available, so work
+            # around it as much as possible with the other
+            # scannerOpen*() Thrift functions
+            raise NotImplementedError("Scanner functionality is not available for HBase 0.90")
+        else:
+            # The scan's caching size is set to the batch_size, so that
+            # the HTable on the Java side retrieves rows from the region
+            # servers in the same chunk sizes that it sends out over
+            # Thrift.
+            scan = TScan(startRow=row_start,
+                         stopRow=row_stop,
+                         timestamp=timestamp,
+                         columns=columns,
+                         caching=batch_size,
+                         filterString=filter)
+            scan_id = self.client.scannerOpenWithScan(self.name, scan)
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
