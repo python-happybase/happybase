@@ -18,7 +18,7 @@ from thrift.protocol import TBinaryProtocol
 from .hbase import Hbase
 from .hbase.ttypes import BatchMutation, ColumnDescriptor, Mutation, TScan
 
-from .util import thrift_type_to_dict, pep8_to_camel_case
+from .util import thrift_type_to_dict, pep8_to_camel_case, str_increment
 
 __all__ = ['DEFAULT_HOST', 'DEFAULT_PORT', 'Connection', 'Table', 'Batch']
 
@@ -469,28 +469,20 @@ class Table(object):
             if row_start is not None or row_stop is not None:
                 raise TypeError("'row_prefix' cannot be combined with 'row_start' or 'row_stop'")
 
-            # Account for Thrift API limitations. FIXME: perhaps
-            # a filter string can be used as a work-around?
-            if timestamp is not None:
-                raise NotImplementedError("prefix scans with 'timestamp' are unsupported")
+            row_start = row_prefix
+            row_stop = str_increment(row_prefix)
 
-            if filter is not None:
-                raise NotImplementedError("prefix scans with 'filter' are unsupported")
-
-            scan_id = self.client.scannerOpenWithPrefix(self.name, row_prefix,
-                                                        columns)
-        else:
-            # The scan's caching size is set to the batch_size, so that
-            # the HTable on the Java side retrieves rows from the region
-            # servers in the same chunk sizes that it sends out over
-            # Thrift.
-            scan = TScan(startRow=row_start,
-                         stopRow=row_stop,
-                         timestamp=timestamp,
-                         columns=columns,
-                         caching=batch_size,
-                         filterString=filter)
-            scan_id = self.client.scannerOpenWithScan(self.name, scan)
+        # The scan's caching size is set to the batch_size, so that
+        # the HTable on the Java side retrieves rows from the region
+        # servers in the same chunk sizes that it sends out over
+        # Thrift.
+        scan = TScan(startRow=row_start,
+                     stopRow=row_stop,
+                     timestamp=timestamp,
+                     columns=columns,
+                     caching=batch_size,
+                     filterString=filter)
+        scan_id = self.client.scannerOpenWithScan(self.name, scan)
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 

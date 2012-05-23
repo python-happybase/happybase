@@ -322,12 +322,6 @@ def test_scan():
     with assert_raises(TypeError):
         list(table.scan(row_start='foobar', row_prefix='foo'))
 
-    with assert_raises(NotImplementedError):
-        list(table.scan(row_prefix='foobar', timestamp=1234))
-
-    with assert_raises(NotImplementedError):
-        list(table.scan(row_prefix='foobar', filter='foobar'))
-
     with table.batch() as b:
         for i in range(2000):
             b.put('row-scan-a%05d' % i,
