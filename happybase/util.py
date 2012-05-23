@@ -1,5 +1,7 @@
 """
 HappyBase utility module.
+
+These functions are not part of the public API.
 """
 
 import re
@@ -37,3 +39,19 @@ def thrift_type_to_dict(obj):
     """Converts a Thrift data type to a regular dictionary."""
     return dict((camel_case_to_pep8(attr), getattr(obj, attr))
                 for attr in thrift_attrs(obj))
+
+
+def str_increment(s):
+    """
+    Returns the shortest string that sorts after the given string when compared
+    using regular string comparison semantics.
+
+    This function increments the last byte that is smaller than ``0xFF``, and
+    drops everything after it. If the string only contains ``0xFF`` bytes,
+    `None` is returned.
+    """
+    for i in xrange(len(s) - 1, -1, -1):
+        if s[i] != '\xff':
+            return s[:i] + chr(ord(s[i]) + 1)
+
+    return None
