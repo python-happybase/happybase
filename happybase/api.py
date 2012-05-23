@@ -28,6 +28,8 @@ __all__ = ['DEFAULT_HOST', 'DEFAULT_PORT', 'Connection', 'Table', 'Batch']
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 
+COMPAT_MODES = ('0.90', '0.92')
+
 make_cell = attrgetter('value')
 make_cell_timestamp = attrgetter('value', 'timestamp')
 pack_i64 = Struct('>q').pack
@@ -62,14 +64,19 @@ class Connection(object):
     :param str table_prefix: Prefix used to construct table names (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, autoconnect=True,
-                 table_prefix=None):
-
+                 table_prefix=None, compat='0.92'):
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
         self.host = host or DEFAULT_HOST
         self.port = port or DEFAULT_PORT
 
+        if compat not in COMPAT_MODES:
+            self._utterly_broken = True
+            raise ValueError("'compat' must be one of %s", COMPAT_MODES)
+
+        self.compat = compat
         self.table_prefix = table_prefix
+
         self.transport = TBufferedTransport(TSocket(self.host, self.port))
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
         self.client = Hbase.Client(protocol)
@@ -99,7 +106,12 @@ class Connection(object):
         logger.debug("Closing Thrift transport to %s:%d", self.host, self.port)
         self.transport.close()
 
-    __del__ = close
+    def __del__(self):
+        if hasattr(self, '_utterly_broken'):
+            # Failure from constructor 
+            return
+
+        self.close()
 
     def table(self, name, use_prefix=True):
         """Returns a table object.

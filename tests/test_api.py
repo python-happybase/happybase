@@ -50,6 +50,10 @@ def teardown_module():
     connection.close()
 
 
+def test_connection_compat():
+    with assert_raises(ValueError):
+        happybase.Connection(compat='0.1.invalid.version')
+
 def test_enabling():
     assert_true(connection.is_table_enabled(TEST_TABLE_NAME))
     connection.disable_table(TEST_TABLE_NAME)
