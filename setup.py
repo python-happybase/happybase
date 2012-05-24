@@ -4,11 +4,11 @@ from setuptools import find_packages, setup
 execfile('happybase/_version.py')
 
 
-def file_contents(filename):
+def readfile(filename):
     with open(join(dirname(__file__), filename)) as fp:
         return fp.read()
 
-description = file_contents('README.rst') + "\n\n" + file_contents("NEWS.rst")
+description = readfile('README.rst') + "\n\n" + readfile("NEWS.rst")
 
 setup(name='happybase',
       version=__version__,
