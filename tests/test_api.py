@@ -17,20 +17,22 @@ from nose.tools import (assert_dict_equal,
 
 import happybase
 
-connection = table = None
+HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
+HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
+HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.92')
+KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
+
 TABLE_PREFIX = 'happybase_tests_tmp'
 TEST_TABLE_NAME = 'test1'
 
-# For debugging:
-KEEP_TABLE = ('KEEP_TABLE' in os.environ)
-
+connection = table = None
 
 def setup_module():
     global connection, table
-    connection = happybase.Connection(host=os.environ.get('HAPPYBASE_HOST'),
-                                      port=os.environ.get('HAPPYBASE_PORT'),
+    connection = happybase.Connection(host=HAPPYBASE_HOST,
+                                      port=HAPPYBASE_PORT,
                                       table_prefix=TABLE_PREFIX,
-                                      compat='0.90')
+                                      compat=HAPPYBASE_COMPAT)
     assert_is_not_none(connection)
 
     cfs = {
