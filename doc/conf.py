@@ -48,7 +48,7 @@ copyright = u'2012'
 # built documents.
 #
 # The short X.Y version.
-execfile(os.path.join(os.path.dirname(__file__), '../happybase/version.py'))
+execfile(os.path.join(os.path.dirname(__file__), '../happybase/_version.py'))
 version = __version__
 
 # The full version, including alpha/beta/rc tags.

@@ -1,7 +1,7 @@
 from os.path import join, dirname
 from setuptools import find_packages, setup
 
-execfile('happybase/version.py')
+execfile('happybase/_version.py')
 
 
 def file_contents(filename):
