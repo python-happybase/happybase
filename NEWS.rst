@@ -19,7 +19,7 @@ New features:
 * Improved compatibility with HBase 0.90.x
 
   * In earlier versions, using :py:meth:`Table.scan` in combination with HBase
-    0.90.x often resulted in crashes, caused by incompatibilities the
+    0.90.x often resulted in crashes, caused by incompatibilities in the
     underlying Thrift protocol.
   * A new `compat` flag to the :py:class:`Connection` constructor has been
     added to enable compatibility with HBase 0.90.x.
