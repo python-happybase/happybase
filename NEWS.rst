@@ -9,10 +9,20 @@ Version history
 HappyBase 0.3 (not yet released)
 ================================
 
-Feature changes:
+New features:
 
-* Add compatibility for HBase 0.90, with (slightly) limited scanner functionality.
-* The `row_prefix` argument to :py:meth:`Table.scan` can now be used together with `filter` and `timestamp` arguments.
+* Improved compatibility with HBase 0.90.x
+
+  * In earlier versions, using :py:meth:`Table.scan` in combination with HBase
+    0.90.x often resulted in crashes, caused by incompatibilities the
+    underlying Thrift protocol.
+  * A new `compat` flag to the :py:class:`Connection` constructor has been
+    added to enable compatibility with HBase 0.90.x.
+  * Note that the :py:meth:`Table.scan` API has a few limitations when used
+    with HBase 0.90.x.
+
+* The `row_prefix` argument to :py:meth:`Table.scan` can now be used together
+  with `filter` and `timestamp` arguments.
 
 Other changes:
 
