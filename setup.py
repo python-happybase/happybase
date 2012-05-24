@@ -12,7 +12,7 @@ setup(name='happybase',
       author_email="uws@xs4all.nl",
       url='https://github.com/wbolster/happybase',
       install_requires=['thrift'],
-      packages=find_packages(),
+      packages=find_packages(exclude=['tests']),
       license="MIT",
       classifiers=(
           "Development Status :: 4 - Beta",
