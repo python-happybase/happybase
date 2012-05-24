@@ -58,10 +58,18 @@ class Connection(object):
     each table name. For example, if `table_prefix` is ``myproject``, all
     tables tables will have names like ``myproject_XYZ``.
 
+    The optional `compat` parameter sets the compatibility level for this
+    connection. Older HBase versions have slightly different Thrift interfaces,
+    and using the wrong protocol can lead to crashes caused by communication
+    errors, so make sure to use the correct one. This value can be either
+    '0.92' (the default) for use with HBase 0.92.x and later versions, or
+    '0.90' for use with HBase 0.90.x.
+
     :param str host: The host to connect to
     :param int port: The port to connect to
     :param bool autoconnect: Whether the connection should be opened directly.
     :param str table_prefix: Prefix used to construct table names (optional)
+    :param str compat: Compatibility mode (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, autoconnect=True,
                  table_prefix=None, compat='0.92'):
@@ -458,9 +466,9 @@ class Table(object):
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
 
-        **Compatibility note:** The `filter` and `batch_size` arguments are
-        only available when using HBase 0.92 (or up). In HBase 0.90
-        compatibility mode, specifying a `filter` raises an exception.
+        **Compatibility note:** The `filter` argument is only available when
+        using HBase 0.92 (or up). In HBase 0.90 compatibility mode, specifying
+        a `filter` raises an exception.
 
         :param str row_start: the row key to start at (inclusive)
         :param str row_stop: the row key to stop at (exclusive)
