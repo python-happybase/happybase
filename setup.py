@@ -8,7 +8,7 @@ def readfile(filename):
     with open(join(dirname(__file__), filename)) as fp:
         return fp.read()
 
-description = readfile('README.rst') + "\n\n" + readfile("NEWS.rst")
+description = readfile('README.rst')
 
 setup(name='happybase',
       version=__version__,
