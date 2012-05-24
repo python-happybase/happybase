@@ -426,9 +426,6 @@ class Table(object):
              include_timestamp=False, batch_size=1000, limit=None):
         """Create a scanner for data in the table.
 
-        *Note:* This function uses the `scannerOpenWithScan()` Thrift API
-        function, which was introduced in HBase 0.92.x.
-
         This method returns an iterable that can be used for looping over the
         matching rows. Scanners can be created in two ways:
 
@@ -461,6 +458,10 @@ class Table(object):
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
 
+        **Compatibility note:** The `filter` and `batch_size` arguments are
+        only available when using HBase 0.92 (or up). In HBase 0.90
+        compatibility mode, specifying a `filter` raises an exception.
+
         :param str row_start: the row key to start at (inclusive)
         :param str row_stop: the row key to stop at (exclusive)
         :param str row_prefix: a prefix of the row key that must match
@@ -486,11 +487,32 @@ class Table(object):
             row_start = row_prefix
             row_stop = str_increment(row_prefix)
 
+        if row_start is None:
+            row_start = ''
+
+        client = self.client
         if self.connection.compat == '0.90':
-            # TODO: scannerOpenWithScan() is not available, so work
-            # around it as much as possible with the other
-            # scannerOpen*() Thrift functions
-            raise NotImplementedError("Scanner functionality is not available for HBase 0.90")
+            # The scannerOpenWithScan() Thrift function is not
+            # available, so work around it as much as possible with the
+            # other scannerOpen*() Thrift functions
+
+            if filter is not None:
+                raise NotImplementedError("'filter' is not supported in HBase 0.90")
+
+            if row_stop is None:
+                if timestamp is None:
+                    scan_id = client.scannerOpen(self.name, row_start, columns)
+                else:
+                    scan_id = client.scannerOpenTs(
+                            self.name, row_start, columns, timestamp)
+            else:
+                if timestamp is None:
+                    scan_id = client.scannerOpenWithStop(
+                            self.name, row_start, row_stop, columns)
+                else:
+                    scan_id = client.scannerOpenWithStopTs(
+                            self.name, row_start, row_stop, columns, timestamp)
+
         else:
             # The scan's caching size is set to the batch_size, so that
             # the HTable on the Java side retrieves rows from the region
@@ -502,7 +524,7 @@ class Table(object):
                          columns=columns,
                          caching=batch_size,
                          filterString=filter)
-            scan_id = self.client.scannerOpenWithScan(self.name, scan)
+            scan_id = client.scannerOpenWithScan(self.name, scan)
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
@@ -515,9 +537,9 @@ class Table(object):
                     how_many = min(batch_size, limit - n_results)
 
                 if how_many == 1:
-                    items = self.client.scannerGet(scan_id)
+                    items = client.scannerGet(scan_id)
                 else:
-                    items = self.client.scannerGetList(scan_id, how_many)
+                    items = client.scannerGetList(scan_id, how_many)
 
                 for item in items:
                     n_results += 1
@@ -529,7 +551,7 @@ class Table(object):
                 if len(items) < how_many:
                     break
         finally:
-            self.client.scannerClose(scan_id)
+            client.scannerClose(scan_id)
             logger.debug("Closed scanner (id=%d) on '%s'", scan_id, self.name)
 
     #

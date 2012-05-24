@@ -29,7 +29,8 @@ def setup_module():
     global connection, table
     connection = happybase.Connection(host=os.environ.get('HAPPYBASE_HOST'),
                                       port=os.environ.get('HAPPYBASE_PORT'),
-                                      table_prefix=TABLE_PREFIX)
+                                      table_prefix=TABLE_PREFIX,
+                                      compat='0.90')
     assert_is_not_none(connection)
 
     cfs = {
@@ -53,6 +54,7 @@ def teardown_module():
 def test_connection_compat():
     with assert_raises(ValueError):
         happybase.Connection(compat='0.1.invalid.version')
+
 
 def test_enabling():
     assert_true(connection.is_table_enabled(TEST_TABLE_NAME))
@@ -367,6 +369,12 @@ def test_scan():
 
     scanner = table.scan(row_prefix='row-scan-b', batch_size=5, limit=10)
     assert_equal(10, calc_len(scanner))
+
+    scanner = table.scan(timestamp=123)
+    assert_equal(0, calc_len(scanner))
+
+    scanner = table.scan(row_prefix='row', timestamp=123)
+    assert_equal(0, calc_len(scanner))
 
 
 def test_delete():
