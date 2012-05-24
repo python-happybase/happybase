@@ -72,7 +72,8 @@ class Connection(object):
 
         if compat not in COMPAT_MODES:
             self._utterly_broken = True
-            raise ValueError("'compat' must be one of %s", COMPAT_MODES)
+            raise ValueError("'compat' must be one of %s"
+                             % ', '.join(COMPAT_MODES))
 
         self.compat = compat
         self.table_prefix = table_prefix
