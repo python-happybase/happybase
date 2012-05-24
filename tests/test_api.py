@@ -324,6 +324,10 @@ def test_scan():
     with assert_raises(ValueError):
         list(table.scan(batch_size=None))
 
+    if connection.compat == '0.90':
+        with assert_raises(NotImplementedError):
+            list(table.scan(filter='foo'))
+
     with assert_raises(ValueError):
         list(table.scan(limit=0))
 
@@ -351,6 +355,9 @@ def test_scan():
     scanner = table.scan(row_start='row-scan-a00012',
                          row_stop='row-scan-a00022')
     assert_equal(10, calc_len(scanner))
+
+    scanner = table.scan(row_start='xyz')
+    assert_equal(0, calc_len(scanner))
 
     scanner = table.scan(row_start='xyz', row_stop='zyx')
     assert_equal(0, calc_len(scanner))
