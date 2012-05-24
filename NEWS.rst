@@ -3,8 +3,10 @@ Version history
 
 .. py:currentmodule:: happybase
 
-HappyBase 0.3 (not yet released)
---------------------------------
+HappyBase 0.3
+-------------
+
+Release date: 2012-05-25
 
 New features:
 
