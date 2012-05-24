@@ -3,11 +3,18 @@ from setuptools import find_packages, setup
 
 execfile('happybase/version.py')
 
+
+def file_contents(filename):
+    with open(join(dirname(__file__), filename)) as fp:
+        return fp.read()
+
+description = file_contents('README.rst') + "\n\n" + file_contents("NEWS.rst")
+
 setup(name='happybase',
       version=__version__,
       description="A developer-friendly Python library to interact "
                   "with Apache HBase",
-      long_description=open(join(dirname(__file__), 'README.rst')).read(),
+      long_description=description,
       author="Wouter Bolsterlee",
       author_email="uws@xs4all.nl",
       url='https://github.com/wbolster/happybase',
