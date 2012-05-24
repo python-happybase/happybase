@@ -30,4 +30,10 @@ environment variables (both are optional) before running the tests:
    $ export HAPPYBASE_HOST=host.example.org
    $ export HAPPYBASE_PORT=9091
 
+To test the HBase 0.90 compatibility mode, use this:
+
+.. code-block:: sh
+
+   $ export HAPPYBASE_COMPAT=0.90
+
 .. vim: set spell spelllang=en:
