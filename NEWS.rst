@@ -9,8 +9,15 @@ Version history
 HappyBase 0.3 (not yet released)
 ================================
 
+Feature changes:
+
+* Add compatibility for HBase 0.90, with (slightly) limited scanner functionality.
 * The `row_prefix` argument to :py:meth:`Table.scan` can now be used together with `filter` and `timestamp` arguments.
+
+Other changes:
+
 * Lower Thrift dependency to 0.6
+* The `setup.py` script no longer installs the tests
 * Documentation improvements
 
 
