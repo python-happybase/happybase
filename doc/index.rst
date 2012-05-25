@@ -5,7 +5,8 @@ HappyBase
 **HappyBase** is a developer-friendly `Python <http://python.org/>`_ library to
 interact with `Apache HBase <http://hbase.apache.org/>`_.
 
-.. rubric:: Table of contents
+
+.. rubric:: Contents of this documentation
 
 .. toctree::
    :maxdepth: 1
@@ -18,6 +19,13 @@ interact with `Apache HBase <http://hbase.apache.org/>`_.
    development
    todo
    license
+
+
+.. rubric:: External links
+
+* `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
+* `Source code <https://github.com/wbolster/happybase>`_ (Github)
+* `Online documentation <http://happybase.readthedocs.org/>`_ (readthedocs.org)
 
 
 .. rubric:: Indices and tables
