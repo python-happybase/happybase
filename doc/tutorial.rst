@@ -47,8 +47,8 @@ HBase, mostly to perform table management tasks like enabling and disabling
 tables. This tutorial does not cover those; the :doc:`API documentation <api>`
 for the :py:class:`Connection` class contains more information.
 
-Using a table name prefix
--------------------------
+Using table ‘namespaces’
+------------------------
 
 If a single HBase instance is used by multiple applications, table name
 collisions may occur because applications use the same table names. A solution
@@ -62,7 +62,7 @@ that should have table names that look like ``myproject_XYZ``, use this::
    connection = happybase.Connection('somehost', table_prefix='myproject')
 
 At this point, :py:meth:`Connection.tables` no longer includes tables in other
-‘namespaces’; it will only returns tables with a ``myproject_`` prefix in
+‘namespaces’; it will only return tables with a ``myproject_`` prefix in
 HBase, and also strips of the prefix::
 
    print connection.tables()  # Table "myproject_XYZ" in HBase will be
