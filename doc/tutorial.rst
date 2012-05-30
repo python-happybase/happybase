@@ -20,11 +20,17 @@ documentation <api>`.
 Opening a connection
 ====================
 
-We'll get started by connecting to HBase::
+We'll get started by connecting to HBase. Just create a new
+:py:class:`Connection`::
 
    import happybase
 
    connection = happybase.Connection('somehost')
+
+If you're using HBase 0.90.x, you need to set the `compat` parameter to make
+sure HappyBase speaks the correct wire protocol to HBase::
+
+   connection = happybase.Connection('somehost', compat='0.90')
 
 When a :py:class:`Connection` instance is created, it automatically opens a
 socket connection to the HBase Thrift server. This behaviour can be disabled by
