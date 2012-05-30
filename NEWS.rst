@@ -8,6 +8,8 @@ HappyBase 0.4 (not yet released)
 
 (TODO)
 
+* Documentation improvements
+
 
 HappyBase 0.3
 -------------
