@@ -731,6 +731,7 @@ class Batch:
         self._reset_mutations()
 
     def _reset_mutations(self):
+        """Resets the internal mutation buffer."""
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
