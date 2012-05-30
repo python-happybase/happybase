@@ -9,6 +9,8 @@ HappyBase 0.4 (not yet released)
 (TODO)
 
 * Documentation improvements
+* Add the Apache license conditions in the :doc:`license statement <license>`
+  (for the included HBase parts)
 
 
 HappyBase 0.3
