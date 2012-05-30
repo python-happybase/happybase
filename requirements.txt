@@ -1,3 +1,1 @@
 thrift>=0.6.0
-nose
-sphinx
