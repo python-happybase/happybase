@@ -42,37 +42,18 @@ manually using :py:meth:`Connection.open`::
    # before first use:
    connection.open()
 
-The :py:class:`Connection` class provides various methods to interact with the
-HBase instance. For instance, we can ask ask for the names of the available
-tables using the :py:meth:`Connection.tables` method::
+The :py:class:`Connection` class provides various methods to interact with
+HBase. For instance, to list the available tables, use
+:py:meth:`Connection.tables`::
 
    print connection.tables()
 
 The :py:class:`Connection` class offers various other methods to interact with
-HBase, mostly to perform table management tasks like enabling and disabling
-tables. This tutorial does not cover those; the :doc:`API documentation <api>`
-for the :py:class:`Connection` class contains more information.
-
-Using table ‘namespaces’
-------------------------
-
-If a single HBase instance is used by multiple applications, table name
-collisions may occur because applications use the same table names. A solution
-is to add a ‘namespace’ prefix to the names of all tables ‘owned’ by a specific
-application. Instead of adding this application-specific prefix each time a
-table name is passed to HappyBase, the `table_prefix` parameter can be used.
-HappyBase will prepend that prefix (and an underscore) to each table name
-handled by the :py:class:`Connection` instance. So, for a project ``myproject``
-that should have table names that look like ``myproject_XYZ``, use this::
-
-   connection = happybase.Connection('somehost', table_prefix='myproject')
-
-At this point, :py:meth:`Connection.tables` no longer includes tables in other
-‘namespaces’; it will only return tables with a ``myproject_`` prefix in
-HBase, and also strips of the prefix::
-
-   print connection.tables()  # Table "myproject_XYZ" in HBase will be
-                              # returned as simply "XYZ"
+HBase, mostly to perform system management tasks like creating, enabling and
+disabling tables. See the :doc:`API documentation <api>` for the
+:py:class:`Connection` class contains more information. This tutorial does not
+cover those since it's more likely you are already using the HBase shell for
+these system management tasks.
 
 
 Working with tables
@@ -100,6 +81,38 @@ we assume the table exists.
    real communication with the region servers, is at the other side of the
    Thrift connection. There is no direct mapping between :py:class:`Table`
    instances on the Python side and `HTable` instances on the server side.
+
+Using table ‘namespaces’
+------------------------
+
+If a single HBase instance is shared by multiple applications, table names used
+by different applications may collide. A simple solution to this problem is to
+add a ‘namespace’ prefix to the names of all tables ‘owned’ by a specific
+application, e.g. for a project ``myproject`` all tables have names like
+``myproject_XYZ``.
+
+Instead of adding this application-specific prefix each time a table name is
+passed to HappyBase, the `table_prefix` parameter to :py:class:`Connection` can
+take care of this. HappyBase will prepend that prefix (and an underscore) to
+each table name handled by that :py:class:`Connection` instance. For example::
+
+   connection = happybase.Connection('somehost', table_prefix='myproject')
+
+At this point, :py:meth:`Connection.tables` no longer includes tables in other
+‘namespaces’. HappyBase will only return tables with a ``myproject_`` prefix,
+and will also remove the prefix transparently when returning results, e.g.::
+
+   print connection.tables()  # Table "myproject_XYZ" in HBase will be
+                              # returned as simply "XYZ"
+
+This also applies to other methods that take table names, such as
+:py:meth:`Connection.table`::
+
+   table = connection.table('XYZ')  # Operates on myproject_XYZ in HBase
+
+The end result is that the table prefix is specified only once in your code,
+namely in the call to the :py:class:`Connection` constructor, and that only a
+single change is necessary in case it needs changing.
 
 
 Retrieving data
