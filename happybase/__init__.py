@@ -1,5 +1,6 @@
 """
-HappyBase, a pythonic interface for HBase using Thrift
+HappyBase, a developer-friendly Python library to interact with Apache
+HBase.
 """
 
 from ._version import __version__

@@ -432,7 +432,7 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, limit=None):
-        """Create a scanner for data in the table.
+        """Creates a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
         matching rows. Scanners can be created in two ways:
@@ -800,6 +800,8 @@ class Batch:
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Called upon exiting a ``with`` block"""
+        # If the 'with' block raises an exception, the batch will not be
+        # sent to the server.
         if self.transaction and exc_type is not None:
             return
 
