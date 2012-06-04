@@ -27,6 +27,7 @@ TEST_TABLE_NAME = 'test1'
 
 connection = table = None
 
+
 def setup_module():
     global connection, table
     connection = happybase.Connection(host=HAPPYBASE_HOST,
@@ -78,9 +79,14 @@ def test_prefix():
     assert_equal(connection.table('foobar').name, TABLE_PREFIX + '_foobar')
     assert_equal(connection.table('foobar', use_prefix=False).name, 'foobar')
 
-    # connection without table prefix;
     c = happybase.Connection(autoconnect=False)
     assert_equal('foo', c._table_name('foo'))
+
+    with assert_raises(TypeError):
+        happybase.Connection(autoconnect=False, table_prefix=123)
+
+    with assert_raises(TypeError):
+        happybase.Connection(autoconnect=False, table_prefix_separator=2.1)
 
 
 def test_stringify():

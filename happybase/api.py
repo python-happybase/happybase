@@ -52,11 +52,10 @@ class Connection(object):
     otherwise :py:meth:`Connection.open` must be called explicitly before first
     use.
 
-    The optional `table_prefix` argument specifies a prefix that will be
-    prepended to all table names, e.g. when :py:meth:`Connection.table` is
-    invoked. If specified, the prefix plus an underscore will be prepended to
-    each table name. For example, if `table_prefix` is ``myproject``, all
-    tables tables will have names like ``myproject_XYZ``.
+    The optional `table_prefix` and `table_prefix_separator` arguments specify
+    a prefix and a separator string to be prepended to all table names, e.g.
+    when :py:meth:`Connection.table` is invoked. For example, if `table_prefix`
+    is ``myproject``, all tables tables will have names like ``myproject_XYZ``.
 
     The optional `compat` parameter sets the compatibility level for this
     connection. Older HBase versions have slightly different Thrift interfaces,
@@ -68,23 +67,31 @@ class Connection(object):
     :param str host: The host to connect to
     :param int port: The port to connect to
     :param bool autoconnect: Whether the connection should be opened directly.
-    :param str table_prefix: Prefix used to construct table names (optional)
     :param str compat: Compatibility mode (optional)
+    :param str table_prefix: Prefix used to construct table names (optional)
+    :param str table_prefix_separator: Separator used for `table_prefix`
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, autoconnect=True,
-                 table_prefix=None, compat='0.92'):
+                 compat='0.92', table_prefix=None, table_prefix_separator='_'):
+
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
         self.host = host or DEFAULT_HOST
         self.port = port or DEFAULT_PORT
 
         if compat not in COMPAT_MODES:
-            self._utterly_broken = True
             raise ValueError("'compat' must be one of %s"
-                             % ', '.join(COMPAT_MODES))
+                             % ", ".join(COMPAT_MODES))
+
+        if table_prefix is not None and not isinstance(table_prefix, basestring):
+            raise TypeError("'table_prefix' must be a string")
+
+        if not isinstance(table_prefix_separator, basestring):
+            raise TypeError("'table_prefix_separator' must be a string")
 
         self.compat = compat
         self.table_prefix = table_prefix
+        self.table_prefix_separator = table_prefix_separator
 
         self.transport = TBufferedTransport(TSocket(self.host, self.port))
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
@@ -92,12 +99,14 @@ class Connection(object):
         if autoconnect:
             self.open()
 
+        self._initialized = True
+
     def _table_name(self, name):
         """Constructs a table name by optionally adding a table name prefix."""
         if self.table_prefix is None:
             return name
 
-        return '%s_%s' % (self.table_prefix, name)
+        return self.table_prefix + self.table_prefix_separator + name
 
     def open(self):
         """Opens the underlying transport to the HBase instance.
@@ -116,11 +125,13 @@ class Connection(object):
         self.transport.close()
 
     def __del__(self):
-        if hasattr(self, '_utterly_broken'):
+        try:
+            self._initialized
+        except AttributeError:
             # Failure from constructor
             return
-
-        self.close()
+        else:
+            self.close()
 
     def table(self, name, use_prefix=True):
         """Returns a table object.
