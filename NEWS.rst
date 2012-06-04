@@ -50,6 +50,7 @@ HappyBase 0.2
 Release date: 2012-05-22
 
 * Fix package installation, so that ``pip install happybase`` works as expected
+  (`issue #1 <https://github.com/wbolster/happybase/issues/1>`_)
 * Various small documentation improvements
 
 
