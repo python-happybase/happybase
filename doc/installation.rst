@@ -2,6 +2,8 @@
 Installation
 ************
 
+.. highlight:: sh
+
 This guide describes how to install HappyBase.
 
 .. contents:: On this page
@@ -13,16 +15,12 @@ Setting up a virtual environment
 
 The recommended way to install HappyBase and Thrift is to use a virtual
 environment created by `virtualenv`. Setup and activate a new virtual
-environment like this:
-
-.. code-block:: sh
+environment like this::
 
    $ virtualenv envname
    $ source envname/bin/activate
 
-If you use the `virtualenvwrapper` scripts, type this instead:
-
-.. code-block:: sh
+If you use the `virtualenvwrapper` scripts, type this instead::
 
    $ mkvirtualenv envname
 
@@ -34,7 +32,7 @@ The next step is to install HappyBase. The easiest way is to use `pip` to fetch
 the package from the `Python Package Index <http://pypi.python.org/>`_ (PyPI).
 This will also install the Thrift package for Python.
 
-.. code-block:: sh
+::
 
    (envname) $ pip install happybase
 
@@ -48,10 +46,9 @@ This will also install the Thrift package for Python.
 Testing the installation
 ========================
 
-Verify that the packages are installed correctly by starting a ``python`` shell
-and entering the following statement::
+Verify that the packages are installed correctly::
 
-   >>> import happybase
+   (envname) $ python -c 'import happybase'
 
 If you don't see any errors, the installation was successful. Congratulations!
 

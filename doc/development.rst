@@ -1,39 +1,58 @@
-
 ***********
 Development
 ***********
+
+.. highlight:: sh
+
+Getting the source
+------------------
 
 The HappyBase source code repository is hosted on GitHub:
 
    https://github.com/wbolster/happybase
 
-Feel free to report issues. Patches are also most welcome.
+To grab a copy, use this::
+
+   $ git clone https://github.com/wbolster/happybase.git
 
 
-Test suite
-----------
 
-The tests use the `nose` test suite. To execute the tests, run:
+Setting up a development environment
+------------------------------------
 
-.. code-block:: sh
+Setting up a development environment from a Git branch is easy::
 
-   $ make test
+   $ cd /path/to/happybase/
+   $ mkvirtualenv happybase
+   (happybase)$ pip install -r requirements-development.txt
+   (happybase)$ pip install -e .
+
+
+Running the tests
+-----------------
+
+The tests use the `nose` test suite. To execute the tests, run::
+
+   (happybase)$ make test
 
 Test outputs are shown on the console. A test code coverage report is saved in
 `coverage/index.html`.
 
 If the Thrift server is not running on localhost, you can specify these
-environment variables (both are optional) before running the tests:
+environment variables (both are optional) before running the tests::
 
-.. code-block:: sh
+   (happybase)$ export HAPPYBASE_HOST=host.example.org
+   (happybase)$ export HAPPYBASE_PORT=9091
 
-   $ export HAPPYBASE_HOST=host.example.org
-   $ export HAPPYBASE_PORT=9091
+To test the HBase 0.90 compatibility mode, use this::
 
-To test the HBase 0.90 compatibility mode, use this:
+   (happybase)$ export HAPPYBASE_COMPAT=0.90
 
-.. code-block:: sh
 
-   $ export HAPPYBASE_COMPAT=0.90
+Contributing
+------------
+
+Feel free to report any issues on GitHub. Patches and merge requests are also
+most welcome.
 
 .. vim: set spell spelllang=en:
