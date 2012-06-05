@@ -5,10 +5,13 @@ HappyBase
 **HappyBase** is a developer-friendly `Python <http://python.org/>`_ library to
 interact with `Apache HBase <http://hbase.apache.org/>`_.
 
-The source code is available from https://github.com/wbolster/happybase.
+External links:
 
-Documentation for HappyBase is in the `doc/` directory. Run `make doc` to
-generate the HTML documentation, then browse to `doc/build/html/index.html`.
-Alternatively, you can view the docs online at
-http://happybase.readthedocs.org/, but keep in mind that this may be an
-outdated version.
+* `Documentation <http://happybase.readthedocs.org/>`_ (readthedocs.org)
+* `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
+* `Source code <https://github.com/wbolster/happybase>`_ (Github)
+
+
+.. If you're reading this from the README.rst file in a source tree,
+   you can generate the HTML documentation by running "make doc" and browsing
+   to doc/build/html/index.html to see the result.
