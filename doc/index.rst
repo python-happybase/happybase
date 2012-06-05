@@ -23,9 +23,9 @@ interact with `Apache HBase <http://hbase.apache.org/>`_.
 
 .. rubric:: External links
 
+* `Documentation <http://happybase.readthedocs.org/>`_ (readthedocs.org)
 * `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
 * `Source code <https://github.com/wbolster/happybase>`_ (Github)
-* `Online documentation <http://happybase.readthedocs.org/>`_ (readthedocs.org)
 
 
 .. rubric:: Indices and tables
