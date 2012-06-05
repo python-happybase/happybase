@@ -263,9 +263,17 @@ supported scanner options.
 Manipulating data
 =================
 
+HBase does not have any notion of *data types*; all row keys, column names and
+column values are simply treated as raw byte strings. By design, HappyBase does
+*not* do any automatic string conversion. This means that data must be
+converted to byte strings in your application before you pass it to HappyBase,
+for instance by calling ``str()`` or by employing more advanced string
+serialisation techniques like ``struct.pack()``.
+
 In HBase, all mutations either store data or mark data for deletion; there is
-no such thing as an `update`. HappyBase provides methods to do single inserts
-or deletes, and also a batch API for bulk mutations.
+no such thing as an in-place `update` or `delete`.  HappyBase provides methods
+to do single inserts or deletes, and a batch API to perform multiple mutations
+in one go.
 
 Storing data
 ------------
