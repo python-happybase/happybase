@@ -21,7 +21,7 @@ Opening a connection
 ====================
 
 We'll get started by connecting to HBase. Just create a new
-:py:class:`Connection`::
+:py:class:`Connection` instance::
 
    import happybase
 
@@ -32,8 +32,8 @@ sure HappyBase speaks the correct wire protocol to HBase::
 
    connection = happybase.Connection('somehost', compat='0.90')
 
-When a :py:class:`Connection` instance is created, it automatically opens a
-socket connection to the HBase Thrift server. This behaviour can be disabled by
+When a :py:class:`Connection` is created, it automatically opens a socket
+connection to the HBase Thrift server. This behaviour can be disabled by
 setting the `autoconnect` argument to `False`, and opening the connection
 manually using :py:meth:`Connection.open`::
 
