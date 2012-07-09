@@ -12,7 +12,7 @@ from operator import attrgetter
 from struct import Struct
 
 from thrift.transport.TSocket import TSocket
-from thrift.transport.TTransport import TBufferedTransport
+from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol
 
 from .hbase import Hbase
@@ -93,7 +93,12 @@ class Connection(object):
         self.table_prefix = table_prefix
         self.table_prefix_separator = table_prefix_separator
 
-        self.transport = TBufferedTransport(TSocket(self.host, self.port))
+        socket = TSocket(self.host, self.port)
+        framed_transport = False  # TODO: make parameter, add docs
+        if framed_transport:
+            self.transport = TFramedTransport(socket)
+        else:
+            self.transport = TBufferedTransport(socket)
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
         self.client = Hbase.Client(protocol)
         if autoconnect:
