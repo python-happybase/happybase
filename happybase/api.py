@@ -219,8 +219,8 @@ class Connection(object):
 
         if not families:
             raise ValueError(
-                    "Cannot create table %r (no column families specified)"
-                    % name)
+                "Cannot create table %r (no column families specified)"
+                % name)
 
         column_descriptors = []
         for cf_name, options in families.iteritems():
@@ -544,14 +544,14 @@ class Table(object):
                     scan_id = client.scannerOpen(self.name, row_start, columns)
                 else:
                     scan_id = client.scannerOpenTs(
-                            self.name, row_start, columns, timestamp)
+                        self.name, row_start, columns, timestamp)
             else:
                 if timestamp is None:
                     scan_id = client.scannerOpenWithStop(
-                            self.name, row_start, row_stop, columns)
+                        self.name, row_start, row_stop, columns)
                 else:
                     scan_id = client.scannerOpenWithStopTs(
-                            self.name, row_start, row_stop, columns, timestamp)
+                        self.name, row_start, row_stop, columns, timestamp)
 
         else:
             # The scan's caching size is set to the batch_size, so that
@@ -794,8 +794,8 @@ class Batch:
         arguments.
         """
         self._mutations[row].extend(
-                Mutation(isDelete=False, column=column, value=value)
-                for column, value in data.iteritems())
+            Mutation(isDelete=False, column=column, value=value)
+            for column, value in data.iteritems())
 
         self._mutation_count += len(data)
         if self.batch_size and self._mutation_count >= self.batch_size:
@@ -817,7 +817,7 @@ class Batch:
             columns = self._families
 
         self._mutations[row].extend(
-                Mutation(isDelete=True, column=column) for column in columns)
+            Mutation(isDelete=True, column=column) for column in columns)
 
         self._mutation_count += len(columns)
         if self.batch_size and self._mutation_count >= self.batch_size:
