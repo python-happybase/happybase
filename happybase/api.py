@@ -29,6 +29,8 @@ DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 
 COMPAT_MODES = ('0.90', '0.92')
+THRIFT_TRANSPORTS = {'buffered': TBufferedTransport,
+                     'framed': TFramedTransport}
 
 make_cell = attrgetter('value')
 make_cell_timestamp = attrgetter('value', 'timestamp')
@@ -60,19 +62,32 @@ class Connection(object):
     The optional `compat` parameter sets the compatibility level for this
     connection. Older HBase versions have slightly different Thrift interfaces,
     and using the wrong protocol can lead to crashes caused by communication
-    errors, so make sure to use the correct one. This value can be either
-    '0.92' (the default) for use with HBase 0.92.x and later versions, or
-    '0.90' for use with HBase 0.90.x.
+    errors, so make sure to use the correct one. This value can be either the
+    string ``0.92`` (the default) for use with HBase 0.92.x and later versions,
+    or ``0.90`` for use with HBase 0.90.x.
+
+    The optional `transport` parameter specifies the Thrift transport mode to
+    use. Supported values for this parameter are ``buffered`` (the default) and
+    ``framed``. Make sure to choose the right one, since otherwise you might
+    see non-obvious connection errors or program hangs when making
+    a connection. HBase versions before 0.94 always use the buffered transport.
+    Starting with HBase 0.94, the Thrift server optionally uses a framed
+    transport, depending on the parameter passed to the ``hbase-daemon.sh start
+    thrift`` command. The default ``-threadpool`` mode uses the buffered
+    transport; the ``-hsha``, ``-nonblocking``, and ``-threadedselector`` modes
+    use the framed transport.
 
     :param str host: The host to connect to
     :param int port: The port to connect to
     :param bool autoconnect: Whether the connection should be opened directly.
-    :param str compat: Compatibility mode (optional)
     :param str table_prefix: Prefix used to construct table names (optional)
     :param str table_prefix_separator: Separator used for `table_prefix`
+    :param str compat: Compatibility mode (optional)
+    :param str transport: Thrift transport mode (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, autoconnect=True,
-                 compat='0.92', table_prefix=None, table_prefix_separator='_'):
+                 table_prefix=None, table_prefix_separator='_', compat='0.92',
+                 transport='buffered'):
 
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
@@ -82,6 +97,10 @@ class Connection(object):
         if compat not in COMPAT_MODES:
             raise ValueError("'compat' must be one of %s"
                              % ", ".join(COMPAT_MODES))
+
+        if transport not in THRIFT_TRANSPORTS:
+            raise ValueError("'transport' must be one of %s"
+                             % ", ".join(THRIFT_TRANSPORTS.keys()))
 
         if table_prefix is not None and not isinstance(table_prefix, basestring):
             raise TypeError("'table_prefix' must be a string")
@@ -94,13 +113,10 @@ class Connection(object):
         self.table_prefix_separator = table_prefix_separator
 
         socket = TSocket(self.host, self.port)
-        framed_transport = False  # TODO: make parameter, add docs
-        if framed_transport:
-            self.transport = TFramedTransport(socket)
-        else:
-            self.transport = TBufferedTransport(socket)
+        self.transport = THRIFT_TRANSPORTS[transport](socket)
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
         self.client = Hbase.Client(protocol)
+
         if autoconnect:
             self.open()
 
