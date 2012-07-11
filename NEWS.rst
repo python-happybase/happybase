@@ -12,6 +12,9 @@ HappyBase 0.4 (not yet released)
   :py:class:`Connection` constructor, to specify the prefix used for the
   `table_prefix` argument (`issue #3
   <https://github.com/wbolster/happybase/issues/3>`_)
+* Add support for framed Thrift transports using a new optional `transport`
+  argument to :py:class:`Connection` (`issue #6
+  <https://github.com/wbolster/happybase/issues/6>`_)
 * Add the Apache license conditions in the :doc:`license statement <license>`
   (for the included HBase parts)
 * Documentation improvements
