@@ -3,10 +3,10 @@ Version history
 
 .. py:currentmodule:: happybase
 
-HappyBase 0.4 (not yet released)
---------------------------------
+HappyBase 0.4
+-------------
 
-(TODO)
+Release date: 2012-07-11
 
 * Add an optional `table_prefix_separator` argument to the
   :py:class:`Connection` constructor, to specify the prefix used for the
