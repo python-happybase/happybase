@@ -48,6 +48,9 @@ To test the HBase 0.90 compatibility mode, use this::
 
    (happybase)$ export HAPPYBASE_COMPAT=0.90
 
+To test the framed Thrift transport mode, use this::
+
+   (happybase)$ export HAPPYBASE_TRANSPORT=framed
 
 Contributing
 ------------
