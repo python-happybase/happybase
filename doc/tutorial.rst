@@ -27,10 +27,14 @@ We'll get started by connecting to HBase. Just create a new
 
    connection = happybase.Connection('somehost')
 
-If you're using HBase 0.90.x, you need to set the `compat` parameter to make
-sure HappyBase speaks the correct wire protocol to HBase::
-
-   connection = happybase.Connection('somehost', compat='0.90')
+In some setups, the :py:class:`Connection` class needs some additional
+information about the HBase version it will be connecting to, and which Thrift
+transport to use. If you're still using HBase 0.90.x, you need to set the
+`compat` parameter to make sure HappyBase speaks the correct wire protocol.
+Additionally, if you're using HBase 0.94 with a non-standard Thrift transport
+mode, make sure to supply the right `transport` parameter. See the API
+documentation for the :py:class:`Connection` class for more information about
+these parameters and their supported values.
 
 When a :py:class:`Connection` is created, it automatically opens a socket
 connection to the HBase Thrift server. This behaviour can be disabled by
