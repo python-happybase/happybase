@@ -3,6 +3,11 @@ Version history
 
 .. py:currentmodule:: happybase
 
+HappyBase 0.5 (not yet released)
+--------------------------------
+
+(TODO)
+
 HappyBase 0.4
 -------------
 
