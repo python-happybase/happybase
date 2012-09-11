@@ -663,7 +663,9 @@ class Table(object):
         :return: Batch instance
         :rtype: :py:class:`Batch`
         """
-        return Batch(self, timestamp, batch_size, transaction)
+        kwargs = locals().copy()
+        del kwargs['self']
+        return Batch(table=self, **kwargs)
 
     #
     # Atomic counters
