@@ -393,6 +393,13 @@ def test_scan():
     scanner = table.scan(row_prefix='row', timestamp=123)
     assert_equal(0, calc_len(scanner))
 
+    scanner = table.scan(batch_size=20)
+    next(scanner)
+    next(scanner)
+    scanner.close()
+    with assert_raises(StopIteration):
+        next(scanner)
+
 
 def test_delete():
     row_key = 'row-test-delete'
