@@ -38,7 +38,7 @@ pack_i64 = Struct('>q').pack
 
 
 def _make_row(cell_map, include_timestamp):
-    """Makes a row dict for a cell mapping like ttypes.TRowResult.columns."""
+    """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
     return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
 
@@ -123,14 +123,14 @@ class Connection(object):
         self._initialized = True
 
     def _table_name(self, name):
-        """Constructs a table name by optionally adding a table name prefix."""
+        """Construct a table name by optionally adding a table name prefix."""
         if self.table_prefix is None:
             return name
 
         return self.table_prefix + self.table_prefix_separator + name
 
     def open(self):
-        """Opens the underlying transport to the HBase instance.
+        """Open the underlying transport to the HBase instance.
 
         This method opens the underlying Thrift transport (TCP connection).
         """
@@ -138,7 +138,7 @@ class Connection(object):
         self.transport.open()
 
     def close(self):
-        """Closes the underyling transport to the HBase instance.
+        """Close the underyling transport to the HBase instance.
 
         This method closes the underlying Thrift transport (TCP connection).
         """
@@ -155,7 +155,7 @@ class Connection(object):
             self.close()
 
     def table(self, name, use_prefix=True):
-        """Returns a table object.
+        """Return a table object.
 
         Returns a :py:class:`happybase.Table` instance for the table named
         `name`. This does not result in a round-trip to the server, and the
@@ -182,7 +182,7 @@ class Connection(object):
     #
 
     def tables(self):
-        """Returns a list of table names available in this HBase instance.
+        """Return a list of table names available in this HBase instance.
 
         If a `table_prefix` was set for this :py:class:`Connection`, only
         tables that have the specified prefix will be listed.
@@ -201,7 +201,7 @@ class Connection(object):
         return names
 
     def create_table(self, name, families):
-        """Creates a table.
+        """Create a table.
 
         :param str name: The table name
         :param dict families: The name and options for each column family
@@ -240,7 +240,7 @@ class Connection(object):
         self.client.createTable(name, column_descriptors)
 
     def delete_table(self, name):
-        """Deletes the specified table.
+        """Delete the specified table.
 
         :param str name: The table name
         """
@@ -248,7 +248,7 @@ class Connection(object):
         self.client.deleteTable(name)
 
     def enable_table(self, name):
-        """Enables the specified table.
+        """Enable the specified table.
 
         :param str name: The table name
         """
@@ -256,7 +256,7 @@ class Connection(object):
         self.client.enableTable(name)
 
     def disable_table(self, name):
-        """Disables the specified table.
+        """Disable the specified table.
 
         :param str name: The table name
         """
@@ -264,7 +264,7 @@ class Connection(object):
         self.client.disableTable(name)
 
     def is_table_enabled(self, name):
-        """Returns whether the specified table is enabled.
+        """Return whether the specified table is enabled.
 
         :param str name: The table name
 
@@ -275,7 +275,7 @@ class Connection(object):
         return self.client.isTableEnabled(name)
 
     def compact_table(self, name, major=False):
-        """Compacts the specified table.
+        """Compact the specified table.
 
         :param str name: The table name
         :param bool major: Whether to perform a major compaction.
@@ -304,7 +304,7 @@ class Table(object):
                                     self.name)
 
     def families(self):
-        """Retrieves the column families for this table.
+        """Retrieve the column families for this table.
 
         :return: Mapping from column family name to settings dict
         :rtype: dict
@@ -317,11 +317,11 @@ class Table(object):
         return families
 
     def _column_family_names(self):
-        """Retrieves the column family names for this table (internal use)"""
+        """Retrieve the column family names for this table (internal use)"""
         return self.client.getColumnDescriptors(self.name).keys()
 
     def regions(self):
-        """Retrieves the regions for this table.
+        """Retrieve the regions for this table.
 
         :return: regions for this table
         :rtype: list of dicts
@@ -334,7 +334,7 @@ class Table(object):
     #
 
     def row(self, row, columns=None, timestamp=None, include_timestamp=False):
-        """Retrieves a single row of data.
+        """Retrieve a single row of data.
 
         This method retrieves the row with the row key specified in the `row`
         argument and returns the columns and values for this row as
@@ -378,7 +378,7 @@ class Table(object):
 
     def rows(self, rows, columns=None, timestamp=None,
              include_timestamp=False):
-        """Retrieves multiple rows of data.
+        """Retrieve multiple rows of data.
 
         This method retrieves the rows with the row keys specified in the
         `rows` argument, which should be should be a list (or tuple) of row
@@ -422,7 +422,7 @@ class Table(object):
 
     def cells(self, row, column, versions=None, timestamp=None,
               include_timestamp=False):
-        """Retrieves multiple versions of a single cell from the table.
+        """Retrieve multiple versions of a single cell from the table.
 
         This method retrieves multiple versions of a cell (if any).
 
@@ -464,7 +464,7 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, limit=None):
-        """Creates a scanner for data in the table.
+        """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
         matching rows. Scanners can be created in two ways:
@@ -599,7 +599,7 @@ class Table(object):
     #
 
     def put(self, row, data, timestamp=None):
-        """Stores data in the table.
+        """Store data in the table.
 
         This method stores the data in the `data` argument for the row
         specified by `row`. The `data` argument is dictionary that maps columns
@@ -618,7 +618,7 @@ class Table(object):
             batch.put(row, data)
 
     def delete(self, row, columns=None, timestamp=None):
-        """Deletes data from the table.
+        """Delete data from the table.
 
         This method deletes all columns for the row specified by `row`, or only
         some columns if the `columns` argument is specified.
@@ -640,7 +640,7 @@ class Table(object):
                 batch.delete(row, columns)
 
     def batch(self, timestamp=None, batch_size=None, transaction=False):
-        """Creates a new batch instance for this table.
+        """Create a new batch instance for this table.
 
         This method returns a new :py:class:`Batch` instance that can be used
         for mass data manipulation. The `timestamp` argument applies to all
@@ -670,7 +670,7 @@ class Table(object):
     #
 
     def counter_get(self, row, column):
-        """Retrieves the current value of a counter column.
+        """Retrieve the current value of a counter column.
 
         This method retrieves the current value of a counter column. If the
         counter column does not exist, this function initialises it to `0`.
@@ -691,7 +691,7 @@ class Table(object):
         return self.counter_inc(row, column, value=0)
 
     def counter_set(self, row, column, value=0):
-        """Sets a counter column to a specific value.
+        """Set a counter column to a specific value.
 
         This method stores a 64-bit signed integer value in the specified
         column.
@@ -708,7 +708,7 @@ class Table(object):
         self.put(row, {column: pack_i64(value)})
 
     def counter_inc(self, row, column, value=1):
-        """Atomically increments (or decrements) a counter column.
+        """Atomically increment (or decrements) a counter column.
 
         This method atomically increments or decrements a counter column in the
         row specified by `row`. The `value` argument specifies how much the
@@ -726,7 +726,7 @@ class Table(object):
         return self.client.atomicIncrement(self.name, row, column, value)
 
     def counter_dec(self, row, column, value=1):
-        """Atomically decrements (or increments) a counter column.
+        """Atomically decrement (or increments) a counter column.
 
         This method is a shortcut for calling :py:meth:`Table.counter_inc` with
         the value negated.
@@ -745,7 +745,7 @@ class Batch:
     """
     def __init__(self, table, timestamp=None, batch_size=None,
                  transaction=False):
-        """Initialises a new Batch instance."""
+        """Initialise a new Batch instance."""
         if not (timestamp is None or isinstance(timestamp, int)):
             raise TypeError("'timestamp' must be an integer or None")
 
@@ -763,12 +763,12 @@ class Batch:
         self._reset_mutations()
 
     def _reset_mutations(self):
-        """Resets the internal mutation buffer."""
+        """Reset the internal mutation buffer."""
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
     def send(self):
-        """Sends the batch to the server."""
+        """Send the batch to the server."""
         bms = [BatchMutation(row, m) for row, m in self._mutations.iteritems()]
         if not bms:
             return
@@ -788,7 +788,7 @@ class Batch:
     #
 
     def put(self, row, data):
-        """Stores data in the table.
+        """Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row` and `data`
         arguments.
@@ -802,7 +802,7 @@ class Batch:
             self.send()
 
     def delete(self, row, columns=None):
-        """Deletes data from the table.
+        """Delete data from the table.
 
         See :py:meth:`Table.delete` for a description of the `row` and `data`
         arguments.
