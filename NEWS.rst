@@ -8,6 +8,14 @@ HappyBase 0.5 (not yet released)
 
 (TODO)
 
+* The debug log message emitted by :py:meth:`Table.scan` when closing a scanner
+  now includes both the number of rows returned to the calling code, and also
+  the number of rows actually fetched from the server. If scanners are not
+  completely iterated over (e.g. because of a 'break' statement in the for loop
+  for the scanner), these numbers may differ. If this happens often, and the
+  differences are big, this may be a hint that the batch_size is not optimal for
+  your application.
+
 HappyBase 0.4
 -------------
 
