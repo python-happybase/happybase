@@ -568,23 +568,24 @@ class Table(object):
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
-        n_results = 0
+        n_returned = n_fetched = 0
         try:
             while True:
                 if limit is None:
                     how_many = batch_size
                 else:
-                    how_many = min(batch_size, limit - n_results)
+                    how_many = min(batch_size, limit - n_returned)
 
                 if how_many == 1:
                     items = client.scannerGet(scan_id)
                 else:
                     items = client.scannerGetList(scan_id, how_many)
 
-                for item in items:
-                    n_results += 1
+                n_fetched += len(items)
+
+                for n_returned, item in enumerate(items, n_returned + 1):
                     yield item.row, _make_row(item.columns, include_timestamp)
-                    if limit is not None and n_results == limit:
+                    if limit is not None and n_returned == limit:
                         return
 
                 # Avoid round-trip when exhausted
@@ -592,7 +593,8 @@ class Table(object):
                     break
         finally:
             client.scannerClose(scan_id)
-            logger.debug("Closed scanner (id=%d) on '%s'", scan_id, self.name)
+            logger.debug("Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
+                         scan_id, self.name, n_returned, n_fetched)
 
     #
     # Data manipulation
