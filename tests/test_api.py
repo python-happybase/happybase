@@ -51,8 +51,7 @@ def setup_module():
 
 def teardown_module():
     if not KEEP_TABLE:
-        connection.disable_table(TEST_TABLE_NAME)
-        connection.delete_table(TEST_TABLE_NAME)
+        connection.delete_table(TEST_TABLE_NAME, disable=True)
     connection.close()
 
 

@@ -239,11 +239,19 @@ class Connection(object):
 
         self.client.createTable(name, column_descriptors)
 
-    def delete_table(self, name):
+    def delete_table(self, name, disable=False):
         """Delete the specified table.
 
+        In HBase, a table always needs to be disabled before it can be deleted.
+        If the `disable` parameter is `True`, this method first disables the
+        table if it wasn't already and then deletes it.
+
         :param str name: The table name
+        :param str disable: Whether to first disable the table if needed
         """
+        if disable and self.is_table_enabled(name):
+            self.disable_table(name)
+
         name = self._table_name(name)
         self.client.deleteTable(name)
 

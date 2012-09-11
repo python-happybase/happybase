@@ -8,6 +8,9 @@ HappyBase 0.5 (not yet released)
 
 (TODO)
 
+* The :py:meth:`Connection.delete_table` method now features an optional
+  `disable` parameter to make deleting enabled tables easier.
+
 * The debug log message emitted by :py:meth:`Table.scan` when closing a scanner
   now includes both the number of rows returned to the calling code, and also
   the number of rows actually fetched from the server. If scanners are not
