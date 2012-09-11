@@ -737,7 +737,7 @@ class Table(object):
         return self.counter_inc(row, column, -value)
 
 
-class Batch:
+class Batch(object):
     """Batch mutation class.
 
     This class cannot be instantiated directly; use :py:meth:`Table.batch`
