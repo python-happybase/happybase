@@ -768,10 +768,10 @@ class Batch(object):
             if not batch_size > 0:
                 raise ValueError("'batch_size' must be > 0")
 
-        self.table = table
-        self.batch_size = batch_size
-        self.timestamp = timestamp
-        self.transaction = transaction
+        self._table = table
+        self._batch_size = batch_size
+        self._timestamp = timestamp
+        self._transaction = transaction
         self._families = None
         self._reset_mutations()
 
@@ -787,12 +787,12 @@ class Batch(object):
             return
 
         logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
-                     self.table.name, self._mutation_count, len(bms))
-        if self.timestamp is None:
-            self.table.client.mutateRows(self.table.name, bms)
+                     self._table.name, self._mutation_count, len(bms))
+        if self._timestamp is None:
+            self._table.client.mutateRows(self._table.name, bms)
         else:
-            self.table.client.mutateRowsTs(self.table.name, bms,
-                                           self.timestamp)
+            self._table.client.mutateRowsTs(self._table.name, bms,
+                                            self._timestamp)
 
         self._reset_mutations()
 
@@ -811,7 +811,7 @@ class Batch(object):
             for column, value in data.iteritems())
 
         self._mutation_count += len(data)
-        if self.batch_size and self._mutation_count >= self.batch_size:
+        if self._batch_size and self._mutation_count >= self._batch_size:
             self.send()
 
     def delete(self, row, columns=None):
@@ -826,14 +826,14 @@ class Batch(object):
         # transaction.
         if columns is None:
             if self._families is None:
-                self._families = self.table._column_family_names()
+                self._families = self._table._column_family_names()
             columns = self._families
 
         self._mutations[row].extend(
             Mutation(isDelete=True, column=column) for column in columns)
 
         self._mutation_count += len(columns)
-        if self.batch_size and self._mutation_count >= self.batch_size:
+        if self._batch_size and self._mutation_count >= self._batch_size:
             self.send()
 
     #
@@ -848,7 +848,7 @@ class Batch(object):
         """Called upon exiting a ``with`` block"""
         # If the 'with' block raises an exception, the batch will not be
         # sent to the server.
-        if self.transaction and exc_type is not None:
+        if self._transaction and exc_type is not None:
             return
 
         self.send()
