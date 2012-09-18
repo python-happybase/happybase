@@ -650,7 +650,7 @@ class Table(object):
                 batch.delete(row, columns)
 
     def batch(self, timestamp=None, batch_size=None, transaction=False):
-        """Create a new batch instance for this table.
+        """Create a new batch operation for this table.
 
         This method returns a new :py:class:`Batch` instance that can be used
         for mass data manipulation. The `timestamp` argument applies to all
@@ -668,6 +668,7 @@ class Table(object):
         :param bool transaction: whether this batch should behave like
                                  a transaction (only useful when used as a
                                  context manager)
+        :param int batch_size: batch size (optional)
         :param int timestamp: timestamp (optional)
 
         :return: Batch instance
