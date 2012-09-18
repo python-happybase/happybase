@@ -37,7 +37,7 @@ make_cell_timestamp = attrgetter('value', 'timestamp')
 pack_i64 = Struct('>q').pack
 
 
-def _make_row(cell_map, include_timestamp):
+def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
     return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
@@ -382,7 +382,7 @@ class Table(object):
         if not rows:
             return {}
 
-        return _make_row(rows[0].columns, include_timestamp)
+        return make_row(rows[0].columns, include_timestamp)
 
     def rows(self, rows, columns=None, timestamp=None,
              include_timestamp=False):
@@ -425,7 +425,7 @@ class Table(object):
             results = self.client.getRowsWithColumnsTs(self.name, rows,
                                                        columns, timestamp)
 
-        return [(r.row, _make_row(r.columns, include_timestamp))
+        return [(r.row, make_row(r.columns, include_timestamp))
                 for r in results]
 
     def cells(self, row, column, versions=None, timestamp=None,
@@ -592,7 +592,7 @@ class Table(object):
                 n_fetched += len(items)
 
                 for n_returned, item in enumerate(items, n_returned + 1):
-                    yield item.row, _make_row(item.columns, include_timestamp)
+                    yield item.row, make_row(item.columns, include_timestamp)
                     if limit is not None and n_returned == limit:
                         return
 
