@@ -764,9 +764,9 @@ class Batch(object):
 
         if batch_size is not None:
             if transaction:
-                raise TypeError("'transaction' can only be used when no 'batch_size' is specified")
+                raise TypeError("'transaction' cannot be used when 'batch_size' is specified")
             if not batch_size > 0:
-                raise ValueError("'batch_size' must be >= 1")
+                raise ValueError("'batch_size' must be > 0")
 
         self.table = table
         self.batch_size = batch_size
