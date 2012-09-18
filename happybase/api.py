@@ -390,7 +390,7 @@ class Table(object):
 
         This method retrieves the rows with the row keys specified in the
         `rows` argument, which should be should be a list (or tuple) of row
-        keys. The return value is a list of `(row_key, data)` tuples.
+        keys. The return value is a list of `(row_key, row_dict)` tuples.
 
         The `columns`, `timestamp` and `include_timestamp` arguments behave
         exactly the same as for :py:meth:`row`.
