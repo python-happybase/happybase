@@ -6,7 +6,7 @@ Version history
 HappyBase 0.5 (not yet released)
 --------------------------------
 
-(TODO)
+Note: this release is a work in progress!
 
 * The :py:meth:`Connection.delete_table` method now features an optional
   `disable` parameter to make deleting enabled tables easier.
