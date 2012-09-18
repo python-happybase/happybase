@@ -247,7 +247,7 @@ class Connection(object):
         table if it wasn't already and then deletes it.
 
         :param str name: The table name
-        :param str disable: Whether to first disable the table if needed
+        :param bool disable: Whether to first disable the table if needed
         """
         if disable and self.is_table_enabled(name):
             self.disable_table(name)
