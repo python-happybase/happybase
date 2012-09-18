@@ -817,8 +817,8 @@ class Batch(object):
     def delete(self, row, columns=None):
         """Delete data from the table.
 
-        See :py:meth:`Table.delete` for a description of the `row` and `data`
-        arguments.
+        See :py:meth:`Table.delete` for a description of the `row` and
+        `columns` arguments.
         """
         # Work-around Thrift API limitation: the mutation API can only
         # delete specified columns, not complete rows, so just list the
