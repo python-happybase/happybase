@@ -46,18 +46,17 @@ manually using :py:meth:`Connection.open`::
    # before first use:
    connection.open()
 
-The :py:class:`Connection` class provides various methods to interact with
+The :py:class:`Connection` class provides the main entry point to interact with
 HBase. For instance, to list the available tables, use
 :py:meth:`Connection.tables`::
 
    print connection.tables()
 
-The :py:class:`Connection` class offers various other methods to interact with
-HBase, mostly to perform system management tasks like creating, enabling and
-disabling tables. See the :doc:`API documentation <api>` for the
-:py:class:`Connection` class contains more information. This tutorial does not
-cover those since it's more likely you are already using the HBase shell for
-these system management tasks.
+Most other methods on the :py:class:`Connection` class are intended for system
+management tasks like creating, dropping, enabling and disabling tables. See the
+:doc:`API documentation <api>` for the :py:class:`Connection` class contains
+more information. This tutorial does not cover those since it's more likely you
+are already using the HBase shell for these system management tasks.
 
 
 Working with tables
@@ -65,9 +64,25 @@ Working with tables
 
 The :py:class:`Table` class provides the main API to retrieve and manipulate
 data in HBase. In the example above, we already asked for the available tables
-using the :py:meth:`Connection.tables` method. The next step is to obtain a
-:py:class:`.Table` instance to work with. Obtain a table by calling
-:py:meth:`Connection.table`, passing it the table name::
+using the :py:meth:`Connection.tables` method. If there weren't any tables yet,
+you can create a new one using :py:meth:`Connection.create_table`::
+
+   connection.create_table(
+       'mytable',
+       {'cf1': dict(max_versions=10),
+        'cf2': dict(max_versions=1, block_cache_enabled=False),
+        'cf3': dict(),  # use defaults
+       }
+   )
+
+.. note::
+
+    The HBase shell is often a better alternative for many HBase administration
+    tasks, since the shell is more powerful compared to the limited Thrift API
+    that HappyBase uses.
+
+The next step is to obtain a :py:class:`.Table` instance to work with. Simply
+call :py:meth:`Connection.table`, passing it the table name::
 
    table = connection.table('mytable')
 

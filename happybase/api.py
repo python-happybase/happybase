@@ -206,12 +206,32 @@ class Connection(object):
         :param str name: The table name
         :param dict families: The name and options for each column family
 
-        The `families` parameter is a dictionary mapping column family names to
-        a dictionary containing the options for this column family. See
-        ColumnDescriptor in the Thrift API for the supported options, but note
-        that the names should be provided in Python style, and not in camel
-        case notation, for example `time_to_live` (not `timeToLive`) and
-        `max_versions` (not `maxVersions`).
+        The `families` parameter is a dictionary mapping column family
+        names to a dictionary containing the options for this column
+        family, e.g.
+
+        ::
+
+            families = {
+                'cf1': dict(max_versions=10),
+                'cf2': dict(max_versions=1, block_cache_enabled=False),
+                'cf3': dict(),  # use defaults
+            }
+            connection.create_table('mytable', families)
+
+        These options correspond to the ColumnDescriptor structure in
+        the Thrift API, but note that the names should be provided in
+        Python style, not in camel case notation, e.g. `time_to_live`,
+        not `timeToLive`. The following options are supported:
+
+        * ``max_versions`` (`int`)
+        * ``compression`` (`str`)
+        * ``in_memory`` (`bool`)
+        * ``bloom_filter_type`` (`str`)
+        * ``bloom_filter_vector_size`` (`int`)
+        * ``bloom_filter_nb_hashes`` (`int`)
+        * ``block_cache_enabled`` (`bool`)
+        * ``time_to_live`` (`int`)
         """
         name = self._table_name(name)
         if not isinstance(families, dict):
