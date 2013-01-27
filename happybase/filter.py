@@ -4,8 +4,6 @@ Filter module.
 This module provides helper routines to construct Thrift filter strings.
 """
 
-# TODO: support AND, OR, WHILE, SKIP (with operator overloading?)
-
 from __future__ import unicode_literals as _unicode_literals
 from functools import partial as _partial
 
@@ -67,7 +65,7 @@ class _Filter(_Node):
 
     def _format_arg(self, arg):
         if isinstance(arg, bool):
-            return 'true' if arg else 'false'
+            return b'true' if arg else b'false'
 
         if isinstance(arg, int):
             return bytes(arg)
@@ -93,6 +91,15 @@ class _Filter(_Node):
         return OR(self, rhs)
 
 
+class _UnaryOperatorNode(_Node):
+    def __init__(self, operator, value):
+        self.operator = operator
+        self.value = value
+
+    def __str__(self):
+        return b'%s (%s)' % (self.operator, self.value)
+
+
 class _BinaryOperatorNode(_Node):
 
     def __init__(self, operator, lhs, rhs):
@@ -103,13 +110,18 @@ class _BinaryOperatorNode(_Node):
     def __str__(self):
         return b'(%s %s %s)' % (self.lhs, self.operator, self.rhs)
 
+def SKIP(f):
+    return _UnaryOperatorNode(b'SKIP', f)
+
+def WHILE(f):
+    return _UnaryOperatorNode(b'WHILE', f)
 
 def AND(lhs, rhs):
-    return _BinaryOperatorNode('AND', lhs, rhs)
+    return _BinaryOperatorNode(b'AND', lhs, rhs)
 
 
 def OR(lhs, rhs):
-    return _BinaryOperatorNode('OR', lhs, rhs)
+    return _BinaryOperatorNode(b'OR', lhs, rhs)
 
 
 def make_filter(name):

@@ -17,7 +17,9 @@ from happybase.filter import (
     make_filter,
     NOT_EQUAL,
     OR,
+    SKIP,
     ValueFilter,
+    WHILE,
 )
 
 
@@ -101,6 +103,19 @@ def test_custom_filter():
     with assert_raises(TypeError):
         f = make_filter, (12)
         f(1, 2)
+
+
+def test_unary_operators():
+
+    assert_equal(
+        b'SKIP (ValueFilter())',
+        bytes(SKIP(ValueFilter()))
+    )
+
+    assert_equal(
+        b'WHILE (ValueFilter())',
+        bytes(WHILE(ValueFilter()))
+    )
 
 
 def test_binary_operators():
