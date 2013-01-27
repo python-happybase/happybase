@@ -582,7 +582,7 @@ filter string syntax.
 Keep in mind that filter strings should be used in *addition* to other ways to
 limit the returned scanner data, e.g. by using `row_start` or `columns`. Not
 doing so results in horribly slow full table scans at the server. See the HBase
-documentation for more information about how to properly use scanner filters.
+documentation for more information on properly using scanner filters.
 
 Dynamic filter strings
 ----------------------
@@ -592,18 +592,20 @@ will suffice, but in some cases you might want to programmatically build filter
 strings to pass to the Thrift server. This is where the
 :py:mod:`happybase.filter` module comes into play. This module provides various
 helper routines to build filter strings. For example, to construct a filter
-string for a `QualifierFilter` you can use something like this::
+string for a ``QualifierFilter`` you can use something like this::
 
    from happybase.filter import QualifierFilter, LESS_OR_EQUAL
 
    qual = b‘column1’
    f = QualifierFilter(LESS_OR_EQUAL, qual)
-   scanner = table.scan(..., filter=f)
+   scanner = table.scan(row_prefix=b'...', filter=f)
 
 Note that HappyBase does not include any filtering logic itself. HappyBase does
 not check the validity (names and arguments) of the generated filter string, but
 only helps with serialising the filter names and properly escaping the arguments
 passed to it.
+
+TODO: it handles bool, int and str automatically
 
 Using custom filters
 --------------------
@@ -619,7 +621,7 @@ If the filter accepts an integer, a comparison operator and a string, you can
 use it as follows::
 
    f = MyCustomFilter(1, EQUAL, 'foobar')
-   scanner = table.scan(..., filter=f)
+   scanner = table.scan(row_prefix=b'...', filter=f)
 
 
 .. rubric:: Next steps
