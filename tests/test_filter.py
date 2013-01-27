@@ -17,7 +17,7 @@ from happybase.filter import (
     make_filter,
     NOT_EQUAL,
     OR,
-    QualifierFilter,
+    ValueFilter,
 )
 
 
@@ -45,7 +45,7 @@ def test_escape():
 def test_serialization():
 
     # Comparison operators
-    f = QualifierFilter(
+    f = ValueFilter(
         LESS,
         LESS_OR_EQUAL,
         EQUAL,
@@ -53,36 +53,36 @@ def test_serialization():
         GREATER_OR_EQUAL,
         GREATER,
     )
-    exp = b"QualifierFilter(<, <=, =, !=, >=, >)"
+    exp = b"ValueFilter(<, <=, =, !=, >=, >)"
     assert_equal(exp, bytes(f))
 
     # Booleans
-    f = QualifierFilter(True, False)
-    exp = b"QualifierFilter(true, false)"
+    f = ValueFilter(True, False)
+    exp = b"ValueFilter(true, false)"
     assert_equal(exp, bytes(f))
 
     # Integers
-    f = QualifierFilter(12, 13, -1, 0)
-    exp = b"QualifierFilter(12, 13, -1, 0)"
+    f = ValueFilter(12, 13, -1, 0)
+    exp = b"ValueFilter(12, 13, -1, 0)"
     assert_equal(exp, bytes(f))
 
     # Strings
-    f = QualifierFilter(b'foo', b"foo'bar", b'bar')
-    exp = b"QualifierFilter('foo', 'foo''bar', 'bar')"
+    f = ValueFilter(b'foo', b"foo'bar", b'bar')
+    exp = b"ValueFilter('foo', 'foo''bar', 'bar')"
     assert_equal(exp, bytes(f))
 
     # Mixed args
     assert_equal(
-        b"QualifierFilter(>=, 'foo', 12, 'bar')",
-        bytes(QualifierFilter(GREATER_OR_EQUAL, b'foo', 12, b'bar'))
+        b"ValueFilter(>=, 'foo', 12, 'bar')",
+        bytes(ValueFilter(GREATER_OR_EQUAL, b'foo', 12, b'bar'))
     )
 
 
 def test_type_checking():
-    assert_raises(TypeError, QualifierFilter, u'foo')
-    assert_raises(TypeError, QualifierFilter, 3.14)
-    assert_raises(TypeError, QualifierFilter, object())
-    assert_raises(TypeError, QualifierFilter, None)
+    assert_raises(TypeError, ValueFilter, u'foo')
+    assert_raises(TypeError, ValueFilter, 3.14)
+    assert_raises(TypeError, ValueFilter, object())
+    assert_raises(TypeError, ValueFilter, None)
 
 
 def test_custom_filter():
@@ -103,16 +103,16 @@ def test_custom_filter():
         f(1, 2)
 
 
-def test_operators():
+def test_binary_operators():
 
     def check(expected, original):
         actual = bytes(original)
         assert_equal(actual, expected)
 
-    f = b"(QualifierFilter('foo') AND QualifierFilter('bar'))"
-    check(f, AND(QualifierFilter(b'foo'), QualifierFilter(b'bar')))
-    check(f, QualifierFilter(b'foo') & QualifierFilter(b'bar'))
+    f = b"(ValueFilter('foo') AND ValueFilter('bar'))"
+    check(f, AND(ValueFilter(b'foo'), ValueFilter(b'bar')))
+    check(f, ValueFilter(b'foo') & ValueFilter(b'bar'))
 
-    f = b"(QualifierFilter('foo') OR QualifierFilter('bar'))"
-    check(f, OR(QualifierFilter(b'foo'), QualifierFilter(b'bar')))
-    check(f, QualifierFilter(b'foo') | QualifierFilter(b'bar'))
+    f = b"(ValueFilter('foo') OR ValueFilter('bar'))"
+    check(f, OR(ValueFilter(b'foo'), ValueFilter(b'bar')))
+    check(f, ValueFilter(b'foo') | ValueFilter(b'bar'))
