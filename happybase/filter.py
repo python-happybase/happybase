@@ -4,6 +4,8 @@ Filter module.
 This module provides helper routines to construct Thrift filter strings.
 """
 
+# TODO: add support for comparators (regex, substring, and so on)
+
 from __future__ import unicode_literals as _unicode_literals
 from functools import partial as _partial
 
