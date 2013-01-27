@@ -29,8 +29,10 @@ DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 
 COMPAT_MODES = ('0.90', '0.92')
-THRIFT_TRANSPORTS = {'buffered': TBufferedTransport,
-                     'framed': TFramedTransport}
+THRIFT_TRANSPORTS = dict(
+    buffered=TBufferedTransport,
+    framed=TFramedTransport,
+)
 
 make_cell = attrgetter('value')
 make_cell_timestamp = attrgetter('value', 'timestamp')
