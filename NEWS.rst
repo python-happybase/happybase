@@ -15,6 +15,10 @@ Note: this version is not yet released!
 * Regenerated bundled Thrift code using Thrift 0.9.0 with the new-style classes
   flag (`issue #27 <https://github.com/wbolster/happybase/issues/27>`_).
 
+* The new :py:mod:`happybase.filter` module provides improved support for
+  specifying scanner filters that should be applied at the region server. See
+  the tutorial and API docs for more information.
+
 
 HappyBase 0.5
 -------------
