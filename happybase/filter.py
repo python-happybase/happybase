@@ -43,7 +43,11 @@ def escape(s):
     return s.replace(b"'", b"''")
 
 
-class _Filter:
+class _Node(object):
+    pass
+
+
+class _Filter(_Node):
     """Client-side Filter representation.
 
     This class does not have any filtering logic; it is only used to
@@ -68,7 +72,6 @@ class _Filter:
         if isinstance(arg, int):
             return bytes(arg)
 
-
         if arg in _COMPARISON_OPERATOR_STRINGS:
             return _COMPARISON_OPERATOR_STRINGS[arg]
 
@@ -82,6 +85,31 @@ class _Filter:
 
     def __str__(self):
         return b'%s(%s)' % (self.name, ', '.join(self.args))
+
+    def __and__(self, other):
+        return AND(self, other)
+
+    def __or__(self, rhs):
+        return OR(self, rhs)
+
+
+class _BinaryOperatorNode(_Node):
+
+    def __init__(self, operator, lhs, rhs):
+        self.operator = operator
+        self.lhs = lhs
+        self.rhs = rhs
+
+    def __str__(self):
+        return b'(%s %s %s)' % (self.lhs, self.operator, self.rhs)
+
+
+def AND(lhs, rhs):
+    return _BinaryOperatorNode('AND', lhs, rhs)
+
+
+def OR(lhs, rhs):
+    return _BinaryOperatorNode('OR', lhs, rhs)
 
 
 def make_filter(name):

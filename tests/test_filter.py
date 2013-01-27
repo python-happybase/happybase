@@ -6,8 +6,19 @@ from __future__ import unicode_literals
 
 from nose.tools import assert_equal, assert_raises
 
-import happybase.filter as filter
-from happybase.filter import escape, make_filter, QualifierFilter
+from happybase.filter import (
+    AND,
+    EQUAL,
+    escape,
+    GREATER,
+    GREATER_OR_EQUAL,
+    LESS,
+    LESS_OR_EQUAL,
+    make_filter,
+    NOT_EQUAL,
+    OR,
+    QualifierFilter,
+)
 
 
 def test_escape():
@@ -35,12 +46,12 @@ def test_serialization():
 
     # Comparison operators
     f = QualifierFilter(
-        filter.LESS,
-        filter.LESS_OR_EQUAL,
-        filter.EQUAL,
-        filter.NOT_EQUAL,
-        filter.GREATER_OR_EQUAL,
-        filter.GREATER,
+        LESS,
+        LESS_OR_EQUAL,
+        EQUAL,
+        NOT_EQUAL,
+        GREATER_OR_EQUAL,
+        GREATER,
     )
     exp = b"QualifierFilter(<, <=, =, !=, >=, >)"
     assert_equal(exp, bytes(f))
@@ -63,7 +74,7 @@ def test_serialization():
     # Mixed args
     assert_equal(
         b"QualifierFilter(>=, 'foo', 12, 'bar')",
-        bytes(QualifierFilter(filter.GREATER_OR_EQUAL, b'foo', 12, b'bar'))
+        bytes(QualifierFilter(GREATER_OR_EQUAL, b'foo', 12, b'bar'))
     )
 
 
@@ -80,7 +91,7 @@ def test_custom_filter():
 
     assert_equal(
         b"MyCustomFilter(1, =, 'foo''bar')",
-        bytes(MyCustomFilter(1, filter.EQUAL, b"foo'bar"))
+        bytes(MyCustomFilter(1, EQUAL, b"foo'bar"))
     )
 
     with assert_raises(TypeError):
@@ -90,3 +101,18 @@ def test_custom_filter():
     with assert_raises(TypeError):
         f = make_filter, (12)
         f(1, 2)
+
+
+def test_operators():
+
+    def check(expected, original):
+        actual = bytes(original)
+        assert_equal(actual, expected)
+
+    f = b"(QualifierFilter('foo') AND QualifierFilter('bar'))"
+    check(f, AND(QualifierFilter(b'foo'), QualifierFilter(b'bar')))
+    check(f, QualifierFilter(b'foo') & QualifierFilter(b'bar'))
+
+    f = b"(QualifierFilter('foo') OR QualifierFilter('bar'))"
+    check(f, OR(QualifierFilter(b'foo'), QualifierFilter(b'bar')))
+    check(f, QualifierFilter(b'foo') | QualifierFilter(b'bar'))
