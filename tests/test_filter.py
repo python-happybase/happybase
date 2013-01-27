@@ -45,6 +45,11 @@ def test_serialization():
     exp = b"QualifierFilter(<, <=, =, !=, >=, >)"
     assert_equal(exp, bytes(f))
 
+    # Booleans
+    f = QualifierFilter(True, False)
+    exp = b"QualifierFilter(true, false)"
+    assert_equal(exp, bytes(f))
+
     # Integers
     f = QualifierFilter(12, 13, -1, 0)
     exp = b"QualifierFilter(12, 13, -1, 0)"

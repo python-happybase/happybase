@@ -62,8 +62,12 @@ class _Filter:
         self.args = map(self._format_arg, args)
 
     def _format_arg(self, arg):
+        if isinstance(arg, bool):
+            return 'true' if arg else 'false'
+
         if isinstance(arg, int):
             return bytes(arg)
+
 
         if arg in _COMPARISON_OPERATOR_STRINGS:
             return _COMPARISON_OPERATOR_STRINGS[arg]
@@ -73,8 +77,8 @@ class _Filter:
             return "'%s'" % escape(arg)
 
         raise TypeError(
-            "Filter arguments must be integers, comparison operators "
-            "or byte strings; got %r" % arg)
+            "Filter arguments must be booleans, integers, comparison "
+            "operators or byte strings; got %r" % arg)
 
     def __str__(self):
         return b'%s(%s)' % (self.name, ', '.join(self.args))
