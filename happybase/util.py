@@ -6,8 +6,6 @@ These functions are not part of the public API.
 
 import re
 
-__all__ = ['thrift_attrs', 'thrift_type_to_dict']
-
 CAPITALS = re.compile('([A-Z])')
 
 
