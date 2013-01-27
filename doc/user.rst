@@ -274,14 +274,17 @@ starting with `abc`::
        print key, data
 
 The scanner examples above only limit the results by row key using the
-`row_start`, `row_stop`, and `row_prefix` arguments, but scanners can also
-limit results to certain columns, column families, and timestamps, just like
-:py:meth:`Table.row` and :py:meth:`Table.rows`. For advanced users, a filter
-string can be passed as the `filter` argument. Additionally, the optional
+`row_start`, `row_stop`, and `row_prefix` arguments, but scanners can also limit
+results to certain columns, column families, and timestamps, just like
+:py:meth:`Table.row` and :py:meth:`Table.rows`. Additionally, the optional
 `limit` argument defines how much data is at most retrieved, and the
 `batch_size` argument specifies how big the transferred chunks should be. The
 :py:meth:`Table.scan` API documentation provides more information on the
 supported scanner options.
+
+Scanners support more advanced filtering techniques by applying filters at the
+region servers. See the section on advanced filtering elsewhere in this tutorial
+to learn how to use this feature using HappyBase.
 
 
 Manipulating data
@@ -468,7 +471,6 @@ methods can be used to retrieve or set a counter value directly::
    :py:meth:`~Table.counter_dec` instead!
 
 
-
 Using the connection pool
 =========================
 
@@ -553,6 +555,71 @@ ones when the connection is returned to the pool. However, the connection pool
 does not capture raised exceptions, nor does it automatically retry failed
 operations. This means that the application still has to handle connection
 errors.
+
+
+Advanced scanner filters
+========================
+
+In addition to the scanner features described earlier, HBase can filter scanner
+results by applying additional filters at the region servers (predicate
+push-down). To use this advanced feature from HappyBase, you can provide a
+filter string describing the server-side filters and pass it as the `filter`
+argument to :py:class:`Table.scan()`. Example::
+
+    scanner = table.scanner(
+        row_start=b'aaa',
+        row_start=b'eee',
+        filter=b'KeyOnlyFilter() AND FirstKeyOnlyFilter()',
+    )
+    n_rows = 0
+    for row, data in scanner:
+        n_rows += 1
+
+See the HBase documentation for the supported filters and the supported
+parameters. See the HBase Thrift documentation for more information about the
+filter string syntax.
+
+Keep in mind that filter strings should be used in *addition* to other ways to
+limit the returned scanner data, e.g. by using `row_start` or `columns`. Not
+doing so results in horribly slow full table scans at the server. See the HBase
+documentation for more information about how to properly use scanner filters.
+
+Dynamic filter strings
+----------------------
+
+For many use cases a literal filter string like the one in the example above
+will suffice, but in some cases you might want to programmatically build filter
+strings to pass to the Thrift server. This is where the
+:py:mod:`happybase.filter` module comes into play. This module provides various
+helper routines to build filter strings. For example, to construct a filter
+string for a `QualifierFilter` you can use something like this::
+
+   from happybase.filter import QualifierFilter, LESS_OR_EQUAL
+
+   qual = b‘column1’
+   f = QualifierFilter(LESS_OR_EQUAL, qual)
+   scanner = table.scan(..., filter=f)
+
+Note that HappyBase does not include any filtering logic itself. HappyBase does
+not check the validity (names and arguments) of the generated filter string, but
+only helps with serialising the filter names and properly escaping the arguments
+passed to it.
+
+Using custom filters
+--------------------
+
+In case you have implemented a custom filter and loaded it in HBase, you can
+easily add support for it in HappyBase::
+
+   from happybase.filter import make_filter, EQUAL
+   MyCustomFilter = make_filter('MyCustomFilter')
+
+You can now use the custom filter exactly like the filters provided by default.
+If the filter accepts an integer, a comparison operator and a string, you can
+use it as follows::
+
+   f = MyCustomFilter(1, EQUAL, 'foobar')
+   scanner = table.scan(..., filter=f)
 
 
 .. rubric:: Next steps
