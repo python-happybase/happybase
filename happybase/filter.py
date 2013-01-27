@@ -40,7 +40,7 @@ def escape(s):
     if not isinstance(s, bytes):
         raise TypeError("Only byte strings can be escaped")
 
-    return s.replace("'", "''")
+    return s.replace(b"'", b"''")
 
 
 class _Filter:
