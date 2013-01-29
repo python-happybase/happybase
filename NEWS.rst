@@ -23,6 +23,10 @@ Note: this release is a work in progress!
   available from PyPI. HappyBase should not be used with obsoleted Thrift
   versions.
 
+* The :py:class:`Connection` constructor now features an optional `timeout`
+  parameter to to specify the timeout to use for the Thrift socket (`issue #15
+  <https://github.com/wbolster/happybase/issues/15>`_)
+
 
 HappyBase 0.4
 -------------

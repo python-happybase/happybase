@@ -48,9 +48,11 @@ def make_row(cell_map, include_timestamp):
 class Connection(object):
     """Connection to an HBase Thrift server.
 
-    The `host` and `port` parameters specify the host name and TCP port of the
-    HBase Thrift server to connect to. If omitted or ``None``, a connection to
-    the default port on ``localhost`` is made.
+    The `host` and `port` parameters specify the host name and TCP port
+    of the HBase Thrift server to connect to. If omitted or ``None``,
+    a connection to the default port on ``localhost`` is made. If
+    specifed, the `timeout` parameter specifies the socket timeout in
+    milliseconds.
 
     If `autoconnect` is `True` (the default) the connection is made directly,
     otherwise :py:meth:`Connection.open` must be called explicitly before first
@@ -81,20 +83,23 @@ class Connection(object):
 
     :param str host: The host to connect to
     :param int port: The port to connect to
-    :param bool autoconnect: Whether the connection should be opened directly.
+    :param int timeout: The socket timeout in milliseconds (optional)
+    :param bool autoconnect: Whether the connection should be opened directly
     :param str table_prefix: Prefix used to construct table names (optional)
     :param str table_prefix_separator: Separator used for `table_prefix`
     :param str compat: Compatibility mode (optional)
     :param str transport: Thrift transport mode (optional)
     """
-    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, autoconnect=True,
-                 table_prefix=None, table_prefix_separator='_', compat='0.92',
+    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
+                 autoconnect=True, table_prefix=None,
+                 table_prefix_separator='_', compat='0.92',
                  transport='buffered'):
 
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
         self.host = host or DEFAULT_HOST
         self.port = port or DEFAULT_PORT
+        self.timeout = timeout
 
         if compat not in COMPAT_MODES:
             raise ValueError("'compat' must be one of %s"
@@ -115,6 +120,10 @@ class Connection(object):
         self.table_prefix_separator = table_prefix_separator
 
         socket = TSocket(self.host, self.port)
+
+        if timeout is not None:
+            socket.setTimeout(timeout)
+
         self.transport = THRIFT_TRANSPORTS[transport](socket)
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
         self.client = Hbase.Client(protocol)

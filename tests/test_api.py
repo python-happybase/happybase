@@ -60,6 +60,12 @@ def test_connection_compat():
         happybase.Connection(compat='0.1.invalid.version')
 
 
+def test_timeout_arg():
+    happybase.Connection(
+        timeout=5000,
+        autoconnect=False)
+
+
 def test_enabling():
     assert_true(connection.is_table_enabled(TEST_TABLE_NAME))
     connection.disable_table(TEST_TABLE_NAME)
