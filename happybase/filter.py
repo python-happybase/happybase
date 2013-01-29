@@ -67,7 +67,11 @@ def _format_arg(arg):
 #
 
 class _Node(object):
-    pass
+    def __and__(self, other):
+        return AND(self, other)
+
+    def __or__(self, rhs):
+        return OR(self, rhs)
 
 
 class _FilterNode(_Node):
@@ -90,12 +94,6 @@ class _FilterNode(_Node):
 
     def __str__(self):
         return b'%s(%s)' % (self.name, ', '.join(self.args))
-
-    def __and__(self, other):
-        return AND(self, other)
-
-    def __or__(self, rhs):
-        return OR(self, rhs)
 
 
 class _UnaryOperatorNode(_Node):
@@ -121,19 +119,32 @@ class _WhileNode(_UnaryOperatorNode):
 
 class _BooleanOperatorNode(_Node):
     def __init__(self, *operands):
-        self.operands = list(operands)
+        self.operands = operands
 
     def __str__(self):
         glue = b' %s ' % self.operator
         return glue.join(map(bytes, self.operands))
 
+    def _extend(self, other):
+        if isinstance(other, self.__class__):
+            operands = self.operands + (other,)
+            return self.__class__(*operands)
+        else:
+            return self.__class__(self, other)
+
 
 class _AndNode(_BooleanOperatorNode):
     operator = 'AND'
 
+    def __and__(self, other):
+        return self._extend(other)
+
 
 class _OrNode(_BooleanOperatorNode):
     operator = 'OR'
+
+    def __or__(self, other):
+        return self._extend
 
 
 #

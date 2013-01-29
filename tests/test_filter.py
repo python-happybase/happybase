@@ -141,17 +141,18 @@ def test_boolean_operators():
         AND(F(1), F(2), F(3))
     )
 
-    # check(
-    #     b'F(1) AND F(2) AND F(3)',
-    #     F(1) & F(2) & F(3)
-    # )
+    check(
+        b'F(1) AND F(2) AND F(3)',
+        F(1) & F(2) & F(3)
+    )
 
-    # check(
-    #     b'F(1) AND F(2) OR F(3)',
-    #     F(1) & F(2) | F(3)
-    # )
+    check(
+        b'F(1) AND F(2) OR F(3)',
+        F(1) & F(2) | F(3)
+    )
 
-    # check(
-    #     b'F(1) AND (F(2) OR F(3))',
-    #     F(1) & (F(2) | F(3))
-    # )
+    # FIXME: precedence stuff doesn't work correctly
+    check(
+        b'F(1) AND (F(2) OR F(3))',
+        F(1) & (F(2) | F(3))
+    )
