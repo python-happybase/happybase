@@ -42,7 +42,7 @@ def setup_module():
         'cf1': {},
         'cf2': None,
         'cf3': {'max_versions': 1},
-        }
+    }
     connection.create_table(TEST_TABLE_NAME, families=cfs)
 
     table = connection.table(TEST_TABLE_NAME)
@@ -166,7 +166,7 @@ def test_batch():
 
     b = table.batch()
     b.put('row1', {'cf1:col1': 'value1',
-                  'cf1:col2': 'value2'})
+                   'cf1:col2': 'value2'})
     b.put('row2', {'cf1:col1': 'value1',
                    'cf1:col2': 'value2',
                    'cf1:col3': 'value3'})
