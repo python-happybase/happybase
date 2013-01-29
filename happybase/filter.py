@@ -112,11 +112,14 @@ class _BinaryOperatorNode(_Node):
     def __str__(self):
         return b'(%s %s %s)' % (self.lhs, self.operator, self.rhs)
 
+
 def SKIP(f):
     return _UnaryOperatorNode(b'SKIP', f)
 
+
 def WHILE(f):
     return _UnaryOperatorNode(b'WHILE', f)
+
 
 def AND(lhs, rhs):
     return _BinaryOperatorNode(b'AND', lhs, rhs)
