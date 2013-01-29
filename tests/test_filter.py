@@ -128,8 +128,6 @@ def test_boolean_operators():
 
     F = make_filter('F')
 
-    # Two arguments
-
     f = b'F(1) AND F(2)'
     check(f, AND(F(1), F(2)))
     check(f, F(1) & F(2))
@@ -137,3 +135,23 @@ def test_boolean_operators():
     f = b'F(1) OR F(2)'
     check(f, OR(F(1), F(2)))
     check(f, F(1) | F(2))
+
+    check(
+        b'F(1) AND F(2) AND F(3)',
+        AND(F(1), F(2), F(3))
+    )
+
+    # check(
+    #     b'F(1) AND F(2) AND F(3)',
+    #     F(1) & F(2) & F(3)
+    # )
+
+    # check(
+    #     b'F(1) AND F(2) OR F(3)',
+    #     F(1) & F(2) | F(3)
+    # )
+
+    # check(
+    #     b'F(1) AND (F(2) OR F(3))',
+    #     F(1) & (F(2) | F(3))
+    # )

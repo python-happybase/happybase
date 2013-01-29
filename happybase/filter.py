@@ -120,12 +120,12 @@ class _WhileNode(_UnaryOperatorNode):
 
 
 class _BooleanOperatorNode(_Node):
-    def __init__(self, lhs, rhs):
-        self.lhs = lhs
-        self.rhs = rhs
+    def __init__(self, *operands):
+        self.operands = list(operands)
 
     def __str__(self):
-        return b'%s %s %s' % (self.lhs, self.operator, self.rhs)
+        glue = b' %s ' % self.operator
+        return glue.join(map(bytes, self.operands))
 
 
 class _AndNode(_BooleanOperatorNode):
@@ -148,12 +148,12 @@ def WHILE(f):
     return _WhileNode(f)
 
 
-def AND(lhs, rhs):
-    return _AndNode(lhs, rhs)
+def AND(*operands):
+    return _AndNode(*operands)
 
 
-def OR(lhs, rhs):
-    return _OrNode(lhs, rhs)
+def OR(*operands):
+    return _OrNode(*operands)
 
 
 def make_filter(name):
