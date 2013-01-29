@@ -120,7 +120,7 @@ def test_unary_operators():
     )
 
 
-def test_binary_operators():
+def test_boolean_operators():
 
     def check(expected, original):
         actual = bytes(original)
@@ -128,10 +128,12 @@ def test_binary_operators():
 
     F = make_filter('F')
 
-    f = b"(F(1) AND F(2))"
+    # Two arguments
+
+    f = b'F(1) AND F(2)'
     check(f, AND(F(1), F(2)))
     check(f, F(1) & F(2))
 
-    f = b"(F(1) OR F(2))"
+    f = b'F(1) OR F(2)'
     check(f, OR(F(1), F(2)))
     check(f, F(1) | F(2))

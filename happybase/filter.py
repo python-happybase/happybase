@@ -125,7 +125,7 @@ class _BooleanOperatorNode(_Node):
         self.rhs = rhs
 
     def __str__(self):
-        return b'(%s %s %s)' % (self.lhs, self.operator, self.rhs)
+        return b'%s %s %s' % (self.lhs, self.operator, self.rhs)
 
 
 class _AndNode(_BooleanOperatorNode):
