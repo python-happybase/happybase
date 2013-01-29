@@ -19,6 +19,11 @@ Note: this release is a work in progress!
   differences are big, this may be a hint that the `batch_size` parameter to
   :py:meth:`Table.scan()` is not optimal for your application.
 
+* Increased Thrift dependency to at least 0.8. Older versions are no longer
+  available from PyPI. HappyBase should not be used with obsoleted Thrift
+  versions.
+
+
 HappyBase 0.4
 -------------
 
