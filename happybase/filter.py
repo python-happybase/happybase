@@ -43,6 +43,10 @@ def escape(s):
     return s.replace(b"'", b"''")
 
 
+#
+# Internal node classes
+#
+
 class _Node(object):
     pass
 
@@ -94,23 +98,28 @@ class _FilterNode(_Node):
 
 
 class _UnaryOperatorNode(_Node):
-    def __init__(self, operator, value):
+    def __init__(self, value):
         if not isinstance(value, _FilterNode):
             raise TypeError(
                 "'SKIP' and 'WHILE' can only be applied to Filters; "
                 "got %r" % value)
 
-        self.operator = operator
         self.value = value
 
     def __str__(self):
         return b'%s %s' % (self.operator, self.value)
 
 
-class _BinaryOperatorNode(_Node):
+class _SkipNode(_UnaryOperatorNode):
+    operator = 'SKIP'
 
-    def __init__(self, operator, lhs, rhs):
-        self.operator = operator
+
+class _WhileNode(_UnaryOperatorNode):
+    operator = 'WHILE'
+
+
+class _BooleanOperatorNode(_Node):
+    def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
 
@@ -118,20 +127,32 @@ class _BinaryOperatorNode(_Node):
         return b'(%s %s %s)' % (self.lhs, self.operator, self.rhs)
 
 
+class _AndNode(_BooleanOperatorNode):
+    operator = 'AND'
+
+
+class _OrNode(_BooleanOperatorNode):
+    operator = 'OR'
+
+
+#
+# Public API for constructing nodes
+#
+
 def SKIP(f):
-    return _UnaryOperatorNode(b'SKIP', f)
+    return _SkipNode(f)
 
 
 def WHILE(f):
-    return _UnaryOperatorNode(b'WHILE', f)
+    return _WhileNode(f)
 
 
 def AND(lhs, rhs):
-    return _BinaryOperatorNode(b'AND', lhs, rhs)
+    return _AndNode(lhs, rhs)
 
 
 def OR(lhs, rhs):
-    return _BinaryOperatorNode(b'OR', lhs, rhs)
+    return _OrNode(lhs, rhs)
 
 
 def make_filter(name):
