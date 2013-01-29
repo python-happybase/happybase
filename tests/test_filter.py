@@ -44,7 +44,7 @@ def test_escape():
         yield check, original, expected
 
 
-def test_serialization():
+def test_filter_serialization():
 
     # Comparison operators
     f = ValueFilter(
@@ -107,14 +107,16 @@ def test_custom_filter():
 
 def test_unary_operators():
 
+    F = make_filter('F')
+
     assert_equal(
-        b'SKIP (ValueFilter())',
-        bytes(SKIP(ValueFilter()))
+        b'SKIP (F())',
+        bytes(SKIP(F()))
     )
 
     assert_equal(
-        b'WHILE (ValueFilter())',
-        bytes(WHILE(ValueFilter()))
+        b'WHILE (F())',
+        bytes(WHILE(F()))
     )
 
 
@@ -124,10 +126,12 @@ def test_binary_operators():
         actual = bytes(original)
         assert_equal(actual, expected)
 
-    f = b"(ValueFilter('foo') AND ValueFilter('bar'))"
-    check(f, AND(ValueFilter(b'foo'), ValueFilter(b'bar')))
-    check(f, ValueFilter(b'foo') & ValueFilter(b'bar'))
+    F = make_filter('F')
 
-    f = b"(ValueFilter('foo') OR ValueFilter('bar'))"
-    check(f, OR(ValueFilter(b'foo'), ValueFilter(b'bar')))
-    check(f, ValueFilter(b'foo') | ValueFilter(b'bar'))
+    f = b"(F(1) AND F(2))"
+    check(f, AND(F(1), F(2)))
+    check(f, F(1) & F(2))
+
+    f = b"(F(1) OR F(2))"
+    check(f, OR(F(1), F(2)))
+    check(f, F(1) | F(2))
