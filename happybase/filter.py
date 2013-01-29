@@ -43,6 +43,25 @@ def escape(s):
     return s.replace(b"'", b"''")
 
 
+def _format_arg(arg):
+    if isinstance(arg, bool):
+        return b'true' if arg else b'false'
+
+    if isinstance(arg, int):
+        return bytes(arg)
+
+    if arg in _COMPARISON_OPERATOR_STRINGS:
+        return _COMPARISON_OPERATOR_STRINGS[arg]
+
+    if isinstance(arg, bytes):
+        # TODO: what to do with already escaped strings?
+        return "'%s'" % escape(arg)
+
+    raise TypeError(
+        "Filter arguments must be booleans, integers, comparison "
+        "operators or byte strings; got %r" % arg)
+
+
 #
 # Internal node classes
 #
@@ -67,25 +86,7 @@ class _FilterNode(_Node):
             raise TypeError("Filter name must be a string")
 
         self.name = name
-        self.args = map(self._format_arg, args)
-
-    def _format_arg(self, arg):
-        if isinstance(arg, bool):
-            return b'true' if arg else b'false'
-
-        if isinstance(arg, int):
-            return bytes(arg)
-
-        if arg in _COMPARISON_OPERATOR_STRINGS:
-            return _COMPARISON_OPERATOR_STRINGS[arg]
-
-        if isinstance(arg, bytes):
-            # TODO: what to do with already escaped strings?
-            return "'%s'" % escape(arg)
-
-        raise TypeError(
-            "Filter arguments must be booleans, integers, comparison "
-            "operators or byte strings; got %r" % arg)
+        self.args = map(_format_arg, args)
 
     def __str__(self):
         return b'%s(%s)' % (self.name, ', '.join(self.args))
