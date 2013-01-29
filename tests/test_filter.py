@@ -110,12 +110,12 @@ def test_unary_operators():
     F = make_filter('F')
 
     assert_equal(
-        b'SKIP (F())',
+        b'SKIP F()',
         bytes(SKIP(F()))
     )
 
     assert_equal(
-        b'WHILE (F())',
+        b'WHILE F()',
         bytes(WHILE(F()))
     )
 

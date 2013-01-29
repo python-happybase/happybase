@@ -47,7 +47,7 @@ class _Node(object):
     pass
 
 
-class _Filter(_Node):
+class _FilterNode(_Node):
     """Client-side Filter representation.
 
     This class does not have any filtering logic; it is only used to
@@ -95,11 +95,16 @@ class _Filter(_Node):
 
 class _UnaryOperatorNode(_Node):
     def __init__(self, operator, value):
+        if not isinstance(value, _FilterNode):
+            raise TypeError(
+                "'SKIP' and 'WHILE' can only be applied to Filters; "
+                "got %r" % value)
+
         self.operator = operator
         self.value = value
 
     def __str__(self):
-        return b'%s (%s)' % (self.operator, self.value)
+        return b'%s %s' % (self.operator, self.value)
 
 
 class _BinaryOperatorNode(_Node):
@@ -150,7 +155,7 @@ def make_filter(name):
     :return: new filter callable
     :rtype: filter callable
     """
-    return _partial(_Filter, name)
+    return _partial(_FilterNode, name)
 
 
 #
