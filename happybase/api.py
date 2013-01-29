@@ -338,9 +338,11 @@ class Table(object):
         self.client = connection.client
 
     def __repr__(self):
-        return '<%s.%s name=%r>' % (__name__,
-                                    self.__class__.__name__,
-                                    self.name)
+        return '<%s.%s name=%r>' % (
+            __name__,
+            self.__class__.__name__,
+            self.name,
+        )
 
     def families(self):
         """Retrieve the column families for this table.
@@ -597,12 +599,14 @@ class Table(object):
             # the HTable on the Java side retrieves rows from the region
             # servers in the same chunk sizes that it sends out over
             # Thrift.
-            scan = TScan(startRow=row_start,
-                         stopRow=row_stop,
-                         timestamp=timestamp,
-                         columns=columns,
-                         caching=batch_size,
-                         filterString=filter)
+            scan = TScan(
+                startRow=row_start,
+                stopRow=row_stop,
+                timestamp=timestamp,
+                columns=columns,
+                caching=batch_size,
+                filterString=filter,
+            )
             scan_id = client.scannerOpenWithScan(self.name, scan)
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)

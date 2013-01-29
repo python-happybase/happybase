@@ -5,15 +5,17 @@ HappyBase API tests.
 import os
 import collections
 
-from nose.tools import (assert_dict_equal,
-                        assert_equal,
-                        assert_false,
-                        assert_in,
-                        assert_is_instance,
-                        assert_is_not_none,
-                        assert_not_in,
-                        assert_raises,
-                        assert_true)
+from nose.tools import (
+    assert_dict_equal,
+    assert_equal,
+    assert_false,
+    assert_in,
+    assert_is_instance,
+    assert_is_not_none,
+    assert_not_in,
+    assert_raises,
+    assert_true,
+)
 
 import happybase
 
@@ -31,11 +33,14 @@ connection = table = None
 
 def setup_module():
     global connection, table
-    connection = happybase.Connection(host=HAPPYBASE_HOST,
-                                      port=HAPPYBASE_PORT,
-                                      table_prefix=TABLE_PREFIX,
-                                      compat=HAPPYBASE_COMPAT,
-                                      transport=HAPPYBASE_TRANSPORT)
+    connection = happybase.Connection(
+        host=HAPPYBASE_HOST,
+        port=HAPPYBASE_PORT,
+        table_prefix=TABLE_PREFIX,
+        compat=HAPPYBASE_COMPAT,
+        transport=HAPPYBASE_TRANSPORT,
+    )
+
     assert_is_not_none(connection)
 
     cfs = {
