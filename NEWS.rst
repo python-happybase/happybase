@@ -27,6 +27,10 @@ Note: this release is a work in progress!
   parameter to to specify the timeout to use for the Thrift socket (`issue #15
   <https://github.com/wbolster/happybase/issues/15>`_)
 
+* In some corner cases exceptions were raised during interpreter shutdown while
+  closing any remaining open connections. (`issue #18
+  <https://github.com/wbolster/happybase/issues/18>`_)
+
 
 HappyBase 0.4
 -------------
