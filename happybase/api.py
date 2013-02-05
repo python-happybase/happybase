@@ -153,7 +153,13 @@ class Connection(object):
 
         This method closes the underlying Thrift transport (TCP connection).
         """
-        logger.debug("Closing Thrift transport to %s:%d", self.host, self.port)
+        if logger is not None:
+            # If called from __del__(), module variables may no longer
+            # exist.
+            logger.debug(
+                "Closing Thrift transport to %s:%d",
+                self.host, self.port)
+
         self.transport.close()
 
     def __del__(self):
