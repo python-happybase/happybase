@@ -2,8 +2,11 @@
 HappyBase
 *********
 
-**HappyBase** is a developer-friendly `Python <http://python.org/>`_ library to
-interact with `Apache HBase <http://hbase.apache.org/>`_.
+**HappyBase** is a developer-friendly Python_ library to interact with
+`Apache HBase`_.
+
+.. _Python: http://python.org/
+.. _Apache Hbase: http://hbase.apache.org/
 
 
 .. rubric:: Contents of this documentation
