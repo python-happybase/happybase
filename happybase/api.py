@@ -146,7 +146,8 @@ class Connection(object):
         This method opens the underlying Thrift transport (TCP connection).
         """
         logger.debug("Opening Thrift transport to %s:%d", self.host, self.port)
-        self.transport.open()
+        if not self.transport.isOpen():
+            self.transport.open()
 
     def close(self):
         """Close the underyling transport to the HBase instance.
@@ -160,7 +161,8 @@ class Connection(object):
                 "Closing Thrift transport to %s:%d",
                 self.host, self.port)
 
-        self.transport.close()
+        if self.transport.isOpen():
+            self.transport.close()
 
     def __del__(self):
         try:
