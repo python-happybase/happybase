@@ -5,4 +5,8 @@ HBase.
 
 from ._version import __version__
 
-from .api import *
+from .connection import DEFAULT_HOST, DEFAULT_PORT, Connection
+from .table import Table
+from .batch import Batch
+
+# TODO: properly handle errors defined in Thrift specification
