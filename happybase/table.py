@@ -185,7 +185,8 @@ class Table(object):
         elif not isinstance(versions, int):
             raise TypeError("'versions' parameter must be a number or None")
         elif versions < 1:
-            raise ValueError("'versions' parameter must be at least 1 (or None)")
+            raise ValueError(
+                "'versions' parameter must be at least 1 (or None)")
 
         if timestamp is None:
             cells = self.connection.client.getVer(
@@ -262,7 +263,9 @@ class Table(object):
 
         if row_prefix is not None:
             if row_start is not None or row_stop is not None:
-                raise TypeError("'row_prefix' cannot be combined with 'row_start' or 'row_stop'")
+                raise TypeError(
+                    "'row_prefix' cannot be combined with 'row_start' "
+                    "or 'row_stop'")
 
             row_start = row_prefix
             row_stop = str_increment(row_prefix)
@@ -276,7 +279,8 @@ class Table(object):
             # other scannerOpen*() Thrift functions
 
             if filter is not None:
-                raise NotImplementedError("'filter' is not supported in HBase 0.90")
+                raise NotImplementedError(
+                    "'filter' is not supported in HBase 0.90")
 
             if row_stop is None:
                 if timestamp is None:
@@ -337,8 +341,9 @@ class Table(object):
                     break
         finally:
             self.connection.client.scannerClose(scan_id)
-            logger.debug("Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
-                         scan_id, self.name, n_returned, n_fetched)
+            logger.debug(
+                "Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
+                scan_id, self.name, n_returned, n_fetched)
 
     #
     # Data manipulation

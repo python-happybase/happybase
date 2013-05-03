@@ -91,7 +91,8 @@ class Connection(object):
             raise ValueError("'transport' must be one of %s"
                              % ", ".join(THRIFT_TRANSPORTS.keys()))
 
-        if table_prefix is not None and not isinstance(table_prefix, basestring):
+        if table_prefix is not None \
+                and not isinstance(table_prefix, basestring):
             raise TypeError("'table_prefix' must be a string")
 
         if not isinstance(table_prefix_separator, basestring):
@@ -318,5 +319,3 @@ class Connection(object):
             self.client.majorCompact(name)
         else:
             self.client.compact(name)
-
-
