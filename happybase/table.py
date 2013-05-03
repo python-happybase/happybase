@@ -32,7 +32,6 @@ class Table(object):
     def __init__(self, name, connection):
         self.name = name
         self.connection = connection
-        self.client = connection.client
 
     def __repr__(self):
         return '<%s.%s name=%r>' % (
@@ -47,7 +46,7 @@ class Table(object):
         :return: Mapping from column family name to settings dict
         :rtype: dict
         """
-        descriptors = self.client.getColumnDescriptors(self.name)
+        descriptors = self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
             name = name[:-1]  # drop trailing ':'
@@ -56,7 +55,7 @@ class Table(object):
 
     def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
-        return self.client.getColumnDescriptors(self.name).keys()
+        return self.connection.client.getColumnDescriptors(self.name).keys()
 
     def regions(self):
         """Retrieve the regions for this table.
@@ -64,7 +63,7 @@ class Table(object):
         :return: regions for this table
         :rtype: list of dicts
         """
-        regions = self.client.getTableRegions(self.name)
+        regions = self.connection.client.getTableRegions(self.name)
         return map(thrift_type_to_dict, regions)
 
     #
@@ -102,12 +101,13 @@ class Table(object):
             raise TypeError("'columns' must be a tuple or list")
 
         if timestamp is None:
-            rows = self.client.getRowWithColumns(self.name, row, columns)
+            rows = self.connection.client.getRowWithColumns(
+                self.name, row, columns)
         else:
             if not isinstance(timestamp, int):
                 raise TypeError("'timestamp' must be an integer")
-            rows = self.client.getRowWithColumnsTs(self.name, row, columns,
-                                                   timestamp)
+            rows = self.connection.client.getRowWithColumnsTs(
+                self.name, row, columns, timestamp)
 
         if not rows:
             return {}
@@ -141,7 +141,8 @@ class Table(object):
             return {}
 
         if timestamp is None:
-            results = self.client.getRowsWithColumns(self.name, rows, columns)
+            results = self.connection.client.getRowsWithColumns(
+                self.name, rows, columns)
         else:
             if not isinstance(timestamp, int):
                 raise TypeError("'timestamp' must be an integer")
@@ -152,8 +153,8 @@ class Table(object):
             if columns is None:
                 columns = self._column_family_names()
 
-            results = self.client.getRowsWithColumnsTs(self.name, rows,
-                                                       columns, timestamp)
+            results = self.connection.client.getRowsWithColumnsTs(
+                self.name, rows, columns, timestamp)
 
         return [(r.row, make_row(r.columns, include_timestamp))
                 for r in results]
@@ -187,12 +188,13 @@ class Table(object):
             raise ValueError("'versions' parameter must be at least 1 (or None)")
 
         if timestamp is None:
-            cells = self.client.getVer(self.name, row, column, versions)
+            cells = self.connection.client.getVer(
+                self.name, row, column, versions)
         else:
             if not isinstance(timestamp, int):
                 raise TypeError("'timestamp' must be an integer")
-            cells = self.client.getVerTs(self.name, row, column, timestamp,
-                                         versions)
+            cells = self.connection.client.getVerTs(
+                self.name, row, column, timestamp, versions)
 
         if include_timestamp:
             return map(make_cell_timestamp, cells)
@@ -268,7 +270,6 @@ class Table(object):
         if row_start is None:
             row_start = ''
 
-        client = self.client
         if self.connection.compat == '0.90':
             # The scannerOpenWithScan() Thrift function is not
             # available, so work around it as much as possible with the
@@ -279,16 +280,17 @@ class Table(object):
 
             if row_stop is None:
                 if timestamp is None:
-                    scan_id = client.scannerOpen(self.name, row_start, columns)
+                    scan_id = self.connection.client.scannerOpen(
+                        self.name, row_start, columns)
                 else:
-                    scan_id = client.scannerOpenTs(
+                    scan_id = self.connection.client.scannerOpenTs(
                         self.name, row_start, columns, timestamp)
             else:
                 if timestamp is None:
-                    scan_id = client.scannerOpenWithStop(
+                    scan_id = self.connection.client.scannerOpenWithStop(
                         self.name, row_start, row_stop, columns)
                 else:
-                    scan_id = client.scannerOpenWithStopTs(
+                    scan_id = self.connection.client.scannerOpenWithStopTs(
                         self.name, row_start, row_stop, columns, timestamp)
 
         else:
@@ -304,7 +306,8 @@ class Table(object):
                 caching=batch_size,
                 filterString=filter,
             )
-            scan_id = client.scannerOpenWithScan(self.name, scan)
+            scan_id = self.connection.client.scannerOpenWithScan(
+                self.name, scan)
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
@@ -317,9 +320,10 @@ class Table(object):
                     how_many = min(batch_size, limit - n_returned)
 
                 if how_many == 1:
-                    items = client.scannerGet(scan_id)
+                    items = self.connection.client.scannerGet(scan_id)
                 else:
-                    items = client.scannerGetList(scan_id, how_many)
+                    items = self.connection.client.scannerGetList(
+                        scan_id, how_many)
 
                 n_fetched += len(items)
 
@@ -332,7 +336,7 @@ class Table(object):
                 if len(items) < how_many:
                     break
         finally:
-            client.scannerClose(scan_id)
+            self.connection.client.scannerClose(scan_id)
             logger.debug("Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
                          scan_id, self.name, n_returned, n_fetched)
 
@@ -374,9 +378,10 @@ class Table(object):
         """
         if columns is None:
             if timestamp is None:
-                self.client.deleteAllRow(self.name, row)
+                self.connection.client.deleteAllRow(self.name, row)
             else:
-                self.client.deleteAllRowTs(self.name, row, timestamp)
+                self.connection.client.deleteAllRowTs(
+                    self.name, row, timestamp)
         else:
             with self.batch(timestamp=timestamp) as batch:
                 batch.delete(row, columns)
@@ -468,7 +473,8 @@ class Table(object):
         :return: counter value after incrementing
         :rtype: int
         """
-        return self.client.atomicIncrement(self.name, row, column, value)
+        return self.connection.client.atomicIncrement(
+            self.name, row, column, value)
 
     def counter_dec(self, row, column, value=1):
         """Atomically decrement (or increments) a counter column.
