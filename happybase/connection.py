@@ -77,16 +77,6 @@ class Connection(object):
                  table_prefix_separator='_', compat='0.92',
                  transport='buffered'):
 
-        # Allow host and port to be None, which may be easier for
-        # applications wrapping a Connection instance.
-        self.host = host or DEFAULT_HOST
-        self.port = port or DEFAULT_PORT
-        self.timeout = timeout
-
-        if compat not in COMPAT_MODES:
-            raise ValueError("'compat' must be one of %s"
-                             % ", ".join(COMPAT_MODES))
-
         if transport not in THRIFT_TRANSPORTS:
             raise ValueError("'transport' must be one of %s"
                              % ", ".join(THRIFT_TRANSPORTS.keys()))
@@ -98,9 +88,18 @@ class Connection(object):
         if not isinstance(table_prefix_separator, basestring):
             raise TypeError("'table_prefix_separator' must be a string")
 
-        self.compat = compat
+        if compat not in COMPAT_MODES:
+            raise ValueError("'compat' must be one of %s"
+                             % ", ".join(COMPAT_MODES))
+
+        # Allow host and port to be None, which may be easier for
+        # applications wrapping a Connection instance.
+        self.host = host or DEFAULT_HOST
+        self.port = port or DEFAULT_PORT
+        self.timeout = timeout
         self.table_prefix = table_prefix
         self.table_prefix_separator = table_prefix_separator
+        self.compat = compat
 
         socket = TSocket(self.host, self.port)
 
