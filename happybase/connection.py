@@ -101,19 +101,23 @@ class Connection(object):
         self.table_prefix_separator = table_prefix_separator
         self.compat = compat
 
-        socket = TSocket(self.host, self.port)
-
-        if timeout is not None:
-            socket.setTimeout(timeout)
-
-        self.transport = THRIFT_TRANSPORTS[transport](socket)
-        protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
-        self.client = Hbase.Client(protocol)
+        self._transport_class = THRIFT_TRANSPORTS[transport]
+        self._refresh_thrift_client()
 
         if autoconnect:
             self.open()
 
         self._initialized = True
+
+    def _refresh_thrift_client(self):
+        """Refresh the Thrift socket, transport, and client."""
+        socket = TSocket(self.host, self.port)
+        if self.timeout is not None:
+            socket.setTimeout(self.timeout)
+
+        self.transport = self._transport_class(socket)
+        protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
+        self.client = Hbase.Client(protocol)
 
     def _table_name(self, name):
         """Construct a table name by optionally adding a table name prefix."""
