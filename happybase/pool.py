@@ -63,6 +63,8 @@ class NoConnectionsAvailable(RuntimeError):
 
     This happens if a timeout was specified when obtaining a connection,
     and no connection became available within the specified timeout.
+
+    .. versionadded:: 0.5
     """
     pass
 
@@ -70,6 +72,8 @@ class NoConnectionsAvailable(RuntimeError):
 class ConnectionPool(object):
     """
     Thread-safe connection pool.
+
+    .. versionadded:: 0.5
 
     The `size` parameter specifies how many connections this pool
     manages. Note that the pool is lazy; it only opens new connections

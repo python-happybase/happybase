@@ -63,6 +63,10 @@ class Connection(object):
     transport; the ``-hsha``, ``-nonblocking``, and ``-threadedselector`` modes
     use the framed transport.
 
+    .. versionadded:: 0.5
+
+       The `timeout` parameter was added.
+
     :param str host: The host to connect to
     :param int port: The port to connect to
     :param int timeout: The socket timeout in milliseconds (optional)
@@ -270,6 +274,10 @@ class Connection(object):
 
     def delete_table(self, name, disable=False):
         """Delete the specified table.
+
+        .. versionadded:: 0.5
+
+           The `disable` parameter was added.
 
         In HBase, a table always needs to be disabled before it can be deleted.
         If the `disable` parameter is `True`, this method first disables the
