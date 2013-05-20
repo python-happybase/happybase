@@ -8,6 +8,10 @@ HappyBase 0.5 (not yet released)
 
 Note: this release is a work in progress!
 
+* Added a thread-safe connection pool (:py:class:`ConnectionPool`) to keep
+  connections open and share them between threads (`issue #21
+  <https://github.com/wbolster/happybase/issues/21>`_).
+
 * The :py:meth:`Connection.delete_table` method now features an optional
   `disable` parameter to make deleting enabled tables easier.
 
