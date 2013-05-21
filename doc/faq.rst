@@ -3,6 +3,16 @@ Frequently asked questions
 ==========================
 
 
+I love HappyBase! Can I donate?
+===============================
+
+Thanks, I'm glad to hear that you appreciate my work! If you feel like, please
+make a small donation_ to sponsor my (spare time!) work on HappyBase. Small
+gestures are really motivating for me and help me keep this project going!
+
+.. _donation: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZJ9U8DNN6KZ9Q
+
+
 Why not use the Thrift API directly?
 ====================================
 
