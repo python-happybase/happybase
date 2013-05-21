@@ -65,7 +65,15 @@ class Connection(object):
 
     .. versionadded:: 0.5
 
-       The `timeout` parameter was added.
+       `timeout` parameter
+
+    .. versionadded:: 0.4
+
+       `table_prefix_separator` parameter
+
+    .. versionadded:: 0.4
+
+       support for framed Thrift transports
 
     :param str host: The host to connect to
     :param int port: The port to connect to
