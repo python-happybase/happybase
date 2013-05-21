@@ -52,15 +52,23 @@ The example below illustrates basic usage of the library. The :doc:`tutorial
    row = table.delete('row-key')
 
 
-Contents of this documentation
-==============================
+Core documentation
+==================
+
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   user
+   api
+
+
+Additional documentation
+========================
 
 .. toctree::
    :maxdepth: 1
 
-   installation
-   tutorial
-   api
    news
    development
    todo

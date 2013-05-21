@@ -1,6 +1,6 @@
-********
-Tutorial
-********
+==========
+User guide
+==========
 
 .. py:currentmodule:: happybase
 
@@ -17,7 +17,7 @@ documentation <api>`.
    :local:
 
 
-Opening a connection
+Managing connections
 ====================
 
 We'll get started by connecting to HBase. Just create a new
