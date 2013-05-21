@@ -1,6 +1,7 @@
 *.py[co]
 *.egg-info/
 .coverage
+.tox/
 build/
 coverage/
 dist/
