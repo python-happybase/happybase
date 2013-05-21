@@ -11,8 +11,8 @@ HappyBase
 
 .. note::
 
-   **Are you one of HappyBase's many happy users?** Please consider making a
-   small donation_ to let me know you appreciate my work. Thanks!
+   **Do you enjoy HappyBase?** Please consider making a small donation_ to let
+   me know you appreciate my work. Thanks!
 
    .. _donation: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZJ9U8DNN6KZ9Q
 
