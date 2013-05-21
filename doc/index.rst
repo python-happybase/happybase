@@ -29,6 +29,7 @@ HappyBase
    news
    development
    todo
+   faq
    license
 
 
