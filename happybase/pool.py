@@ -179,7 +179,7 @@ class ConnectionPool(object):
         This method *must* be used as a context manager, i.e. with
         Python's ``with`` block. Example::
 
-            with pool.connection as connection:
+            with pool.connection() as connection:
                 pass  # do something with the connection
 
         If `timeout` is specified, this is the number of seconds to wait
