@@ -31,6 +31,11 @@ Note: this release is a work in progress!
   parameter to to specify the timeout to use for the Thrift socket (`issue #15
   <https://github.com/wbolster/happybase/issues/15>`_)
 
+* The `timestamp` argument to various methods now also accepts `long` values in
+  addition to `int` values. This fixes problems with large timestamp values on
+  32-bit systems. (`issue #23
+  <https://github.com/wbolster/happybase/issues/23>`_).
+
 * In some corner cases exceptions were raised during interpreter shutdown while
   closing any remaining open connections. (`issue #18
   <https://github.com/wbolster/happybase/issues/18>`_)
