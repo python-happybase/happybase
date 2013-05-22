@@ -3,6 +3,7 @@ HappyBase table module.
 """
 
 import logging
+from numbers import Integral
 from operator import attrgetter
 from struct import Struct
 
@@ -104,7 +105,7 @@ class Table(object):
             rows = self.connection.client.getRowWithColumns(
                 self.name, row, columns)
         else:
-            if not isinstance(timestamp, int):
+            if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             rows = self.connection.client.getRowWithColumnsTs(
                 self.name, row, columns, timestamp)
@@ -144,7 +145,7 @@ class Table(object):
             results = self.connection.client.getRowsWithColumns(
                 self.name, rows, columns)
         else:
-            if not isinstance(timestamp, int):
+            if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
 
             # Work-around a bug in the HBase Thrift server where the
@@ -192,7 +193,7 @@ class Table(object):
             cells = self.connection.client.getVer(
                 self.name, row, column, versions)
         else:
-            if not isinstance(timestamp, int):
+            if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             cells = self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions)

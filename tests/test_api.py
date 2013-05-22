@@ -146,6 +146,7 @@ def test_families():
 def test_put():
     table.put('r1', {'cf1:c1': 'v1', 'cf1:c2': 'v2', 'cf2:c3': 'v3'})
     table.put('r1', {'cf1:c4': 'v2'}, timestamp=2345678)
+    table.put('r1', {'cf1:c4': 'v2'}, timestamp=1369168852994L)
 
 
 def test_atomic_counters():

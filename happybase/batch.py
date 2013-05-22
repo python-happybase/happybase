@@ -4,6 +4,7 @@ HappyBase Batch module.
 
 from collections import defaultdict
 import logging
+from numbers import Integral
 
 from .hbase.ttypes import BatchMutation, Mutation
 
@@ -19,7 +20,7 @@ class Batch(object):
     def __init__(self, table, timestamp=None, batch_size=None,
                  transaction=False):
         """Initialise a new Batch instance."""
-        if not (timestamp is None or isinstance(timestamp, int)):
+        if not (timestamp is None or isinstance(timestamp, Integral)):
             raise TypeError("'timestamp' must be an integer or None")
 
         if batch_size is not None:
