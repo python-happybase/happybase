@@ -27,8 +27,8 @@ __ http://thrift.apache.org/
 Example
 =======
 
-The example below illustrates basic usage of the library. The :doc:`tutorial
-<tutorial>` contains many more examples.
+The example below illustrates basic usage of the library. The :doc:`user guide
+<user>` contains many more examples.
 
 ::
 
