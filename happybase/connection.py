@@ -64,15 +64,12 @@ class Connection(object):
     use the framed transport.
 
     .. versionadded:: 0.5
-
        `timeout` parameter
 
     .. versionadded:: 0.4
-
        `table_prefix_separator` parameter
 
     .. versionadded:: 0.4
-
        support for framed Thrift transports
 
     :param str host: The host to connect to
@@ -284,8 +281,7 @@ class Connection(object):
         """Delete the specified table.
 
         .. versionadded:: 0.5
-
-           The `disable` parameter was added.
+           the `disable` parameter
 
         In HBase, a table always needs to be disabled before it can be deleted.
         If the `disable` parameter is `True`, this method first disables the
