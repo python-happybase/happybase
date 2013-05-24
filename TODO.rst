@@ -13,11 +13,6 @@ future, depending on time, demand, and technical possibilities.
 
 * Automatic retries for failed operations (but only those that can be retried)
 
-* Connection pooling (maybe based on PyCassa's ConnectionPool?)
-
-* Thread safety. This involves at least coordinating access to the socket
-  connection to HBase's Thrift gateway.
-
 * Port HappyBase over to the (still experimental) HBase Thrift2 API when it
   becomes mainstream, and expose more of the underlying features nicely in the
   HappyBase API.
