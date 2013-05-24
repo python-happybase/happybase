@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 #
 # TODO: maybe support multiple Thrift servers. What would a reasonable
 # distribution look like? Round-robin? Randomize the list upon
-# instantation and then cycle through it? How to handle (temporary?)
+# instantiation and then cycle through it? How to handle (temporary?)
 # connection errors?
 #
 
@@ -167,7 +167,7 @@ class ConnectionPool(object):
                 "No connection available from pool within specified "
                 "timeout")
 
-    def _release_connection(self, connection):
+    def _return_connection(self, connection):
         """Return a connection to the pool."""
         self._queue.put(connection)
 
@@ -241,4 +241,4 @@ class ConnectionPool(object):
 
                 connection = self._create_connection()
 
-            self._release_connection(connection)
+            self._return_connection(connection)
