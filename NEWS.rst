@@ -3,10 +3,10 @@ Version history
 
 .. py:currentmodule:: happybase
 
-HappyBase 0.5 (not yet released)
---------------------------------
+HappyBase 0.5
+-------------
 
-Note: this release is a work in progress!
+Release date: 2013-05-24
 
 * Added a thread-safe connection pool (:py:class:`ConnectionPool`) to keep
   connections open and share them between threads (`issue #21
