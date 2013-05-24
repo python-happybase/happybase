@@ -5,7 +5,7 @@ API reference
 .. py:currentmodule:: happybase
 
 This chapter contains detailed API documentation for HappyBase. It is suggested
-to read the :doc:`tutorial <tutorial>` first to get a general idea about how
+to read the :doc:`user guide <user>` first to get a general idea about how
 HappyBase works.
 
 The HappyBase API is organised as follows:

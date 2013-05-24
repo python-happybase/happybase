@@ -4,12 +4,12 @@ User guide
 
 .. py:currentmodule:: happybase
 
-This tutorial explores the HappyBase API and should provide you with enough
-information to get you started. Note that this tutorial is intended as an
+This user guide explores the HappyBase API and should provide you with enough
+information to get you started. Note that this user guide is intended as an
 introduction to HappyBase, not to HBase in general. Readers should already have
 a basic understanding of HBase and its data model.
 
-While the tutorial does cover most features, it is not a complete reference
+While the user guide does cover most features, it is not a complete reference
 guide. More information about the HappyBase API is available from the :doc:`API
 documentation <api>`.
 
@@ -55,8 +55,8 @@ HBase. For instance, to list the available tables, use
 Most other methods on the :py:class:`Connection` class are intended for system
 management tasks like creating, dropping, enabling and disabling tables. See the
 :doc:`API documentation <api>` for the :py:class:`Connection` class contains
-more information. This tutorial does not cover those since it's more likely you
-are already using the HBase shell for these system management tasks.
+more information. This user guide does not cover those since it's more likely
+you are already using the HBase shell for these system management tasks.
 
 
 Working with tables
@@ -91,8 +91,8 @@ Thrift server, which means application code may ask the :py:class:`Connection`
 instance for a new :py:class:`Table` whenever it needs one, without negative
 performance consequences. A side effect is that no check is done to ensure that
 the table exists, since that would involve a round-trip. Expect errors if you
-try to interact with non-existing tables later in your code. For this tutorial,
-we assume the table exists.
+try to interact with non-existing tables later in your code. For this guide, we
+assume the table exists.
 
 .. note::
 
@@ -465,7 +465,7 @@ methods can be used to retrieve or set a counter value directly::
 
 .. rubric:: Next steps
 
-The next step is to try it out for yourself. The :doc:`API documentation <api>`
+The next step is to try it out for yourself! The :doc:`API documentation <api>`
 can be used as a reference.
 
 .. vim: set spell spelllang=en:

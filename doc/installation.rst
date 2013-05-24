@@ -56,7 +56,7 @@ If you don't see any errors, the installation was successful. Congratulations!
 .. rubric:: Next steps
 
 Now that you successfully installed HappyBase on your machine, continue with
-the :doc:`tutorial <tutorial>` to learn how to use it.
+the :doc:`user guide <user>` to learn how to use it.
 
 
 .. vim: set spell spelllang=en:
