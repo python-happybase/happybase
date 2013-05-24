@@ -76,50 +76,10 @@ class ConnectionPool(object):
     .. versionadded:: 0.5
 
     The `size` parameter specifies how many connections this pool
-    manages. Note that the pool is lazy; it only opens new connections
-    when requested. Additional keyword arguments are passed unmodified
-    to the :py:class:`happybase.Connection` constructor, with the
-    exception of the `autoconnect` argument, since maintaining
-    connections is the task of the pool.
-
-    A connection pool allows multiple threads to share connections. When
-    a thread asks for a connection (using
-    :py:meth:`ConnectionPool.connection`), it is granted a lease, during
-    which the thread has exclusive access to the connection. After the
-    thread is done, the connection returns to the pool.
-
-    Connections can only be obtained using Python's context manager
-    protocol, i.e. using a code block inside a ``with`` statement. This
-    ensures that connections are actually returned to the pool after
-    use. Example::
-
-        pool = ConnectionPool(size=3, host='...')
-        with pool.connection() as connection:
-            print(connection.tables())
-
-    The connection pool is designed in such a way that a thread can hold
-    at most a single connection at a time. When a thread holds
-    a connection and asks for a connection for a second time (e.g.
-    because a function also requests a connection from the pool), the
-    same connection instance it already holds is returned, so this does
-    not require any coordination from the application.
-
-    The pool tries to detect broken connections and will replace those
-    with fresh ones when the connection is returned to the pool.
-
-    .. note::
-
-       To avoid starvation, connections should be returned to the pool
-       as quickly as possible. In practice this means that the amount of
-       code included inside the ``with`` block should be kept to an
-       absolute minimum.
-
-    .. warning::
-
-       Never use the ``connection`` instance after the ``with`` block
-       has ended. Even though the variable is still in scope, the
-       connection may have been assigned to another thread in the mean
-       time.
+    manages. Additional keyword arguments are passed unmodified to the
+    :py:class:`happybase.Connection` constructor, with the exception of
+    the `autoconnect` argument, since maintaining connections is the
+    task of the pool.
 
     :param int size: the maximum number of concurrently open connections
     :param kwargs: keyword arguments passed to

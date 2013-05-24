@@ -17,8 +17,8 @@ documentation <api>`.
    :local:
 
 
-Managing connections
-====================
+Establishing a connection
+=========================
 
 We'll get started by connecting to HBase. Just create a new
 :py:class:`Connection` instance::
@@ -57,6 +57,11 @@ management tasks like creating, dropping, enabling and disabling tables. See the
 :doc:`API documentation <api>` for the :py:class:`Connection` class contains
 more information. This user guide does not cover those since it's more likely
 you are already using the HBase shell for these system management tasks.
+
+.. note::
+
+   HappyBase also features a connection pool, which is covered later in this
+   guide.
 
 
 Working with tables
@@ -461,6 +466,93 @@ methods can be used to retrieve or set a counter value directly::
    value, modify it in code and then :py:meth:`~Table.counter_set` the modified
    value; use the atomic :py:meth:`~Table.counter_inc` and
    :py:meth:`~Table.counter_dec` instead!
+
+
+
+Using the connection pool
+=========================
+
+HappyBase comes with a thread-safe connection pool that allows multiple threads
+to share and reuse open connections. This is most useful in multi-threaded
+server applications such as web applications served using Apache's `mod_wsgi`.
+When a thread asks the pool for a connection (using
+:py:meth:`ConnectionPool.connection`), it will be granted a lease, during which
+the thread has exclusive access to the connection. After the thread is done
+using the connection, it returns the connection to the pool so that it becomes
+available for other threads.
+
+Instantiating the pool
+----------------------
+
+The pool is provided by the :py:class:`ConnectionPool` class. The `size`
+argument to the constructor specifies the number of connections in the pool.
+Additional arguments are passed on to the :py:class:`Connection` constructor::
+
+   pool = happybase.ConnectionPool(size=3, host='...', table_prefix='myproject')
+
+Upon instantiation, the connection pool will establish a connection immediately,
+so that simple problems like wrong host names are detected immediately. For the
+remaining connections, the pool acts lazy: new connections will be opened only
+when needed.
+
+Obtaining connections
+---------------------
+
+Connections can only be obtained using Python's context manager protocol, i.e.
+using a code block inside a ``with`` statement. This ensures that connections
+are actually returned to the pool after use. Example::
+
+   pool = happybase.ConnectionPool(size=3, host='...')
+
+   with pool.connection() as connection:
+       print connection.tables()
+
+.. warning::
+
+   Never use the ``connection`` instance after the ``with`` block has ended.
+   Even though the variable is still in scope, the connection may have been
+   assigned to another thread in the mean time.
+
+Connections should be returned to the pool as quickly as possible, so that other
+threads can use them. This means that the amount of code included inside the
+``with`` block should be kept to an absolute minimum. In practice, an
+application should only load data inside the ``with`` block, and process the
+data outside the ``with`` block::
+
+   with pool.connection() as connection:
+       table = connection.table('table-name')
+       row = table.row('row-key')
+
+   process_data(row)
+
+An application thread can only hold one connection at a time. When a thread
+holds a connection and asks for a connection for a second time (e.g. because a
+called function also requests a connection from the pool), the same connection
+instance it already holds is returned, so this does not require any coordination
+from the application. This means that in the following example, both connection
+requests to the pool will return the exact same connection::
+
+   pool = happybase.ConnectionPool(size=3, host='...')
+
+   def do_something_else():
+       with pool.connection() as connection:
+           pass  # use the connection here
+
+   with pool.connection() as connection:
+       # use the connection here, e.g.
+       print(connection.tables())
+
+       # call another function that uses a connection
+       do_something_else()
+
+Handling broken connections
+---------------------------
+
+The pool tries to detect broken connections and will replace those with fresh
+ones when the connection is returned to the pool. However, the connection pool
+does not capture raised exceptions, nor does it automatically retry failed
+operations. This means that the application still has to handle connection
+errors.
 
 
 .. rubric:: Next steps
