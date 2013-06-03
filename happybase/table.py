@@ -235,7 +235,7 @@ class Table(object):
 
         If `limit` is given, at most `limit` results will be returned.
 
-        The `batch_size` argument specified how many results should be
+        The `batch_size` argument specifies how many results should be
         retrieved per batch when retrieving results from the scanner. Only set
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
