@@ -17,7 +17,7 @@ except:
   fastbinary = None
 
 
-class Iface:
+class Iface(object):
   def enableTable(self, tableName):
     """
     Brings a table on-line (enables it)
@@ -3554,7 +3554,7 @@ class getColumnDescriptors_result:
       if fid == 0:
         if ftype == TType.MAP:
           self.success = {}
-          (_ktype31, _vtype32, _size30 ) = iprot.readMapBegin() 
+          (_ktype31, _vtype32, _size30 ) = iprot.readMapBegin()
           for _i34 in xrange(_size30):
             _key35 = iprot.readString();
             _val36 = ColumnDescriptor()

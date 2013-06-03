@@ -3,6 +3,8 @@ HappyBase connection pool module.
 """
 
 import contextlib
+import functools
+import inspect
 import logging
 import Queue
 import threading
@@ -17,9 +19,11 @@ logger = logging.getLogger(__name__)
 # instantiation and then cycle through it? How to handle (temporary?)
 # connection errors?
 #
+from .hbase import Hbase
 
 
-class _ClientProxy(object):
+class _ClientProxy(Hbase.Client):
+
     """
     Proxy class to silently notice Thrift client exceptions.
 
@@ -29,32 +33,25 @@ class _ClientProxy(object):
 
     The connection pool replaces tainted connections with fresh ones.
     """
-    def __init__(self, connection, client):
-        self.connection = connection
-        self.client = client
-        self._cache = {}
 
-    def __getattr__(self, name):
-        """
-        Hook into attribute lookup and return wrapped methods.
+    def __init__(self, *args, **kwargs):
 
-        Since the client is only used for method calls, just treat
-        every attribute access as a method to wrap.
-        """
-        wrapped = self._cache.get(name)
-
-        if wrapped is None:
-            def wrapped(*args, **kwargs):
-                method = getattr(self.client, name)
-                assert callable(method)
+        def wrapped(func):
+            @functools.wraps(func)
+            def inner_func(*args, **kwargs):
                 try:
-                    return method(*args, **kwargs)
+                    return func(*args, **kwargs)
                 except:
-                    self.connection._tainted = True
+                    self._tainted = True
                     raise
-            self._cache[name] = wrapped
 
-        return wrapped
+            return inner_func
+
+        for method_name, method in inspect.getmembers(self, predicate=inspect.ismethod):
+            if inspect.ismethod(method) and method_name != "__init__":
+                setattr(self, method_name, wrapped(method))
+
+        super(_ClientProxy, self).__init__(*args, **kwargs)
 
 
 class NoConnectionsAvailable(RuntimeError):
@@ -102,6 +99,8 @@ class ConnectionPool(object):
         self._connection_kwargs = kwargs
         self._connection_kwargs['autoconnect'] = False
 
+        self._connection_kwargs['client_cls'] = _ClientProxy
+
         for i in xrange(size):
             connection = self._create_connection()
             self._queue.put(connection)
@@ -115,7 +114,6 @@ class ConnectionPool(object):
     def _create_connection(self):
         """Create a new connection with monkey-patched Thrift client."""
         connection = Connection(**self._connection_kwargs)
-        connection.client = _ClientProxy(connection, connection.client)
         return connection
 
     def _acquire_connection(self, timeout=None):
@@ -184,6 +182,8 @@ class ConnectionPool(object):
 
         finally:
 
+            tainted = getattr(self._thread_connections.current.client, '_tainted', False)
+
             # Remove thread local reference, since the thread no longer
             # owns it.
             del self._thread_connections.current
@@ -191,7 +191,7 @@ class ConnectionPool(object):
             # Refresh the underlying Thrift client if an exception
             # occurred in the Thrift layer, since we don't know whether
             # the connection is still usable.
-            if getattr(connection, '_tainted', False):
+            if tainted:
                 logger.info("Replacing tainted pool connection")
 
                 try:
