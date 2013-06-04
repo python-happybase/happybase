@@ -470,7 +470,7 @@ def test_connection_pool():
 
                 # Fake an exception once in a while
                 if random.random() < .001:
-                    connection._tainted = True
+                    connection.client._tainted = True
 
                 inner_function()
 
@@ -509,6 +509,38 @@ def test_pool_exhaustion():
         t.start()
         t.join()
 
+
+def test_pool_memory_reclaimed():
+    # Attach a local thread variable that records whether the destructor was called.
+    # We can't raise an Exception because Python will ignore raising one within
+    # the __del__ method (http://docs.python.org/2/reference/datamodel.html#object.__del__)
+    import happybase
+    happybase.locals = threading.local()
+    happybase.locals.called = False
+
+    def del_called(self):
+        import happybase
+        happybase.locals.called = True
+
+    def open_pool():
+        pool = ConnectionPool(size=1, **connection_kwargs)
+        with pool.connection(timeout=.1) as connection:
+            connection.tables()
+
+    try:
+        import happybase.connection
+
+        # Monkeypatch the __del__ method so that it can set the thread local
+        # variable.
+        original_del = happybase.connection.Connection.__del__
+        happybase.connection.Connection.__del__ = del_called
+
+        open_pool()
+
+    finally:
+        happybase.connection.Connection.__del__ = original_del
+
+    assert_equal(happybase.locals.called, True)
 
 if __name__ == '__main__':
     import sys
