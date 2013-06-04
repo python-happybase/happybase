@@ -43,6 +43,14 @@ connection_kwargs = dict(
 connection = table = None
 
 
+def delete_table_if_exists():
+    if not KEEP_TABLE:
+        tables = connection.tables()
+        if TEST_TABLE_NAME in tables:
+            print "Table still exists on exit...removing it."
+            connection.delete_table(TEST_TABLE_NAME, disable=True)
+
+
 def setup_module():
     global connection, table
     connection = Connection(**connection_kwargs)
@@ -54,6 +62,7 @@ def setup_module():
         'cf2': None,
         'cf3': {'max_versions': 1},
     }
+    delete_table_if_exists()
     connection.create_table(TEST_TABLE_NAME, families=cfs)
 
     table = connection.table(TEST_TABLE_NAME)
