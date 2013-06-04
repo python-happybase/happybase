@@ -511,6 +511,7 @@ def test_pool_exhaustion():
 
 
 if __name__ == '__main__':
+    import logging
     import sys
 
     # Dump stacktraces using 'kill -USR1', useful for debugging hanging
@@ -522,6 +523,8 @@ if __name__ == '__main__':
     else:
         import signal
         faulthandler.register(signal.SIGUSR1)
+
+    logging.basicConfig(level=logging.DEBUG)
 
     method_name = 'test_%s' % sys.argv[1]
     method = globals()[method_name]
