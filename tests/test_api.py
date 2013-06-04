@@ -455,6 +455,8 @@ def test_connection_pool_construction():
 
 def test_connection_pool():
 
+    from thrift.transport.TTransport import TTransportException
+
     def run():
         name = threading.current_thread().name
         print "Thread %s starting" % name
@@ -464,15 +466,24 @@ def test_connection_pool():
             with pool.connection() as another_connection:
                 assert connection is another_connection
 
+                # Fake an exception once in a while
+                if random.random() < .001:
+                    connection.transport.close()
+                    raise TTransportException("Fake transport exception")
+
         for i in xrange(100):
             with pool.connection() as connection:
                 connection.tables()
 
-                # Fake an exception once in a while
-                if random.random() < .001:
-                    connection._tainted = True
+                try:
+                    inner_function()
+                except TTransportException:
+                    # This error should have been picked up by the
+                    # connection pool, and the connection should have
+                    # been replaced by a fresh one
+                    pass
 
-                inner_function()
+                connection.tables()
 
         print "Thread %s done" % name
 

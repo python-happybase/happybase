@@ -5,7 +5,10 @@ HappyBase connection pool module.
 import contextlib
 import logging
 import Queue
+import socket
 import threading
+
+from thrift.Thrift import TException
 
 from .connection import Connection
 
@@ -17,44 +20,6 @@ logger = logging.getLogger(__name__)
 # instantiation and then cycle through it? How to handle (temporary?)
 # connection errors?
 #
-
-
-class _ClientProxy(object):
-    """
-    Proxy class to silently notice Thrift client exceptions.
-
-    This class proxies all requests a Connection makes to the underlying
-    Thrift client, and sets a flag when the client raised an exception,
-    e.g. socket errors or Thrift protocol errors.
-
-    The connection pool replaces tainted connections with fresh ones.
-    """
-    def __init__(self, connection, client):
-        self.connection = connection
-        self.client = client
-        self._cache = {}
-
-    def __getattr__(self, name):
-        """
-        Hook into attribute lookup and return wrapped methods.
-
-        Since the client is only used for method calls, just treat
-        every attribute access as a method to wrap.
-        """
-        wrapped = self._cache.get(name)
-
-        if wrapped is None:
-            def wrapped(*args, **kwargs):
-                method = getattr(self.client, name)
-                assert callable(method)
-                try:
-                    return method(*args, **kwargs)
-                except:
-                    self.connection._tainted = True
-                    raise
-            self._cache[name] = wrapped
-
-        return wrapped
 
 
 class NoConnectionsAvailable(RuntimeError):
@@ -99,11 +64,11 @@ class ConnectionPool(object):
         self._queue = Queue.LifoQueue(maxsize=size)
         self._thread_connections = threading.local()
 
-        self._connection_kwargs = kwargs
-        self._connection_kwargs['autoconnect'] = False
+        connection_kwargs = kwargs
+        connection_kwargs['autoconnect'] = False
 
         for i in xrange(size):
-            connection = self._create_connection()
+            connection = Connection(**connection_kwargs)
             self._queue.put(connection)
 
         # The first connection is made immediately so that trivial
@@ -111,12 +76,6 @@ class ConnectionPool(object):
         # Subsequent connections are connected lazily.
         with self.connection():
             pass
-
-    def _create_connection(self):
-        """Create a new connection with monkey-patched Thrift client."""
-        connection = Connection(**self._connection_kwargs)
-        connection.client = _ClientProxy(connection, connection.client)
-        return connection
 
     def _acquire_connection(self, timeout=None):
         """Acquire a connection from the pool."""
@@ -152,27 +111,23 @@ class ConnectionPool(object):
         :rtype: :py:class:`happybase.Connection`
         """
 
-        # If this thread already holds a connection, just return it.
-        # This is the short path for nested calls from the same thread.
         connection = getattr(self._thread_connections, 'current', None)
-        if connection is not None:
-            yield connection
-            return
 
-        # If this point is reached, this is the outermost connection
-        # requests for a thread. Obtain a new connection from the pool
-        # and keep a reference in a thread local so that nested
-        # connection requests from the same thread can return the same
-        # connection instance.
-        #
-        # Note: this code acquires a lock before assigning to the
-        # thread local; see
-        # http://emptysquare.net/blog/another-thing-about-pythons-
-        # threadlocals/
-
-        connection = self._acquire_connection(timeout)
-        with self._lock:
-            self._thread_connections.current = connection
+        return_after_use = False
+        if connection is None:
+            # This is the outermost connection requests for this thread.
+            # Obtain a new connection from the pool and keep a reference
+            # in a thread local so that nested connection requests from
+            # the same thread can return the same connection instance.
+            #
+            # Note: this code acquires a lock before assigning to the
+            # thread local; see
+            # http://emptysquare.net/blog/another-thing-about-pythons-
+            # threadlocals/
+            return_after_use = True
+            connection = self._acquire_connection(timeout)
+            with self._lock:
+                self._thread_connections.current = connection
 
         try:
             # Open connection, because connections are opened lazily.
@@ -182,23 +137,21 @@ class ConnectionPool(object):
             # Return value from the context manager's __enter__()
             yield connection
 
-        finally:
-
-            # Remove thread local reference, since the thread no longer
-            # owns it.
-            del self._thread_connections.current
-
+        except (TException, socket.error):
             # Refresh the underlying Thrift client if an exception
             # occurred in the Thrift layer, since we don't know whether
             # the connection is still usable.
-            if getattr(connection, '_tainted', False):
-                logger.info("Replacing tainted pool connection")
+            logger.info("Replacing tainted pool connection")
+            connection._refresh_thrift_client()
+            connection.open()
 
-                try:
-                    connection.close()
-                except:
-                    pass
+            # Reraise to caller; see contextlib.contextmanager() docs
+            raise
 
-                connection = self._create_connection()
-
-            self._return_connection(connection)
+        finally:
+            # Remove thread local reference after the outermost 'with'
+            # block ends. Afterwards the thread no longer owns the
+            # connection.
+            if return_after_use:
+                del self._thread_connections.current
+                self._return_connection(connection)
