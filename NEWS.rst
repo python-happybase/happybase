@@ -3,6 +3,18 @@ Version history
 
 .. py:currentmodule:: happybase
 
+HappyBase 0.6
+-------------
+
+Note: this version is not yet released!
+
+* Rewrote exception handling in connection pool (`issue #25
+  <https://github.com/wbolster/happybase/issues/25>`_).
+
+* Regenerated bundled Thrift code using Thrift 0.9.0 with the new-style classes
+  flag (`issue #27 <https://github.com/wbolster/happybase/issues/27>`_).
+
+
 HappyBase 0.5
 -------------
 
