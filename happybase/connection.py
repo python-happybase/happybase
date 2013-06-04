@@ -64,12 +64,15 @@ class Connection(object):
     use the framed transport.
 
     .. versionadded:: 0.5
+
        `timeout` parameter
 
     .. versionadded:: 0.4
+
        `table_prefix_separator` parameter
 
     .. versionadded:: 0.4
+
        support for framed Thrift transports
 
     :param str host: The host to connect to
@@ -84,6 +87,7 @@ class Connection(object):
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
                  table_prefix_separator='_', compat='0.92',
+                 client_cls=Hbase.Client,
                  transport='buffered'):
 
         if transport not in THRIFT_TRANSPORTS:
@@ -111,6 +115,7 @@ class Connection(object):
         self.compat = compat
 
         self._transport_class = THRIFT_TRANSPORTS[transport]
+        self._client_cls = client_cls
         self._refresh_thrift_client()
 
         if autoconnect:
@@ -126,7 +131,7 @@ class Connection(object):
 
         self.transport = self._transport_class(socket)
         protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
-        self.client = Hbase.Client(protocol)
+        self.client = self._client_cls(protocol)
 
     def _table_name(self, name):
         """Construct a table name by optionally adding a table name prefix."""
@@ -281,7 +286,8 @@ class Connection(object):
         """Delete the specified table.
 
         .. versionadded:: 0.5
-           the `disable` parameter
+
+           The `disable` parameter was added.
 
         In HBase, a table always needs to be disabled before it can be deleted.
         If the `disable` parameter is `True`, this method first disables the
