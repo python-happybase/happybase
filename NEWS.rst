@@ -8,7 +8,8 @@ HappyBase 0.6
 
 Note: this version is not yet released!
 
-* Rewrote exception handling in connection pool (`issue #25
+* Rewrote exception handling in connection pool. Exception handling is now a lot
+  cleaner and does not introduce cyclic references anymore. (`issue #25
   <https://github.com/wbolster/happybase/issues/25>`_).
 
 * Regenerated bundled Thrift code using Thrift 0.9.0 with the new-style classes
