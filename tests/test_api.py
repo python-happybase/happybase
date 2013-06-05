@@ -467,11 +467,12 @@ def test_connection_pool():
                 assert connection is another_connection
 
                 # Fake an exception once in a while
-                if random.random() < .001:
+                if random.random() < .25:
+                    print "Introducing random failure"
                     connection.transport.close()
                     raise TTransportException("Fake transport exception")
 
-        for i in xrange(100):
+        for i in xrange(50):
             with pool.connection() as connection:
                 connection.tables()
 
@@ -487,7 +488,7 @@ def test_connection_pool():
 
         print "Thread %s done" % name
 
-    N_THREADS = 50
+    N_THREADS = 10
 
     pool = ConnectionPool(size=3, **connection_kwargs)
     threads = [threading.Thread(target=run) for i in xrange(N_THREADS)]
