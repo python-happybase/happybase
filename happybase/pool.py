@@ -90,6 +90,13 @@ class ConnectionPool(object):
         """Return a connection to the pool."""
         self._queue.put(connection)
 
+    def _replace_tainted_connection(self, connection):
+        # Refresh the underlying Thrift client if an exception
+        # occurred in the Thrift layer, since we don't know whether
+        # the connection is still usable.
+        connection._refresh_thrift_client()
+        connection.open()
+
     @contextlib.contextmanager
     def connection(self, timeout=None):
         """
@@ -134,24 +141,23 @@ class ConnectionPool(object):
             # This is a no-op for connections that are already open.
             connection.open()
 
+        except (TException, socket.error):
+            logging.info("Socket error on initial connection open -- replacing tainted pool")
+            self._replace_tainted_connection(connection)
+
+        try:
             # Return value from the context manager's __enter__()
             yield connection
 
         except (TException, socket.error):
-            # Refresh the underlying Thrift client if an exception
-            # occurred in the Thrift layer, since we don't know whether
-            # the connection is still usable.
-            logger.info("Replacing tainted pool connection")
-            connection._refresh_thrift_client()
-            connection.open()
-
-            # Reraise to caller; see contextlib.contextmanager() docs
-            raise
+            logging.info("Call within connection failed -- replacing tainted pool and reraising Exception")
+            self._replace_tainted_connection(connection)
+            raise  # Reraise to caller; see contextlib.contextmanager() docs
 
         finally:
-            # Remove thread local reference after the outermost 'with'
-            # block ends. Afterwards the thread no longer owns the
-            # connection.
             if return_after_use:
+                # Remove thread local reference after the outermost 'with'
+                # block ends. Afterwards the thread no longer owns the
+                # connection.
                 del self._thread_connections.current
                 self._return_connection(connection)

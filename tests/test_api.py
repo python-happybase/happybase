@@ -4,6 +4,7 @@ HappyBase tests.
 
 import collections
 import os
+import mock
 import random
 import threading
 
@@ -531,6 +532,20 @@ def test_pool_exhaustion():
         t.start()
         t.join()
 
+
+def test_pool_tainted():
+    """ Verify connection will be reopened on the initial connection failure."""
+    from thrift.transport.TTransport import TTransportException
+
+    with mock.patch('happybase.connection.Connection.open') as mock_open:
+        pool = ConnectionPool(size=1, **connection_kwargs)
+
+        # Mock after the creation since the ConnectionPool class tries to open a connection.
+        mock_open.side_effect = [TTransportException("connection failed"), None]
+
+        with pool.connection() as connection:
+            # Make sure that the exception is still re-raised inside the with() statement.
+            assert_raises(TTransportException, connection.tables)
 
 if __name__ == '__main__':
     import logging
