@@ -43,12 +43,22 @@ connection_kwargs = dict(
 connection = table = None
 
 
+def maybe_delete_table():
+    if KEEP_TABLE:
+        return
+
+    if TEST_TABLE_NAME in connection.tables():
+        print "Test table already exists; removing it..."
+        connection.delete_table(TEST_TABLE_NAME, disable=True)
+
+
 def setup_module():
     global connection, table
     connection = Connection(**connection_kwargs)
 
     assert_is_not_none(connection)
 
+    maybe_delete_table()
     cfs = {
         'cf1': {},
         'cf2': None,
