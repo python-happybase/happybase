@@ -10,6 +10,7 @@ from struct import Struct
 from .hbase.ttypes import TScan
 from .util import thrift_type_to_dict, str_increment
 from .batch import Batch
+from .filter import _FilterNode
 
 logger = logging.getLogger(__name__)
 
@@ -204,8 +205,8 @@ class Table(object):
             return map(make_cell, cells)
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
-             columns=None, filter=None, timestamp=None,
-             include_timestamp=False, batch_size=1000, limit=None):
+             columns=None, timestamp=None, include_timestamp=False,
+             batch_size=1000, limit=None, filter=None):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -230,15 +231,18 @@ class Table(object):
         The `columns`, `timestamp` and `include_timestamp` arguments behave
         exactly the same as for :py:meth:`row`.
 
-        The `filter` argument may be a filter string that will be applied at
-        the server by the region servers.
-
         If `limit` is given, at most `limit` results will be returned.
 
         The `batch_size` argument specifies how many results should be
         retrieved per batch when retrieving results from the scanner. Only set
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
+
+        The `filter` argument may be a filter string that will be
+        applied at the server by the region servers. If you need more
+        than a static filter string literal, use the helpers in the
+        :py:mod:`happybase.filter` module to construct filter strings
+        programmatically.
 
         **Compatibility note:** The `filter` argument is only available when
         using HBase 0.92 (or up). In HBase 0.90 compatibility mode, specifying
@@ -273,6 +277,14 @@ class Table(object):
 
         if row_start is None:
             row_start = ''
+
+        if filter is not None:
+            if isinstance(filter, _FilterNode):
+                filter = str(filter)
+
+            if not isinstance(filter, str):
+                raise TypeError(
+                    "'filter' must be a filter instance or a (byte) string")
 
         if self.connection.compat == '0.90':
             # The scannerOpenWithScan() Thrift function is not
