@@ -6,7 +6,7 @@ Version history
 HappyBase 0.6
 -------------
 
-Note: this version is not yet released!
+Release date: 2013-06-12
 
 * Rewrote exception handling in connection pool. Exception handling is now a lot
   cleaner and does not introduce cyclic references anymore. (`issue #25
