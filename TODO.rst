@@ -16,3 +16,6 @@ future, depending on time, demand, and technical possibilities.
 * Port HappyBase over to the (still experimental) HBase Thrift2 API when it
   becomes mainstream, and expose more of the underlying features nicely in the
   HappyBase API.
+
+* Python 3 support. This would be trivial for HappyBase, but the underlying
+  Thrift library needs to be Python 3 compatible first.
