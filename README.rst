@@ -14,3 +14,8 @@ HBase_.
 .. If you're reading this from the README.rst file in a source tree,
    you can generate the HTML documentation by running "make doc" and browsing
    to doc/build/html/index.html to see the result.
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/wbolster/happybase/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
