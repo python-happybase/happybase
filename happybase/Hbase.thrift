@@ -35,7 +35,7 @@ namespace cpp  apache.hadoop.hbase.thrift
 namespace rb Apache.Hadoop.Hbase.Thrift
 namespace py hbase
 namespace perl Hbase
-
+namespace php Hbase
 //
 // Types
 //
@@ -86,7 +86,9 @@ struct TRegionInfo {
   2:Text endKey,
   3:i64 id,
   4:Text name,
-  5:byte version 
+  5:byte version,
+  6:Text serverName,
+  7:i32 port
 }
 
 /**
@@ -95,7 +97,8 @@ struct TRegionInfo {
 struct Mutation {
   1:bool isDelete = 0,
   2:Text column,
-  3:Text value
+  3:Text value,
+  4:bool writeToWAL = 1
 }
 
 
@@ -107,13 +110,32 @@ struct BatchMutation {
   2:list<Mutation> mutations
 }
 
+/**
+ * For increments that are not incrementColumnValue
+ * equivalents.
+ */
+struct TIncrement {
+  1:Text table,
+  2:Text row,
+  3:Text column,
+  4:i64  ammount
+}
+
+/**
+ * Holds column name and the cell.
+ */
+struct TColumn {
+  1:Text columnName,
+  2:TCell cell
+ }
 
 /**
  * Holds row name and then a map of columns to cells. 
  */
 struct TRowResult {
   1:Text row,
-  2:map<Text, TCell> columns
+  2:optional map<Text, TCell> columns,
+  3:optional list<TColumn> sortedColumns
 }
 
 /**
@@ -125,7 +147,9 @@ struct TScan {
   3:optional i64 timestamp,
   4:optional list<Text> columns,
   5:optional i32 caching,
-  6:optional Text filterString
+  6:optional Text filterString,
+  7:optional i32 batchSize,
+  8:optional bool sortColumns
 }
 
 //
@@ -263,7 +287,10 @@ service Hbase {
     2:Text row,
 
     /** column name */
-    3:Text column
+    3:Text column,
+
+    /** Get attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -283,7 +310,10 @@ service Hbase {
     3:Text column,
 
     /** number of versions to retrieve */
-    4:i32 numVersions
+    4:i32 numVersions,
+
+    /** Get attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -307,7 +337,10 @@ service Hbase {
     4:i64 timestamp,
 
     /** number of versions to retrieve */
-    5:i32 numVersions
+    5:i32 numVersions,
+
+    /** Get attributes */
+    6:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -321,7 +354,10 @@ service Hbase {
     1:Text tableName,
 
     /** row key */
-    2:Text row
+    2:Text row,
+
+    /** Get attributes */
+    3:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -338,7 +374,10 @@ service Hbase {
     2:Text row,
 
     /** List of columns to return, null for all columns */
-    3:list<Text> columns
+    3:list<Text> columns,
+
+    /** Get attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -355,7 +394,10 @@ service Hbase {
     2:Text row,
 
     /** timestamp */
-    3:i64 timestamp
+    3:i64 timestamp,
+
+    /** Get attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
     
   /** 
@@ -373,7 +415,10 @@ service Hbase {
 
     /** List of columns to return, null for all columns */
     3:list<Text> columns,
-    4:i64 timestamp
+    4:i64 timestamp,
+
+    /** Get attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -388,6 +433,9 @@ service Hbase {
 
     /** row keys */
     2:list<Text> rows
+
+    /** Get attributes */
+    3:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -401,10 +449,13 @@ service Hbase {
     1:Text tableName,
 
     /** row keys */
-    2:list<Text> rows
+    2:list<Text> rows,
 
     /** List of columns to return, null for all columns */
-    3:list<Text> columns
+    3:list<Text> columns,
+
+    /** Get attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -421,7 +472,10 @@ service Hbase {
     2:list<Text> rows
 
     /** timestamp */
-    3:i64 timestamp
+    3:i64 timestamp,
+
+    /** Get attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -439,7 +493,10 @@ service Hbase {
 
     /** List of columns to return, null for all columns */
     3:list<Text> columns,
-    4:i64 timestamp
+    4:i64 timestamp,
+
+    /** Get attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -456,7 +513,10 @@ service Hbase {
     2:Text row,
 
     /** list of mutation commands */
-    3:list<Mutation> mutations
+    3:list<Mutation> mutations,
+
+    /** Mutation attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io, 2:IllegalArgument ia)
 
   /** 
@@ -476,7 +536,10 @@ service Hbase {
     3:list<Mutation> mutations,
 
     /** timestamp */
-    4:i64 timestamp
+    4:i64 timestamp,
+
+    /** Mutation attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io, 2:IllegalArgument ia)
 
   /** 
@@ -490,7 +553,10 @@ service Hbase {
     1:Text tableName,
 
     /** list of row batches */
-    2:list<BatchMutation> rowBatches
+    2:list<BatchMutation> rowBatches,
+
+    /** Mutation attributes */
+    3:map<Text, Text> attributes
   ) throws (1:IOError io, 2:IllegalArgument ia)
 
   /** 
@@ -507,7 +573,10 @@ service Hbase {
     2:list<BatchMutation> rowBatches,
 
     /** timestamp */
-    3:i64 timestamp
+    3:i64 timestamp,
+
+    /** Mutation attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io, 2:IllegalArgument ia)
 
   /**
@@ -538,7 +607,10 @@ service Hbase {
     2:Text row,
 
     /** name of column whose value is to be deleted */
-    3:Text column
+    3:Text column,
+
+    /** Delete attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -556,7 +628,10 @@ service Hbase {
     3:Text column,
 
     /** timestamp */
-    4:i64 timestamp
+    4:i64 timestamp,
+
+    /** Delete attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -567,7 +642,27 @@ service Hbase {
     1:Text tableName,
 
     /** key of the row to be completely deleted. */
-    2:Text row
+    2:Text row,
+
+    /** Delete attributes */
+    3:map<Text, Text> attributes
+  ) throws (1:IOError io)
+
+  /**
+   * Increment a cell by the ammount.
+   * Increments can be applied async if hbase.regionserver.thrift.coalesceIncrement is set to true.
+   * False is the default.  Turn to true if you need the extra performance and can accept some
+   * data loss if a thrift server dies with increments still in the queue.
+   */
+  void increment(
+    /** The single increment to apply */
+    1:TIncrement increment
+  ) throws (1:IOError io)
+
+
+  void incrementRows(
+    /** The list of increments */
+    1:list<TIncrement> increments
   ) throws (1:IOError io)
 
   /**
@@ -582,7 +677,10 @@ service Hbase {
     2:Text row,
 
     /** timestamp */
-    3:i64 timestamp
+    3:i64 timestamp,
+
+    /** Delete attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -594,7 +692,10 @@ service Hbase {
     1:Text tableName,
 
     /** Scan instance */
-    2:TScan scan
+    2:TScan scan,
+
+    /** Scan attributes */
+    3:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -618,7 +719,10 @@ service Hbase {
      * columns of the specified column family are returned. It's also possible
      * to pass a regex in the column qualifier.
      */
-    3:list<Text> columns
+    3:list<Text> columns,
+
+    /** Scan attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -649,7 +753,10 @@ service Hbase {
      * columns of the specified column family are returned. It's also possible
      * to pass a regex in the column qualifier.
      */
-    4:list<Text> columns
+    4:list<Text> columns,
+
+    /** Scan attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -666,7 +773,10 @@ service Hbase {
     2:Text startAndPrefix,
 
     /** the columns you want returned */
-    3:list<Text> columns
+    3:list<Text> columns,
+
+    /** Scan attributes */
+    4:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -694,7 +804,10 @@ service Hbase {
     3:list<Text> columns,
 
     /** timestamp */
-    4:i64 timestamp
+    4:i64 timestamp,
+
+    /** Scan attributes */
+    5:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /** 
@@ -729,7 +842,10 @@ service Hbase {
     4:list<Text> columns,
 
     /** timestamp */
-    5:i64 timestamp
+    5:i64 timestamp,
+
+    /** Scan attributes */
+    6:map<Text, Text> attributes
   ) throws (1:IOError io)
 
   /**
@@ -778,4 +894,32 @@ service Hbase {
     /** id of a scanner returned by scannerOpen */
     1:ScannerID id
   ) throws (1:IOError io, 2:IllegalArgument ia)
+
+  /**
+   * Get the row just before the specified one.
+   *
+   * @return value for specified row/column
+   */
+  list<TCell> getRowOrBefore(
+    /** name of table */
+    1:Text tableName,
+
+    /** row key */
+    2:Text row,
+
+    /** column name */
+    3:Text family
+  ) throws (1:IOError io)
+
+  /**
+   * Get the regininfo for the specified row. It scans
+   * the metatable to find region's start and end keys.
+   *
+   * @return value for specified row/column
+   */
+  TRegionInfo getRegionInfo(
+    /** row key */
+    1:Text row,
+
+  ) throws (1:IOError io)
 }
