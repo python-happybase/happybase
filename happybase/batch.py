@@ -67,7 +67,9 @@ class Batch(object):
         """Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
-        and `wal` arguments.
+        and `wal` arguments. The `wal` argument should normally not be
+        used; its only use is to override the batch-wide value passed to
+        :py:meth:`Table.batch`.
         """
         if wal is None:
             wal = self._wal
@@ -87,8 +89,10 @@ class Batch(object):
     def delete(self, row, columns=None, wal=None):
         """Delete data from the table.
 
-        See :py:meth:`Table.delete` for a description of the `row`,
-        `columns`, and `wal` arguments.
+        See :py:meth:`Table.put` for a description of the `row`, `data`,
+        and `wal` arguments. The `wal` argument should normally not be
+        used; its only use is to override the batch-wide value passed to
+        :py:meth:`Table.batch`.
         """
         # Work-around Thrift API limitation: the mutation API can only
         # delete specified columns, not complete rows, so just list the
