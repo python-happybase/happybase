@@ -84,8 +84,8 @@ class Batch(object):
         """
         # Work-around Thrift API limitation: the mutation API can only
         # delete specified columns, not complete rows, so just list the
-        # column families once and cache them for later use in the same
-        # transaction.
+        # column families once and cache them for later use by the same
+        # batch instance.
         if columns is None:
             if self._families is None:
                 self._families = self._table._column_family_names()
