@@ -382,15 +382,8 @@ class Table(object):
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
         """
-        if columns is None:
-            if timestamp is None:
-                self.connection.client.deleteAllRow(self.name, row, {})
-            else:
-                self.connection.client.deleteAllRowTs(
-                    self.name, row, timestamp, {})
-        else:
-            with self.batch(timestamp=timestamp) as batch:
-                batch.delete(row, columns)
+        with self.batch(timestamp=timestamp) as batch:
+            batch.delete(row, columns)
 
     def batch(self, timestamp=None, batch_size=None, transaction=False):
         """Create a new batch operation for this table.
