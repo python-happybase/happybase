@@ -3,6 +3,20 @@ Version history
 
 .. py:currentmodule:: happybase
 
+HappyBase 0.7
+-------------
+
+Release date: *not yet released*
+
+* Added a `wal` argument to various data manipulation methods on the
+  :py:class:`Table` and :py:class:`Batch` classes to determine whether to write
+  the mutation to the Write-Ahead Log (WAL). (`issue #36
+  <https://github.com/wbolster/happybase/issues/36`_).
+
+* Regenerated bundled Thrift API modules using a recent upstream Thrift API
+  definition. This is required to expose newly added API.
+
+
 HappyBase 0.6
 -------------
 
