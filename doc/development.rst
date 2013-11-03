@@ -24,7 +24,7 @@ Setting up a development environment from a Git branch is easy::
 
    $ cd /path/to/happybase/
    $ mkvirtualenv happybase
-   (happybase)$ pip install -r requirements-development.txt
+   (happybase)$ pip install -r test-requirements.txt
    (happybase)$ pip install -e .
 
 
