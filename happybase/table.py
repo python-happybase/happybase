@@ -350,26 +350,30 @@ class Table(object):
     # Data manipulation
     #
 
-    def put(self, row, data, timestamp=None):
+    def put(self, row, data, timestamp=None, wal=True):
         """Store data in the table.
 
         This method stores the data in the `data` argument for the row
         specified by `row`. The `data` argument is dictionary that maps columns
         to values. Column names must include a family and qualifier part, e.g.
         `cf:col`, though the qualifier part may be the empty string, e.g.
-        `cf:`. The `timestamp` argument is optional.
+        `cf:`.
 
         Note that, in many situations, :py:meth:`batch()` is a more appropriate
         method to manipulate data.
 
+        .. versionadded:: 0.7
+           `wal` parameter
+
         :param str row: the row key
         :param dict data: the data to store
         :param int timestamp: timestamp (optional)
+        :param wal bool: whether to write to the WAL (optional)
         """
-        with self.batch(timestamp=timestamp) as batch:
+        with self.batch(timestamp=timestamp, wal=wal) as batch:
             batch.put(row, data)
 
-    def delete(self, row, columns=None, timestamp=None):
+    def delete(self, row, columns=None, timestamp=None, wal=True):
         """Delete data from the table.
 
         This method deletes all columns for the row specified by `row`, or only
@@ -378,14 +382,19 @@ class Table(object):
         Note that, in many situations, :py:meth:`batch()` is a more appropriate
         method to manipulate data.
 
+        .. versionadded:: 0.7
+           `wal` parameter
+
         :param str row: the row key
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
+        :param wal bool: whether to write to the WAL (optional)
         """
-        with self.batch(timestamp=timestamp) as batch:
+        with self.batch(timestamp=timestamp, wal=wal) as batch:
             batch.delete(row, columns)
 
-    def batch(self, timestamp=None, batch_size=None, transaction=False):
+    def batch(self, timestamp=None, batch_size=None, transaction=False,
+              wal=True):
         """Create a new batch operation for this table.
 
         This method returns a new :py:class:`Batch` instance that can be used
@@ -401,11 +410,23 @@ class Table(object):
         used as context manager in a ``with`` block of code. The `transaction`
         flag cannot be used in combination with `batch_size`.
 
+        The `wal` argument determines whether mutations should be
+        written to the HBase Write Ahead Log (WAL). This flag can only
+        be used with recent HBase versions. If specified, it provides
+        a default for all the put and delete operations on this batch.
+        This default value can be overridden for individual operations
+        using the `wal` argument to :py:meth:`Batch.put` and
+        :py:meth:`Batch.delete`.
+
+        .. versionadded:: 0.7
+           `wal` parameter
+
         :param bool transaction: whether this batch should behave like
                                  a transaction (only useful when used as a
                                  context manager)
         :param int batch_size: batch size (optional)
         :param int timestamp: timestamp (optional)
+        :param wal bool: whether to write to the WAL (optional)
 
         :return: Batch instance
         :rtype: :py:class:`Batch`
