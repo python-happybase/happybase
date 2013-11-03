@@ -51,10 +51,10 @@ class Batch(object):
         logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
                      self._table.name, self._mutation_count, len(bms))
         if self._timestamp is None:
-            self._table.connection.client.mutateRows(self._table.name, bms)
+            self._table.connection.client.mutateRows(self._table.name, bms, {})
         else:
             self._table.connection.client.mutateRowsTs(
-                self._table.name, bms, self._timestamp)
+                self._table.name, bms, self._timestamp, {})
 
         self._reset_mutations()
 

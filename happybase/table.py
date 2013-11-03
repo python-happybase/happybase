@@ -103,12 +103,12 @@ class Table(object):
 
         if timestamp is None:
             rows = self.connection.client.getRowWithColumns(
-                self.name, row, columns)
+                self.name, row, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             rows = self.connection.client.getRowWithColumnsTs(
-                self.name, row, columns, timestamp)
+                self.name, row, columns, timestamp, {})
 
         if not rows:
             return {}
@@ -143,7 +143,7 @@ class Table(object):
 
         if timestamp is None:
             results = self.connection.client.getRowsWithColumns(
-                self.name, rows, columns)
+                self.name, rows, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
@@ -155,7 +155,7 @@ class Table(object):
                 columns = self._column_family_names()
 
             results = self.connection.client.getRowsWithColumnsTs(
-                self.name, rows, columns, timestamp)
+                self.name, rows, columns, timestamp, {})
 
         return [(r.row, make_row(r.columns, include_timestamp))
                 for r in results]
@@ -191,12 +191,12 @@ class Table(object):
 
         if timestamp is None:
             cells = self.connection.client.getVer(
-                self.name, row, column, versions)
+                self.name, row, column, versions, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             cells = self.connection.client.getVerTs(
-                self.name, row, column, timestamp, versions)
+                self.name, row, column, timestamp, versions, {})
 
         if include_timestamp:
             return map(make_cell_timestamp, cells)
@@ -286,17 +286,17 @@ class Table(object):
             if row_stop is None:
                 if timestamp is None:
                     scan_id = self.connection.client.scannerOpen(
-                        self.name, row_start, columns)
+                        self.name, row_start, columns, {})
                 else:
                     scan_id = self.connection.client.scannerOpenTs(
-                        self.name, row_start, columns, timestamp)
+                        self.name, row_start, columns, timestamp, {})
             else:
                 if timestamp is None:
                     scan_id = self.connection.client.scannerOpenWithStop(
-                        self.name, row_start, row_stop, columns)
+                        self.name, row_start, row_stop, columns, {})
                 else:
                     scan_id = self.connection.client.scannerOpenWithStopTs(
-                        self.name, row_start, row_stop, columns, timestamp)
+                        self.name, row_start, row_stop, columns, timestamp, {})
 
         else:
             # The scan's caching size is set to the batch_size, so that
@@ -312,7 +312,7 @@ class Table(object):
                 filterString=filter,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
-                self.name, scan)
+                self.name, scan, {})
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
@@ -384,10 +384,10 @@ class Table(object):
         """
         if columns is None:
             if timestamp is None:
-                self.connection.client.deleteAllRow(self.name, row)
+                self.connection.client.deleteAllRow(self.name, row, {})
             else:
                 self.connection.client.deleteAllRowTs(
-                    self.name, row, timestamp)
+                    self.name, row, timestamp, {})
         else:
             with self.batch(timestamp=timestamp) as batch:
                 batch.delete(row, columns)
