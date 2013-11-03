@@ -17,7 +17,7 @@ from .util import pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
 
-COMPAT_MODES = ('0.90', '0.92')
+COMPAT_MODES = ('0.90', '0.92', '0.94')
 THRIFT_TRANSPORTS = dict(
     buffered=TBufferedTransport,
     framed=TFramedTransport,
@@ -25,6 +25,8 @@ THRIFT_TRANSPORTS = dict(
 
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
+DEFAULT_TRANSPORT = 'buffered'
+DEFAULT_COMPAT = '0.94'
 
 
 class Connection(object):
@@ -83,8 +85,8 @@ class Connection(object):
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
-                 table_prefix_separator='_', compat='0.92',
-                 transport='buffered'):
+                 table_prefix_separator='_', compat=DEFAULT_COMPAT,
+                 transport=DEFAULT_TRANSPORT):
 
         if transport not in THRIFT_TRANSPORTS:
             raise ValueError("'transport' must be one of %s"
