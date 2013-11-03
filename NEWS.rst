@@ -17,6 +17,9 @@ Release date: *not yet released*
 * Pass batch_size to underlying Thrift Scan instance (`issue #38
   <https://github.com/wbolster/happybase/issues/38`_).
 
+* Expose server name and port in :py:meth:`Table.regions` (recent HBase versions
+  only) (`issue #37 <https://github.com/wbolster/happybase/issues/37`_).
+
 * Regenerated bundled Thrift API modules using a recent upstream Thrift API
   definition. This is required to expose newly added API.
 
