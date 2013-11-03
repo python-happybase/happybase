@@ -310,6 +310,7 @@ class Table(object):
                 columns=columns,
                 caching=batch_size,
                 filterString=filter,
+                batchSize=batch_size,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
