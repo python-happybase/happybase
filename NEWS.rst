@@ -7,7 +7,7 @@ Version history
 HappyBase 0.7
 -------------
 
-Release date: *not yet released*
+Release date: 2013-11-06
 
 * Added a `wal` argument to various data manipulation methods on the
   :py:class:`Table` and :py:class:`Batch` classes to determine whether to write
