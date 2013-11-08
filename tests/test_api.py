@@ -273,7 +273,6 @@ def test_row():
     exp = {'cf1:col1': 'v1new',
            'cf1:col2': 'v2'}
     assert_dict_equal(exp, row(row_key, ['cf1']))
-    assert_dict_equal(exp, row(row_key, ['cf1:']))
 
     exp = {'cf1:col1': 'v1new',
            'cf2:col2': 'v4'}
