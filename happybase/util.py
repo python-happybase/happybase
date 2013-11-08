@@ -9,6 +9,21 @@ import re
 CAPITALS = re.compile('([A-Z])')
 
 
+try:
+    # Python 2.7
+    from collections import OrderedDict
+except ImportError:
+    try:
+        # External package for Python 2.6
+        from ordereddict import OrderedDict
+    except ImportError as exc:
+        # Stub to throw errors at run-time (not import time)
+        def OrderedDict(*args, **kwargs):
+            raise RuntimeError(
+                "No OrderedDict implementation available; please "
+                "install the 'ordereddict' Package from PyPI.")
+
+
 def camel_case_to_pep8(name):
     """Convert a camel cased name to PEP8 style."""
     converted = CAPITALS.sub(lambda m: '_' + m.groups()[0].lower(), name)
