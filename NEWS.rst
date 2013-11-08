@@ -4,6 +4,17 @@ Version history
 .. py:currentmodule:: happybase
 
 
+HappyBase 0.8
+-------------
+
+Release date: *not yet released*
+
+* Add support for retrieving sorted columns, which is possible with the
+  HBase 0.96 Thrift API. This feature uses a new `sorted_columns` argument
+  to py:meth:`Table.scan` (`issue #39
+  <https://github.com/wbolster/happybase/issues/39>`_).
+
+
 HappyBase 0.7
 -------------
 
