@@ -8,7 +8,7 @@ from operator import attrgetter
 from struct import Struct
 
 from .hbase.ttypes import TScan
-from .util import thrift_type_to_dict, str_increment
+from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,14 @@ def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
     return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
+
+
+def make_ordered_row(sorted_columns, include_timestamp):
+    """Make a row dict for sorted column results from scans."""
+    cellfn = include_timestamp and make_cell_timestamp or make_cell
+    return OrderedDict(
+        (column.columnName, cellfn(column.cell))
+        for column in sorted_columns)
 
 
 class Table(object):
@@ -206,7 +214,8 @@ class Table(object):
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
-             include_timestamp=False, batch_size=1000, limit=None):
+             include_timestamp=False, batch_size=1000, limit=None,
+             sorted_columns=False):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -236,14 +245,26 @@ class Table(object):
 
         If `limit` is given, at most `limit` results will be returned.
 
+        If `sorted_columns` is `True`, the columns in the rows returned
+        by this scanner will be retrieved in sorted_columns order, and
+        the data will be stored in `OrderedDict` instances.
+
         The `batch_size` argument specifies how many results should be
         retrieved per batch when retrieving results from the scanner. Only set
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
 
-        **Compatibility note:** The `filter` argument is only available when
-        using HBase 0.92 (or up). In HBase 0.90 compatibility mode, specifying
-        a `filter` raises an exception.
+        **Compatibility notes:**
+
+        * The `filter` argument is only available when using HBase 0.92
+          (or up). In HBase 0.90 compatibility mode, specifying
+          a `filter` raises an exception.
+
+        * The `sorted_columns` argument is only available when using
+          HBase 0.96 (or up).
+
+        .. versionadded:: 0.7
+           `sorted_columns` parameter
 
         :param str row_start: the row key to start at (inclusive)
         :param str row_stop: the row key to stop at (exclusive)
@@ -262,6 +283,10 @@ class Table(object):
 
         if limit is not None and limit < 1:
             raise ValueError("'limit' must be >= 1")
+
+        if sorted_columns and self.connection.compat < '0.96':
+            raise NotImplementedError(
+                "'sorted_columns' is not supported in HBase >= 0.96")
 
         if row_prefix is not None:
             if row_start is not None or row_stop is not None:
@@ -312,6 +337,7 @@ class Table(object):
                 caching=batch_size,
                 filterString=filter,
                 batchSize=batch_size,
+                sortColumns=sorted_columns,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
@@ -335,7 +361,15 @@ class Table(object):
                 n_fetched += len(items)
 
                 for n_returned, item in enumerate(items, n_returned + 1):
-                    yield item.row, make_row(item.columns, include_timestamp)
+                    row_key = item.row
+                    if sorted_columns:
+                        row = make_ordered_row(item.sortedColumns,
+                                               include_timestamp)
+                    else:
+                        row = make_row(item.columns, include_timestamp)
+
+                    yield row_key, row
+
                     if limit is not None and n_returned == limit:
                         return
 

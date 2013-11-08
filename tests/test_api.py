@@ -14,6 +14,7 @@ from nose.tools import (
     assert_in,
     assert_is_instance,
     assert_is_not_none,
+    assert_list_equal,
     assert_not_in,
     assert_raises,
     assert_true,
@@ -425,6 +426,24 @@ def test_scan():
     scanner.close()
     with assert_raises(StopIteration):
         next(scanner)
+
+
+def test_scan_sorting():
+    if connection.compat < '0.96':
+        return  # not supported
+
+    input_row = {}
+    for i in xrange(100):
+        input_row['cf1:col-%03d' % i] = ''
+    input_key = 'row-scan-sorted'
+    table.put(input_key, input_row)
+
+    scan = table.scan(row_start=input_key, sorted_columns=True)
+    key, row = next(scan)
+    assert_equal(key, input_key)
+    assert_list_equal(
+        sorted(input_row.items()),
+        row.items())
 
 
 def test_delete():
