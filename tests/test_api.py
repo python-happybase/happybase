@@ -23,7 +23,7 @@ from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
 HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
 HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
-HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.92')
+HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.96')
 HAPPYBASE_TRANSPORT = os.environ.get('HAPPYBASE_TRANSPORT', 'buffered')
 KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
 
