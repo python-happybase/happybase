@@ -17,7 +17,7 @@ from .util import pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
 
-COMPAT_MODES = ('0.90', '0.92', '0.94')
+COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96')
 THRIFT_TRANSPORTS = dict(
     buffered=TBufferedTransport,
     framed=TFramedTransport,
@@ -26,7 +26,7 @@ THRIFT_TRANSPORTS = dict(
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 DEFAULT_TRANSPORT = 'buffered'
-DEFAULT_COMPAT = '0.94'
+DEFAULT_COMPAT = '0.96'
 
 
 class Connection(object):
@@ -51,8 +51,7 @@ class Connection(object):
     connection. Older HBase versions have slightly different Thrift interfaces,
     and using the wrong protocol can lead to crashes caused by communication
     errors, so make sure to use the correct one. This value can be either the
-    string ``0.92`` (the default) for use with HBase 0.92.x and later versions,
-    or ``0.90`` for use with HBase 0.90.x.
+    string ``0.90``, ``0.92``, ``0.94``, or ``0.96`` (the default).
 
     The optional `transport` parameter specifies the Thrift transport mode to
     use. Supported values for this parameter are ``buffered`` (the default) and
