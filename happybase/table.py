@@ -246,8 +246,8 @@ class Table(object):
         If `limit` is given, at most `limit` results will be returned.
 
         If `sorted_columns` is `True`, the columns in the rows returned
-        by this scanner will be retrieved in sorted_columns order, and
-        the data will be stored in `OrderedDict` instances.
+        by this scanner will be retrieved in sorted order, and the data
+        will be stored in `OrderedDict` instances.
 
         The `batch_size` argument specifies how many results should be
         retrieved per batch when retrieving results from the scanner. Only set
@@ -361,14 +361,13 @@ class Table(object):
                 n_fetched += len(items)
 
                 for n_returned, item in enumerate(items, n_returned + 1):
-                    row_key = item.row
                     if sorted_columns:
                         row = make_ordered_row(item.sortedColumns,
                                                include_timestamp)
                     else:
                         row = make_row(item.columns, include_timestamp)
 
-                    yield row_key, row
+                    yield item.row, row
 
                     if limit is not None and n_returned == limit:
                         return
