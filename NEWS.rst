@@ -11,7 +11,7 @@ Release date: *not yet released*
 
 * Add support for retrieving sorted columns, which is possible with the
   HBase 0.96 Thrift API. This feature uses a new `sorted_columns` argument
-  to py:meth:`Table.scan` (`issue #39
+  to :py:meth:`Table.scan` (`issue #39
   <https://github.com/wbolster/happybase/issues/39>`_).
 
 
