@@ -274,6 +274,8 @@ class Table(object):
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
         :param int batch_size: batch size for retrieving resuls
+        :param int limit: max number of rows to return
+        :param bool sorted_columns: whether to return sorted columns
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
