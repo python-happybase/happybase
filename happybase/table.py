@@ -263,7 +263,7 @@ class Table(object):
         * The `sorted_columns` argument is only available when using
           HBase 0.96 (or up).
 
-        .. versionadded:: 0.7
+        .. versionadded:: 0.8
            `sorted_columns` parameter
 
         :param str row_start: the row key to start at (inclusive)
