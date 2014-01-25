@@ -32,43 +32,46 @@ DEFAULT_COMPAT = '0.96'
 class Connection(object):
     """Connection to an HBase Thrift server.
 
-    The `host` and `port` parameters specify the host name and TCP port
+    The `host` and `port` argumetsn specify the host name and TCP port
     of the HBase Thrift server to connect to. If omitted or ``None``,
     a connection to the default port on ``localhost`` is made. If
-    specifed, the `timeout` parameter specifies the socket timeout in
+    specifed, the `timeout` argument specifies the socket timeout in
     milliseconds.
 
-    If `autoconnect` is `True` (the default) the connection is made directly,
-    otherwise :py:meth:`Connection.open` must be called explicitly before first
-    use.
+    If `autoconnect` is `True` (the default) the connection is made
+    directly, otherwise :py:meth:`Connection.open` must be called
+    explicitly before first use.
 
-    The optional `table_prefix` and `table_prefix_separator` arguments specify
-    a prefix and a separator string to be prepended to all table names, e.g.
-    when :py:meth:`Connection.table` is invoked. For example, if `table_prefix`
-    is ``myproject``, all tables tables will have names like ``myproject_XYZ``.
+    The optional `table_prefix` and `table_prefix_separator` arguments
+    specify a prefix and a separator string to be prepended to all table
+    names, e.g. when :py:meth:`Connection.table` is invoked. For
+    example, if `table_prefix` is ``myproject``, all tables tables will
+    have names like ``myproject_XYZ``.
 
-    The optional `compat` parameter sets the compatibility level for this
-    connection. Older HBase versions have slightly different Thrift interfaces,
-    and using the wrong protocol can lead to crashes caused by communication
-    errors, so make sure to use the correct one. This value can be either the
-    string ``0.90``, ``0.92``, ``0.94``, or ``0.96`` (the default).
+    The optional `compat` argument sets the compatibility level for
+    this connection. Older HBase versions have slightly different Thrift
+    interfaces, and using the wrong protocol can lead to crashes caused
+    by communication errors, so make sure to use the correct one. This
+    value can be either the string ``0.90``, ``0.92``, ``0.94``, or
+    ``0.96`` (the default).
 
-    The optional `transport` parameter specifies the Thrift transport mode to
-    use. Supported values for this parameter are ``buffered`` (the default) and
-    ``framed``. Make sure to choose the right one, since otherwise you might
-    see non-obvious connection errors or program hangs when making
-    a connection. HBase versions before 0.94 always use the buffered transport.
-    Starting with HBase 0.94, the Thrift server optionally uses a framed
-    transport, depending on the parameter passed to the ``hbase-daemon.sh start
-    thrift`` command. The default ``-threadpool`` mode uses the buffered
-    transport; the ``-hsha``, ``-nonblocking``, and ``-threadedselector`` modes
-    use the framed transport.
+    The optional `transport` argument specifies the Thrift transport
+    mode to use. Supported values for this argument are ``buffered``
+    (the default) and ``framed``. Make sure to choose the right one,
+    since otherwise you might see non-obvious connection errors or
+    program hangs when making a connection. HBase versions before 0.94
+    always use the buffered transport. Starting with HBase 0.94, the
+    Thrift server optionally uses a framed transport, depending on the
+    argument passed to the ``hbase-daemon.sh start thrift`` command.
+    The default ``-threadpool`` mode uses the buffered transport; the
+    ``-hsha``, ``-nonblocking``, and ``-threadedselector`` modes use the
+    framed transport.
 
     .. versionadded:: 0.5
-       `timeout` parameter
+       `timeout` argument
 
     .. versionadded:: 0.4
-       `table_prefix_separator` parameter
+       `table_prefix_separator` argument
 
     .. versionadded:: 0.4
        support for framed Thrift transports
@@ -176,16 +179,17 @@ class Connection(object):
     def table(self, name, use_prefix=True):
         """Return a table object.
 
-        Returns a :py:class:`happybase.Table` instance for the table named
-        `name`. This does not result in a round-trip to the server, and the
-        table is not checked for existence.
+        Returns a :py:class:`happybase.Table` instance for the table
+        named `name`. This does not result in a round-trip to the
+        server, and the table is not checked for existence.
 
-        The optional `use_prefix` parameter specifies whether the table prefix
-        (if any) is prepended to the specified `name`. Set this to `False` if
-        you want to use a table that resides in another ‘prefix namespace’,
-        e.g. a table from a ‘friendly’ application co-hosted on the same HBase
-        instance. See the `table_prefix` parameter to the
-        :py:class:`Connection` constructor for more information.
+        The optional `use_prefix` argument specifies whether the table
+        prefix (if any) is prepended to the specified `name`. Set this
+        to `False` if you want to use a table that resides in another
+        ‘prefix namespace’, e.g. a table from a ‘friendly’ application
+        co-hosted on the same HBase instance. See the `table_prefix`
+        argument to the :py:class:`Connection` constructor for more
+        information.
 
         :param str name: the name of the table
         :param bool use_prefix: whether to use the table prefix (if any)
@@ -225,7 +229,7 @@ class Connection(object):
         :param str name: The table name
         :param dict families: The name and options for each column family
 
-        The `families` parameter is a dictionary mapping column family
+        The `families` argument is a dictionary mapping column family
         names to a dictionary containing the options for this column
         family, e.g.
 
@@ -282,11 +286,11 @@ class Connection(object):
         """Delete the specified table.
 
         .. versionadded:: 0.5
-           the `disable` parameter
+           `disable` argument
 
-        In HBase, a table always needs to be disabled before it can be deleted.
-        If the `disable` parameter is `True`, this method first disables the
-        table if it wasn't already and then deletes it.
+        In HBase, a table always needs to be disabled before it can be
+        deleted. If the `disable` argument is `True`, this method first
+        disables the table if it wasn't already and then deletes it.
 
         :param str name: The table name
         :param bool disable: Whether to first disable the table if needed

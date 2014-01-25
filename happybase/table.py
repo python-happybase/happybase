@@ -193,10 +193,10 @@ class Table(object):
         if versions is None:
             versions = (2 ** 31) - 1  # Thrift type is i32
         elif not isinstance(versions, int):
-            raise TypeError("'versions' parameter must be a number or None")
+            raise TypeError("'versions' argument must be a number or None")
         elif versions < 1:
             raise ValueError(
-                "'versions' parameter must be at least 1 (or None)")
+                "'versions' argument must be at least 1 (or None)")
 
         if timestamp is None:
             cells = self.connection.client.getVer(
@@ -273,7 +273,7 @@ class Table(object):
           HBase 0.96 (or up).
 
         .. versionadded:: 0.8
-           `sorted_columns` parameter
+           `sorted_columns` argument
 
         :param str row_start: the row key to start at (inclusive)
         :param str row_stop: the row key to stop at (exclusive)
@@ -409,7 +409,7 @@ class Table(object):
         method to manipulate data.
 
         .. versionadded:: 0.7
-           `wal` parameter
+           `wal` argument
 
         :param str row: the row key
         :param dict data: the data to store
@@ -429,7 +429,7 @@ class Table(object):
         method to manipulate data.
 
         .. versionadded:: 0.7
-           `wal` parameter
+           `wal` argument
 
         :param str row: the row key
         :param list_or_tuple columns: list of columns (optional)
@@ -465,7 +465,7 @@ class Table(object):
         :py:meth:`Batch.delete`.
 
         .. versionadded:: 0.7
-           `wal` parameter
+           `wal` argument
 
         :param bool transaction: whether this batch should behave like
                                  a transaction (only useful when used as a

@@ -40,7 +40,7 @@ class ConnectionPool(object):
 
     .. versionadded:: 0.5
 
-    The `size` parameter specifies how many connections this pool
+    The `size` argument specifies how many connections this pool
     manages. Additional keyword arguments are passed unmodified to the
     :py:class:`happybase.Connection` constructor, with the exception of
     the `autoconnect` argument, since maintaining connections is the
