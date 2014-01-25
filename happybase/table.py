@@ -254,6 +254,15 @@ class Table(object):
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
 
+        .. warning::
+
+           Not all HBase filters can be used in combination with a batch
+           size. Explicitly specify `None` for the `batch_size` argument
+           in those cases to override the default value. Failure to do
+           so can result in hard to debug errors (not HappyBase's
+           fault), such as a non-responsive connection. The HBase logs
+           may contain more useful information in these situations.
+
         **Compatibility notes:**
 
         * The `filter` argument is only available when using HBase 0.92
@@ -280,11 +289,11 @@ class Table(object):
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
         """
-        if batch_size < 1:
-            raise ValueError("'batch_size' must be >= 1")
+        if batch_size is not None and batch_size < 1:
+            raise ValueError("'batch_size' must be >= 1 (or None)")
 
         if limit is not None and limit < 1:
-            raise ValueError("'limit' must be >= 1")
+            raise ValueError("'limit' must be >= 1 (or None)")
 
         if sorted_columns and self.connection.compat < '0.96':
             raise NotImplementedError(
@@ -349,16 +358,16 @@ class Table(object):
         n_returned = n_fetched = 0
         try:
             while True:
-                if limit is None:
+                if batch_size is None:
+                    how_many = 1
+                else:
                     how_many = batch_size
-                else:
-                    how_many = min(batch_size, limit - n_returned)
 
-                if how_many == 1:
-                    items = self.connection.client.scannerGet(scan_id)
-                else:
-                    items = self.connection.client.scannerGetList(
-                        scan_id, how_many)
+                if limit is not None:
+                    how_many = min(how_many, limit - n_returned)
+
+                items = self.connection.client.scannerGetList(
+                    scan_id, how_many)
 
                 n_fetched += len(items)
 
