@@ -30,11 +30,11 @@ We'll get started by connecting to HBase. Just create a new
 In some setups, the :py:class:`Connection` class needs some additional
 information about the HBase version it will be connecting to, and which Thrift
 transport to use. If you're still using HBase 0.90.x, you need to set the
-`compat` parameter to make sure HappyBase speaks the correct wire protocol.
+`compat` argument to make sure HappyBase speaks the correct wire protocol.
 Additionally, if you're using HBase 0.94 with a non-standard Thrift transport
-mode, make sure to supply the right `transport` parameter. See the API
+mode, make sure to supply the right `transport` argument. See the API
 documentation for the :py:class:`Connection` class for more information about
-these parameters and their supported values.
+these arguments and their supported values.
 
 When a :py:class:`Connection` is created, it automatically opens a socket
 connection to the HBase Thrift server. This behaviour can be disabled by
@@ -116,7 +116,7 @@ application, e.g. for a project ``myproject`` all tables have names like
 ``myproject_XYZ``.
 
 Instead of adding this application-specific prefix each time a table name is
-passed to HappyBase, the `table_prefix` parameter to :py:class:`Connection` can
+passed to HappyBase, the `table_prefix` argument to :py:class:`Connection` can
 take care of this. HappyBase will prepend that prefix (and an underscore) to
 each table name handled by that :py:class:`Connection` instance. For example::
 
@@ -211,7 +211,7 @@ timestamp up to the specified timestamp::
 
 By default, HappyBase does not include timestamps in the results it returns. In
 your application needs access to the timestamps, simply set the
-`include_timestamp` parameter to ``True``. Now, each cell in the result will be
+`include_timestamp` argument to ``True``. Now, each cell in the result will be
 returned as a `(value, timestamp)` tuple instead of just a value::
 
    row = table.row('row-key', columns=['cf1:col1'], include_timestamp=True)
