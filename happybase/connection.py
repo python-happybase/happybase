@@ -32,7 +32,7 @@ DEFAULT_COMPAT = '0.96'
 class Connection(object):
     """Connection to an HBase Thrift server.
 
-    The `host` and `port` argumetsn specify the host name and TCP port
+    The `host` and `port` arguments specify the host name and TCP port
     of the HBase Thrift server to connect to. If omitted or ``None``,
     a connection to the default port on ``localhost`` is made. If
     specifed, the `timeout` argument specifies the socket timeout in
