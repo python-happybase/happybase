@@ -446,6 +446,13 @@ def test_scan_sorting():
         row.items())
 
 
+def test_scan_filter_and_batch_size():
+    # See issue #54 and #56
+    filter = "SingleColumnValueFilter ('cf1', 'qual1', =, 'binary:val1')"
+    for k, v in table.scan(filter=filter):
+        print v
+
+
 def test_delete():
     row_key = 'row-test-delete'
     data = {'cf1:col1': 'v1',

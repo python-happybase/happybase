@@ -214,8 +214,8 @@ class Table(object):
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
-             include_timestamp=False, batch_size=1000, limit=None,
-             sorted_columns=False):
+             include_timestamp=False, batch_size=1000, scan_batching=None,
+             limit=None, sorted_columns=False):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -245,14 +245,21 @@ class Table(object):
 
         If `limit` is given, at most `limit` results will be returned.
 
-        If `sorted_columns` is `True`, the columns in the rows returned
-        by this scanner will be retrieved in sorted order, and the data
-        will be stored in `OrderedDict` instances.
-
         The `batch_size` argument specifies how many results should be
         retrieved per batch when retrieving results from the scanner. Only set
         this to a low value (or even 1) if your data is large, since a low
         batch size results in added round-trips to the server.
+
+        The optional `scan_batching` is for advanced usage only; it
+        translates to `Scan.setBatching()` at the Java side (inside the
+        Thrift server). By setting this value rows may be split into
+        partial rows, so result rows may be incomplete, and the number
+        of results returned by te scanner may no longer correspond to
+        the number of rows matched by the scan.
+
+        If `sorted_columns` is `True`, the columns in the rows returned
+        by this scanner will be retrieved in sorted order, and the data
+        will be stored in `OrderedDict` instances.
 
         **Compatibility notes:**
 
@@ -274,6 +281,7 @@ class Table(object):
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
         :param int batch_size: batch size for retrieving resuls
+        :param bool scan_batching: server-side scan batching (optional)
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
 
@@ -327,10 +335,25 @@ class Table(object):
                         self.name, row_start, row_stop, columns, timestamp, {})
 
         else:
-            # The scan's caching size is set to the batch_size, so that
-            # the HTable on the Java side retrieves rows from the region
-            # servers in the same chunk sizes that it sends out over
-            # Thrift.
+            # XXX: The "batch_size" can be slightly confusing to those
+            # familiar with the HBase Java API:
+            #
+            # * TScan.caching (Thrift API) translates to
+            #   Scan.setCaching() (Java API)
+            #
+            # * TScan.batchSize (Thrift API) translates to
+            #   Scan.setBatching (Java API) .
+            #
+            # However, we set Scan.setCaching() to what is called
+            # batch_size in the HappyBase API, so that the HTable on the
+            # Java side (inside the Thrift server) retrieves rows from
+            # the region servers in the same chunk sizes that it sends
+            # out again to Python (over Thrift). This cannot be tweaked
+            # (by design).
+            #
+            # The Scan.setBatching() value (Java API), which possibly
+            # cuts rows into multiple partial rows, can be set using the
+            # slightly strange name scan_batching.
             scan = TScan(
                 startRow=row_start,
                 stopRow=row_stop,
@@ -338,7 +361,7 @@ class Table(object):
                 columns=columns,
                 caching=batch_size,
                 filterString=filter,
-                batchSize=batch_size,
+                batchSize=scan_batching,
                 sortColumns=sorted_columns,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
