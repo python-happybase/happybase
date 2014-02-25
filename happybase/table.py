@@ -273,6 +273,9 @@ class Table(object):
         .. versionadded:: 0.8
            `sorted_columns` argument
 
+        .. versionadded:: 0.8
+           `scan_batching` argument
+
         :param str row_start: the row key to start at (inclusive)
         :param str row_stop: the row key to stop at (exclusive)
         :param str row_prefix: a prefix of the row key that must match
