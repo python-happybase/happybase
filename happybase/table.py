@@ -294,6 +294,9 @@ class Table(object):
         if limit is not None and limit < 1:
             raise ValueError("'limit' must be >= 1")
 
+        if scan_batching is not None and scan_batching < 1:
+            raise ValueError("'scan_batching' must be >= 1")
+
         if sorted_columns and self.connection.compat < '0.96':
             raise NotImplementedError(
                 "'sorted_columns' is not supported in HBase >= 0.96")
