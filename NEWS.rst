@@ -7,7 +7,7 @@ Version history
 HappyBase 0.8
 -------------
 
-Release date: *not yet released*
+Release date: 2014-02-25
 
 * Add (and default to) '0.96' compatibility mode in :py:class:`Connection`.
 
