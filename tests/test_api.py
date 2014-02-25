@@ -357,7 +357,7 @@ def test_scan():
         list(table.scan(row_prefix='foobar', row_start='xyz'))
 
     with assert_raises(ValueError):
-        list(table.scan(batch_size=0))
+        list(table.scan(batch_size=None))
 
     if connection.compat == '0.90':
         with assert_raises(NotImplementedError):
@@ -444,13 +444,6 @@ def test_scan_sorting():
     assert_list_equal(
         sorted(input_row.items()),
         row.items())
-
-
-def test_scan_filter_and_batch_size():
-    # See issue #54
-    filter = "SingleColumnValueFilter ('cf1', 'qual1', =, 'binary:val1')"
-    for k, v in table.scan(filter=filter, batch_size=None):
-        print v
 
 
 def test_delete():

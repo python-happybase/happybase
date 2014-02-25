@@ -18,11 +18,6 @@ Release date: *not yet released*
   Python 2.6 a separate ```ordereddict``` pacakge has to be installed from PyPI.
   (`issue #39 <https://github.com/wbolster/happybase/issues/39>`_)
 
-* Allow `None` as a valid value for the `batch_size` argument to
-  :py:meth:`Table.scan`, since HBase does not support specifying a batch size
-  when some scanner filters are used. (`issue #54
-  <https://github.com/wbolster/happybase/issues/54>`_).
-
 
 HappyBase 0.7
 -------------
