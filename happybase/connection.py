@@ -6,6 +6,8 @@ HappyBase connection module.
 
 import logging
 
+import random
+
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol
@@ -107,6 +109,9 @@ class Connection(object):
 
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
+        hosts = host.split(',') if host else []
+        if len(hosts)>1:
+            (host, _ , port)= random.choice(hosts).partition(':')
         self.host = host or DEFAULT_HOST
         self.port = port or DEFAULT_PORT
         self.timeout = timeout
