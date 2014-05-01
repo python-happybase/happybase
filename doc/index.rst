@@ -18,8 +18,10 @@ __ http://thrift.apache.org/
 
 .. note::
 
-   **Do you enjoy HappyBase?** Please consider making a small donation__ to let
-   me know you appreciate my work. Thanks!
+   **Do you enjoy HappyBase?** Great! You should know that I don't use HappyBase
+   myself anymore, but still maintain it because it's quite popular. Please
+   consider making a small donation__ to let me know you appreciate my work.
+   Thanks!
 
    __ https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZJ9U8DNN6KZ9Q
 
