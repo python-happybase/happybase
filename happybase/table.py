@@ -302,7 +302,7 @@ class Table(object):
 
         if sorted_columns and self.connection.compat < '0.96':
             raise NotImplementedError(
-                "'sorted_columns' is not supported in HBase >= 0.96")
+                "'sorted_columns' is only supported in HBase >= 0.96")
 
         if row_prefix is not None:
             if row_start is not None or row_stop is not None:
