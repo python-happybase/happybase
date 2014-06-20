@@ -66,6 +66,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void scannerClose(ScannerID id)'
   print '   getRowOrBefore(Text tableName, Text row, Text family)'
   print '  TRegionInfo getRegionInfo(Text row)'
+  print '   append(TAppend append)'
+  print '  bool checkAndPut(Text tableName, Text row, Text column, Text value, Mutation mput,  attributes)'
   print ''
   sys.exit(0)
 
@@ -374,6 +376,18 @@ elif cmd == 'getRegionInfo':
     print 'getRegionInfo requires 1 args'
     sys.exit(1)
   pp.pprint(client.getRegionInfo(eval(args[0]),))
+
+elif cmd == 'append':
+  if len(args) != 1:
+    print 'append requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.append(eval(args[0]),))
+
+elif cmd == 'checkAndPut':
+  if len(args) != 6:
+    print 'checkAndPut requires 6 args'
+    sys.exit(1)
+  pp.pprint(client.checkAndPut(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),eval(args[4]),eval(args[5]),))
 
 else:
   print 'Unrecognized method %s' % cmd

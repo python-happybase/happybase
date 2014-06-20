@@ -862,6 +862,7 @@ class TScan(object):
    - filterString
    - batchSize
    - sortColumns
+   - reversed
   """
 
   thrift_spec = (
@@ -874,9 +875,10 @@ class TScan(object):
     (6, TType.STRING, 'filterString', None, None, ), # 6
     (7, TType.I32, 'batchSize', None, None, ), # 7
     (8, TType.BOOL, 'sortColumns', None, None, ), # 8
+    (9, TType.BOOL, 'reversed', None, None, ), # 9
   )
 
-  def __init__(self, startRow=None, stopRow=None, timestamp=None, columns=None, caching=None, filterString=None, batchSize=None, sortColumns=None,):
+  def __init__(self, startRow=None, stopRow=None, timestamp=None, columns=None, caching=None, filterString=None, batchSize=None, sortColumns=None, reversed=None,):
     self.startRow = startRow
     self.stopRow = stopRow
     self.timestamp = timestamp
@@ -885,6 +887,7 @@ class TScan(object):
     self.filterString = filterString
     self.batchSize = batchSize
     self.sortColumns = sortColumns
+    self.reversed = reversed
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -940,6 +943,11 @@ class TScan(object):
           self.sortColumns = iprot.readBool();
         else:
           iprot.skip(ftype)
+      elif fid == 9:
+        if ftype == TType.BOOL:
+          self.reversed = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -984,6 +992,124 @@ class TScan(object):
     if self.sortColumns is not None:
       oprot.writeFieldBegin('sortColumns', TType.BOOL, 8)
       oprot.writeBool(self.sortColumns)
+      oprot.writeFieldEnd()
+    if self.reversed is not None:
+      oprot.writeFieldBegin('reversed', TType.BOOL, 9)
+      oprot.writeBool(self.reversed)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class TAppend(object):
+  """
+  An Append object is used to specify the parameters for performing the append operation.
+
+  Attributes:
+   - table
+   - row
+   - columns
+   - values
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'table', None, None, ), # 1
+    (2, TType.STRING, 'row', None, None, ), # 2
+    (3, TType.LIST, 'columns', (TType.STRING,None), None, ), # 3
+    (4, TType.LIST, 'values', (TType.STRING,None), None, ), # 4
+  )
+
+  def __init__(self, table=None, row=None, columns=None, values=None,):
+    self.table = table
+    self.row = row
+    self.columns = columns
+    self.values = values
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.table = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.row = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype33, _size30) = iprot.readListBegin()
+          for _i34 in xrange(_size30):
+            _elem35 = iprot.readString();
+            self.columns.append(_elem35)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.LIST:
+          self.values = []
+          (_etype39, _size36) = iprot.readListBegin()
+          for _i40 in xrange(_size36):
+            _elem41 = iprot.readString();
+            self.values.append(_elem41)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('TAppend')
+    if self.table is not None:
+      oprot.writeFieldBegin('table', TType.STRING, 1)
+      oprot.writeString(self.table)
+      oprot.writeFieldEnd()
+    if self.row is not None:
+      oprot.writeFieldBegin('row', TType.STRING, 2)
+      oprot.writeString(self.row)
+      oprot.writeFieldEnd()
+    if self.columns is not None:
+      oprot.writeFieldBegin('columns', TType.LIST, 3)
+      oprot.writeListBegin(TType.STRING, len(self.columns))
+      for iter42 in self.columns:
+        oprot.writeString(iter42)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.values is not None:
+      oprot.writeFieldBegin('values', TType.LIST, 4)
+      oprot.writeListBegin(TType.STRING, len(self.values))
+      for iter43 in self.values:
+        oprot.writeString(iter43)
+      oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
