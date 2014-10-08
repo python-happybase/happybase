@@ -8,7 +8,7 @@ import logging
 
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TCompactProtocol
 
 from .hbase import Hbase
 from .hbase.ttypes import ColumnDescriptor
@@ -23,11 +23,16 @@ THRIFT_TRANSPORTS = dict(
     framed=TFramedTransport,
 )
 
+THRIFT_PROTOCOLS = dict(
+    binary=TBinaryProtocol.TBinaryProtocolAccelerated,
+    compact=TCompactProtocol.TCompactProtocol,
+)
+
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 DEFAULT_TRANSPORT = 'buffered'
 DEFAULT_COMPAT = '0.96'
-
+DEFAULT_PROTOCOL = 'binary'
 
 class Connection(object):
     """Connection to an HBase Thrift server.
@@ -67,6 +72,15 @@ class Connection(object):
     ``-hsha``, ``-nonblocking``, and ``-threadedselector`` modes use the
     framed transport.
 
+    The optional `protocol` argument specifies the Thrift transport
+    protocol to use. Supported values for this argument are ``binary``
+    (the default) and ``compact``. Make sure to choose the right one,
+    since otherwise you might see non-obvious connection errors or
+    program hangs when making a connection. TCompactProtocol is a 
+    more compact binary format that is  typically more efficient to 
+    process as well. TBinaryAccelerated is the default protocol that
+    happybase uses.
+
     .. versionadded:: 0.5
        `timeout` argument
 
@@ -88,7 +102,7 @@ class Connection(object):
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
                  table_prefix_separator='_', compat=DEFAULT_COMPAT,
-                 transport=DEFAULT_TRANSPORT):
+                 transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
 
         if transport not in THRIFT_TRANSPORTS:
             raise ValueError("'transport' must be one of %s"
@@ -105,6 +119,10 @@ class Connection(object):
             raise ValueError("'compat' must be one of %s"
                              % ", ".join(COMPAT_MODES))
 
+        if protocol not in THRIFT_PROTOCOLS:
+            raise ValueError("'protocol' must be one of %s"
+                             % ", ".join(THRIFT_PROTOCOLS))
+
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
         self.host = host or DEFAULT_HOST
@@ -115,6 +133,7 @@ class Connection(object):
         self.compat = compat
 
         self._transport_class = THRIFT_TRANSPORTS[transport]
+        self._protocol_class = THRIFT_PROTOCOLS[protocol]
         self._refresh_thrift_client()
 
         if autoconnect:
@@ -129,7 +148,7 @@ class Connection(object):
             socket.setTimeout(self.timeout)
 
         self.transport = self._transport_class(socket)
-        protocol = TBinaryProtocol.TBinaryProtocolAccelerated(self.transport)
+        protocol = self._protocol_class(self.transport)
         self.client = Hbase.Client(protocol)
 
     def _table_name(self, name):
