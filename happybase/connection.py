@@ -81,6 +81,8 @@ class Connection(object):
     process as well. TBinaryAccelerated is the default protocol that
     happybase uses.
 
+    .. versionadded:: 0.9b
+       `protocol` argument
     .. versionadded:: 0.5
        `timeout` argument
 
