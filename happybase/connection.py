@@ -22,7 +22,6 @@ THRIFT_TRANSPORTS = dict(
     buffered=TBufferedTransport,
     framed=TFramedTransport,
 )
-
 THRIFT_PROTOCOLS = dict(
     binary=TBinaryProtocol.TBinaryProtocolAccelerated,
     compact=TCompactProtocol.TCompactProtocol,
@@ -33,6 +32,7 @@ DEFAULT_PORT = 9090
 DEFAULT_TRANSPORT = 'buffered'
 DEFAULT_COMPAT = '0.96'
 DEFAULT_PROTOCOL = 'binary'
+
 
 class Connection(object):
     """Connection to an HBase Thrift server.
