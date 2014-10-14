@@ -76,9 +76,9 @@ class Connection(object):
     protocol to use. Supported values for this argument are ``binary``
     (the default) and ``compact``. Make sure to choose the right one,
     since otherwise you might see non-obvious connection errors or
-    program hangs when making a connection. TCompactProtocol is a 
-    more compact binary format that is  typically more efficient to 
-    process as well. TBinaryAccelerated is the default protocol that
+    program hangs when making a connection. ``TCompactProtocol`` is
+    a more compact binary format that is  typically more efficient to
+    process as well. ``TBinaryAccelerated`` is the default protocol that
     happybase uses.
 
     .. versionadded:: 0.9b
