@@ -9,6 +9,9 @@ HappyBase 0.9
 
 Release date: *not yet released*
 
+* Add support for the Thrift compact protocol (``TCompactProtocol``) in
+  :py:class:`Connection`.
+
 
 HappyBase 0.8
 -------------
