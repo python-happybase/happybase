@@ -7,7 +7,7 @@ Version history
 HappyBase 0.9
 -------------
 
-Release date: *not yet released*
+Release date: 2014-11-24
 
 * Fix an issue where scanners would return fewer results than expected due to
   HBase not always behaving as its documentation suggests (`issue #72
