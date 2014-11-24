@@ -389,6 +389,9 @@ class Table(object):
                     items = self.connection.client.scannerGetList(
                         scan_id, how_many)
 
+                if not items:
+                    break  # scan has finished
+
                 n_fetched += len(items)
 
                 for n_returned, item in enumerate(items, n_returned + 1):
@@ -401,11 +404,7 @@ class Table(object):
                     yield item.row, row
 
                     if limit is not None and n_returned == limit:
-                        return
-
-                # Avoid round-trip when exhausted
-                if len(items) < how_many:
-                    break
+                        break  # not interested in the remainder
         finally:
             self.connection.client.scannerClose(scan_id)
             logger.debug(
