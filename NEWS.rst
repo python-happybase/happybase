@@ -27,9 +27,9 @@ Release date: 2014-02-25
 
 * Add support for retrieving sorted columns, which is possible with the HBase
   0.96 Thrift API. This feature uses a new `sorted_columns` argument to
-  :py:meth:`Table.scan`. An ```OrderedDict`` implementation is required for this
+  :py:meth:`Table.scan`. An ``OrderedDict`` implementation is required for this
   feature; with Python 2.7 this is available from the standard library, but for
-  Python 2.6 a separate ```ordereddict``` pacakge has to be installed from PyPI.
+  Python 2.6 a separate ``ordereddict`` package has to be installed from PyPI.
   (`issue #39 <https://github.com/wbolster/happybase/issues/39>`_)
 
 * The `batch_size` argument to :py:meth:`Table.scan` is no longer propagated to
