@@ -10,11 +10,12 @@ HappyBase 0.9
 Release date: *not yet released*
 
 * Fix an issue where scanners would return fewer results than expected due to
-  HBase not always behaving as its documentation suggests. (`issue #72
+  HBase not always behaving as its documentation suggests (`issue #72
   <https://github.com/wbolster/happybase/issues/72>`_).
 
 * Add support for the Thrift compact protocol (``TCompactProtocol``) in
-  :py:class:`Connection`.
+  :py:class:`Connection` (`issue #70
+  <https://github.com/wbolster/happybase/issues/70>`_).
 
 
 HappyBase 0.8
