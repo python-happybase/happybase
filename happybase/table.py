@@ -383,11 +383,8 @@ class Table(object):
                 else:
                     how_many = min(batch_size, limit - n_returned)
 
-                if how_many == 1:
-                    items = self.connection.client.scannerGet(scan_id)
-                else:
-                    items = self.connection.client.scannerGetList(
-                        scan_id, how_many)
+                items = self.connection.client.scannerGetList(
+                    scan_id, how_many)
 
                 if not items:
                     break  # scan has finished
