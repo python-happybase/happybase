@@ -387,7 +387,7 @@ class Table(object):
                     scan_id, how_many)
 
                 if not items:
-                    break  # scan has finished
+                    return  # scan has finished
 
                 n_fetched += len(items)
 
@@ -401,7 +401,7 @@ class Table(object):
                     yield item.row, row
 
                     if limit is not None and n_returned == limit:
-                        break  # not interested in the remainder
+                        return  # scan has finished
         finally:
             self.connection.client.scannerClose(scan_id)
             logger.debug(
