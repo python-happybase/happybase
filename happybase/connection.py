@@ -153,7 +153,7 @@ class Connection(object):
                 except  TTransportException as ex:
                     falis+=1
         finally:
-            if fails<len(failover) and len(failover):
+            if fails==0 or fails<len(failover):
                logger.debug("Connection sucessful")
             else:
                 raise  TTransportException("Failed to connect in the end")
