@@ -7,7 +7,7 @@ HappyBase connection module.
 import logging
 
 from thrift.transport.TSocket import TSocket
-from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
+from thrift.transport.TTransport import TBufferedTransport, TFramedTransport,TTransportException
 from thrift.protocol import TBinaryProtocol, TCompactProtocol
 
 from .hbase import Hbase
@@ -103,7 +103,7 @@ class Connection(object):
     :param str transport: Thrift transport mode (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
-                 autoconnect=True, table_prefix=None,
+                 autoconnect=True, table_prefix=None,failover=[],
                  table_prefix_separator='_', compat=DEFAULT_COMPAT,
                  transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
 
@@ -138,9 +138,26 @@ class Connection(object):
         self._transport_class = THRIFT_TRANSPORTS[transport]
         self._protocol_class = THRIFT_PROTOCOLS[protocol]
         self._refresh_thrift_client()
-
-        if autoconnect:
-            self.open()
+        fails=0
+        try:
+            if autoconnect:
+                self.open()
+        except TTransportException as ex:
+            
+            for h in failover:
+                logger.debug("Opening Thrift transport failed, trying failover %s", h)
+                self.host=h
+                try:
+                    self._refresh_thrift_client()
+                    self.open()
+                except  TTransportException as ex:
+                    falis+=1
+        finally:
+            if fails==0 or fails<len(failover):
+               logger.debug("Connection sucessful")
+            else:
+                raise  TTransportException("Failed to connect in the end")
+            
 
         self._initialized = True
 
