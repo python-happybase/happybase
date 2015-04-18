@@ -144,6 +144,14 @@ class Connection(object):
 
         self._initialized = True
 
+    def __enter__(self):
+        """Context enter."""
+        return self
+
+    def __exit__(self, e_type, e_value, e_traceback):
+        """Context exit"""
+        self.close() 
+
     def _refresh_thrift_client(self):
         """Refresh the Thrift socket, transport, and client."""
         socket = TSocket(self.host, self.port)
