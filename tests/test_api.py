@@ -183,6 +183,26 @@ def test_atomic_counters():
     assert_equal(10, table.counter_dec(row, column, -7))
 
 
+def test_multiple_counters():
+    row = 'row-with-counters'
+    columns = ['cf1:counter1', 'cf1:counter2', 'cf1:counter3']
+
+    table.counters_inc(row, zip(columns, [0, 0, 0]))
+    assert_equal([0, 0, 0], [table.counter_get(row, c) for c in columns])
+
+    table.counters_inc(row, zip(columns, [1, 3, 5]))
+    assert_equal([1, 3, 5], [table.counter_get(row, c) for c in columns])
+
+    table.counters_inc(row, zip(columns, [-1, -3, -5]))
+    assert_equal([0, 0, 0], [table.counter_get(row, c) for c in columns])
+
+    for col, delta in zip(columns, [1, 3, 5]):
+        table.counters_inc(row, [(col, delta)])
+        assert_equal(delta, table.counter_get(row, col))
+        table.counter_dec(row, [(col, delta)])
+        assert_equal(0, table.counter_get(row, col))
+
+
 def test_batch():
     with assert_raises(TypeError):
         table.batch(timestamp='invalid')

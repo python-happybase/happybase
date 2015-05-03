@@ -559,25 +559,6 @@ class Table(object):
         return self.connection.client.atomicIncrement(
             self.name, row, column, value)
 
-    def counter_incs(self, row, data):
-        """
-
-        This method increments of decrements the counter columns in the row
-        specified by `row`. The `data` argument is iteratble data type that
-        contains tuple of column and value, e.g. [(`cf:col`, 1), (`cf:col2`, 2)].
-
-        Note that unlike `counter_inc`, does not return value after incrementing.
-
-        :param str row: the row key
-        :param list data: list of tuple for columns and values
-        """
-        if data is not None and not isinstance(data, (list, tuple, izip)):
-            raise TypeError("'data' must be a iterable data types of tuple")
-
-        self.connection.client.incrementRows(
-            [TIncrement(table=self.name, row=row, column=column, ammount=value)
-             for column, value in data])
-
     def counter_dec(self, row, column, value=1):
         """Atomically decrement (or increments) a counter column.
 
@@ -588,3 +569,24 @@ class Table(object):
         :rtype: int
         """
         return self.counter_inc(row, column, -value)
+
+    def counters_inc(self, row, data):
+        """
+
+        This method increments (or decrements) the counter columns in the row
+        specified by `row`. The `data` argument is iteratble data type that
+        contains tuple of column and value, e.g.
+        [(`cf:col`, 1), (`cf:col2`, 2)].
+
+        Note that unlike `counter_inc`, does not return value after
+        incrementing.
+
+        :param str row: the row key
+        :param list data: list of tuple for columns and values
+        """
+        if data is not None and not isinstance(data, (list, tuple, izip)):
+            raise TypeError("'data' must be a iterable data types of tuple")
+
+        self.connection.client.incrementRows(
+            [TIncrement(table=self.name, row=row, column=column, ammount=value)
+             for column, value in data])
