@@ -199,8 +199,16 @@ def test_multiple_counters():
     for col, delta in zip(columns, [1, 3, 5]):
         table.counters_inc(row, [(col, delta)])
         assert_equal(delta, table.counter_get(row, col))
-        table.counter_dec(row, [(col, delta)])
+        table.counter_dec(row, [(col, -delta)])
         assert_equal(0, table.counter_get(row, col))
+
+    table.counters_inc(row, zip(columns, [1, 3, 5]))
+    table.counters_inc(row, zip(columns, [1, 3, 5]))
+    assert_equal([2, 6, 10], [table.counter_get(row, c) for c in columns])
+
+    table.counters_inc(row, zip(columns, [-1, -3, -5]))
+    table.counters_inc(row, zip(columns, [-1, -3, -5]))
+    assert_equal([0, 0, 0], [table.counter_get(row, c) for c in columns])
 
 
 def test_batch():
