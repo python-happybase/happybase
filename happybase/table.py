@@ -3,7 +3,6 @@ HappyBase table module.
 """
 
 import logging
-from itertools import izip
 from numbers import Integral
 from operator import attrgetter
 from struct import Struct
@@ -574,19 +573,19 @@ class Table(object):
         """
 
         This method increments (or decrements) the counter columns in the row
-        specified by `row`. The `data` argument is iteratble data type that
-        contains tuple of column and value, e.g.
-        [(`cf:col`, 1), (`cf:col2`, 2)].
+        specified by `row`. The `data` argument is a dictionary that
+        maps columns and its counter values, e.g.
+        {`cf:col`: 1, `cf:col2`: 2}.
 
         Note that unlike `counter_inc`, does not return value after
         incrementing.
 
         :param str row: the row key
-        :param list data: list of tuple for columns and values
+        :param dict data: the dictionary maps columns and tis counter values
         """
-        if data is not None and not isinstance(data, (list, tuple, izip)):
+        if data is not None and not isinstance(data, dict):
             raise TypeError("'data' must be a iterable data types of tuple")
 
         self.connection.client.incrementRows(
             [TIncrement(table=self.name, row=row, column=column, ammount=value)
-             for column, value in data])
+             for column, value in data.iteritems()])
