@@ -575,16 +575,16 @@ class Table(object):
         This method increments (or decrements) the counter columns in the row
         specified by `row`. The `data` argument is a dictionary that
         maps columns and its counter values, e.g.
-        {`cf:col`: 1, `cf:col2`: 2}.
+        {"cf:col": 1, "cf:col2": 2}.
 
         Note that unlike `counter_inc`, does not return value after
         incrementing.
 
         :param str row: the row key
-        :param dict data: the dictionary maps columns and tis counter values
+        :param dict data: the dictionary that maps columns to numeric counter values
         """
-        if data is not None and not isinstance(data, dict):
-            raise TypeError("'data' must be a iterable data types of tuple")
+        if not isinstance(data, dict):
+            raise TypeError("'data' must be a dictionary")
 
         self.connection.client.incrementRows(
             [TIncrement(table=self.name, row=row, column=column, ammount=value)
