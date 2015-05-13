@@ -215,7 +215,7 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
-             limit=None, sorted_columns=False):
+             limit=None, sorted_columns=False, reversed=False):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -270,6 +270,9 @@ class Table(object):
         * The `sorted_columns` argument is only available when using
           HBase 0.96 (or up).
 
+        * The `reversed` option is only available when using HBase 0.98
+          (or up).
+
         .. versionadded:: 0.8
            `sorted_columns` argument
 
@@ -287,6 +290,7 @@ class Table(object):
         :param bool scan_batching: server-side scan batching (optional)
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
+        :param bool reversed: whether or not to reverse the row ordering
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
@@ -369,6 +373,7 @@ class Table(object):
                 filterString=filter,
                 batchSize=scan_batching,
                 sortColumns=sorted_columns,
+                reversed=reversed
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
