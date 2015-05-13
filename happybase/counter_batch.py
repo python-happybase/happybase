@@ -1,7 +1,7 @@
 from happybase.hbase.ttypes import TIncrement
 
 
-class BatchCounters:
+class CounterBatch:
     def __init__(self, table, batch_size=None):
         self.table = table
         self.batch_size = batch_size

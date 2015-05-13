@@ -10,7 +10,7 @@ from struct import Struct
 from .hbase.ttypes import TScan
 from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
-from .batch_increments import BatchCounters
+from .counter_batch import CounterBatch
 
 logger = logging.getLogger(__name__)
 
@@ -374,7 +374,7 @@ class Table(object):
                 filterString=filter,
                 batchSize=scan_batching,
                 sortColumns=sorted_columns,
-                reversed=reversed
+                reversed=reversed,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
@@ -503,10 +503,10 @@ class Table(object):
         del kwargs['self']
         return Batch(table=self, **kwargs)
 
-    def batch_counters(self, batch_size=None):
-        """Create a new batch counter operation for this table.
+    def counter_batch(self, batch_size=None):
+        """Create a new batch of counter operation for this table.
 
-        This method returns a new :py:class:`BatchCounters` instance that can be used
+        This method returns a new :py:class:`CounterBatch` instance that can be used
         for mass counter manipulation.
 
         If given, the `batch_size` argument specifies the maximum batch size
@@ -515,10 +515,10 @@ class Table(object):
 
         :param int batch_size: batch size (optional)
 
-        :return: BatchCounters instance
-        :rtype: :py:class:`BatchCounters`
+        :return: CounterBatch instance
+        :rtype: :py:class:`CounterBatch`
         """
-        return BatchCounters(table=self, batch_size=batch_size)
+        return CounterBatch(table=self, batch_size=batch_size)
 
     #
     # Atomic counters
