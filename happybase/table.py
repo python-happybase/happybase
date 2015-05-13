@@ -10,6 +10,7 @@ from struct import Struct
 from .hbase.ttypes import TScan
 from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
+from .batch_increments import BatchCounters
 
 logger = logging.getLogger(__name__)
 
@@ -501,6 +502,23 @@ class Table(object):
         kwargs = locals().copy()
         del kwargs['self']
         return Batch(table=self, **kwargs)
+
+    def batch_counters(self, batch_size=None):
+        """Create a new batch counter operation for this table.
+
+        This method returns a new :py:class:`BatchCounters` instance that can be used
+        for mass counter manipulation.
+
+        If given, the `batch_size` argument specifies the maximum batch size
+        after which the batch should send the mutations to the server. By
+        default this is unbounded.
+
+        :param int batch_size: batch size (optional)
+
+        :return: BatchCounters instance
+        :rtype: :py:class:`BatchCounters`
+        """
+        return BatchCounters(table=self, batch_size=batch_size)
 
     #
     # Atomic counters
