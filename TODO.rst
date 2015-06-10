@@ -17,5 +17,8 @@ future, depending on time, demand, and technical possibilities.
   becomes mainstream, and expose more of the underlying features nicely in the
   HappyBase API.
 
-* Python 3 support. This would be trivial for HappyBase, but the underlying
-  Thrift library needs to be Python 3 compatible first.
+* Python 3 support. This would be trivial for HappyBase, now that the
+  underlying Thrift library is Python 3 compatible. `Track`_ this
+  issue online.
+
+.. _Track: https://github.com/wbolster/happybase/issues/40
