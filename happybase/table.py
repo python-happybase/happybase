@@ -7,7 +7,7 @@ from numbers import Integral
 from operator import attrgetter
 from struct import Struct
 
-from .hbase.ttypes import TScan
+from .hbase.ttypes import TScan, TIncrement
 from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
 
@@ -568,3 +568,24 @@ class Table(object):
         :rtype: int
         """
         return self.counter_inc(row, column, -value)
+
+    def counters_inc(self, row, data):
+        """
+
+        This method increments (or decrements) the counter columns in the row
+        specified by `row`. The `data` argument is a dictionary that
+        maps columns and its counter values, e.g.
+        {"cf:col": 1, "cf:col2": 2}.
+
+        Note that unlike `counter_inc`, does not return value after
+        incrementing.
+
+        :param str row: the row key
+        :param dict data: the dictionary that maps columns to numeric counter values
+        """
+        if not isinstance(data, dict):
+            raise TypeError("'data' must be a dictionary")
+
+        self.connection.client.incrementRows(
+            [TIncrement(table=self.name, row=row, column=column, ammount=value)
+             for column, value in data.iteritems()])
