@@ -9,11 +9,14 @@ import logging
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol
+import sasl
+from os import path
 
 from .hbase import Hbase
 from .hbase.ttypes import ColumnDescriptor
 from .table import Table
 from .util import pep8_to_camel_case
+from .thrift_sasl import TSaslClientTransport
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +84,11 @@ class Connection(object):
     process as well. ``TBinaryAccelerated`` is the default protocol that
     happybase uses.
 
+    The optional `use_kerberos` argument allows you to establish a
+    secure connection to HBase. This argument requires a buffered
+    `transport` protocol. You must first authorize yourself with
+    your KDC by using kinit (e.g. kinit -kt my.keytab user@REALM)
+
     .. versionadded:: 0.9
        `protocol` argument
 
@@ -101,11 +109,14 @@ class Connection(object):
     :param str table_prefix_separator: Separator used for `table_prefix`
     :param str compat: Compatibility mode (optional)
     :param str transport: Thrift transport mode (optional)
+    :param bool use_kerberos: Connect to HBase via a secure connection (default: False)
+    :param str sasl_service: The name of the SASL service (default: hbase)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
                  table_prefix_separator='_', compat=DEFAULT_COMPAT,
-                 transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
+                 transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL,
+                 use_kerberos=False, sasl_service="hbase"):
 
         if transport not in THRIFT_TRANSPORTS:
             raise ValueError("'transport' must be one of %s"
@@ -135,6 +146,8 @@ class Connection(object):
         self.table_prefix_separator = table_prefix_separator
         self.compat = compat
 
+        self._use_kerberos = use_kerberos
+        self._sasl_service = sasl_service
         self._transport_class = THRIFT_TRANSPORTS[transport]
         self._protocol_class = THRIFT_PROTOCOLS[protocol]
         self._refresh_thrift_client()
@@ -150,7 +163,20 @@ class Connection(object):
         if self.timeout is not None:
             socket.setTimeout(self.timeout)
 
-        self.transport = self._transport_class(socket)
+        if not self._use_kerberos:
+            self.transport = self._transport_class(socket)
+        else:
+            # Check for required arguments for kerberos
+            if self._transport_class is not TBufferedTransport:
+                raise ValueError("Must use a buffered transport "
+                                 " when use_kerberos is enabled")
+
+            saslc = sasl.Client()
+            saslc.setAttr("host", self.host)
+            saslc.setAttr("service", self._sasl_service)
+            saslc.init()
+            self.transport = TSaslClientTransport(saslc, "GSSAPI", socket)
+
         protocol = self._protocol_class(self.transport)
         self.client = Hbase.Client(protocol)
 
