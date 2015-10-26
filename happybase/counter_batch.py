@@ -1,37 +1,34 @@
 from happybase.hbase.ttypes import TIncrement
+from collections import defaultdict
 
 
 class CounterBatch(object):
     def __init__(self, table, batch_size=None):
         self.table = table
         self.batch_size = batch_size
-        self.batch = []
+        self.batch = defaultdict(int)
+        self.batch_count = 0
 
     def counter_inc(self, row, column, value=1):
-        self.batch.append({'row': row, 'column': column, 'value': value})
+        self.batch[(row, column)] += value
+        self.batch_count += 1
         self._check_send()
 
     def counter_dec(self, row, column, value=1):
-        self.batch.append({'row': row, 'column': column, 'value': -value})
-        self._check_send()
+        self.counter_inc(row, column, -value)
 
     def send(self):
-        increment_rows = []
-        for increment in self.batch:
-            increment_rows.append(
-                TIncrement(
-                    table=self.table.name,
-                    row=increment['row'],
-                    column=increment['column'],
-                    ammount=increment.get('value', 1),
-                )
-            )
+        increment_rows = [
+            TIncrement(table=self.table.name, row=key[0], column=key[1], ammount=value)
+            for key, value in self.batch.iteritems()
+        ]
         self.table.connection.client.incrementRows(increment_rows)
+        self.batch.clear()
+        self.batch_count = 0
 
     def _check_send(self):
-        if self.batch_size and (len(self.batch) >= self.batch_size):
+        if self.batch_size and (self.batch_count >= self.batch_size):
             self.send()
-            self.batch = []
 
     #
     # Context manager methods
