@@ -1,1 +1,3 @@
 thrift>=0.8.0
+thrift_sasl
+sasl
