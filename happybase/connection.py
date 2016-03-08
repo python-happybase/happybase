@@ -87,7 +87,13 @@ class Connection(object):
     The optional `use_kerberos` argument allows you to establish a
     secure connection to HBase. This argument requires a buffered
     `transport` protocol. You must first authorize yourself with
-    your KDC by using kinit (e.g. kinit -kt my.keytab user@REALM)
+    your KDC by using `kinit` (e.g. `kinit -kt my.keytab user@REALM`)
+    
+    The optional `sasl_service` argument allows to specify the name of
+    the sasl service.
+    
+    .. versionadded:: 0.9.1
+       `use_kerberos` and `sasl_service` arguments
 
     .. versionadded:: 0.9
        `protocol` argument
@@ -109,8 +115,8 @@ class Connection(object):
     :param str table_prefix_separator: Separator used for `table_prefix`
     :param str compat: Compatibility mode (optional)
     :param str transport: Thrift transport mode (optional)
-    :param bool use_kerberos: Connect to HBase via a secure connection (default: False)
-    :param str sasl_service: The name of the SASL service (default: hbase)
+    :param bool use_kerberos: Connect to HBase via a secure connection (optional)
+    :param str sasl_service: The name of the SASL service (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
