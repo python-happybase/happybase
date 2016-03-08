@@ -16,7 +16,7 @@ from .hbase import Hbase
 from .hbase.ttypes import ColumnDescriptor
 from .table import Table
 from .util import pep8_to_camel_case
-from .thrift_sasl import TSaslClientTransport
+from thrift_sasl import TSaslClientTransport
 
 logger = logging.getLogger(__name__)
 
