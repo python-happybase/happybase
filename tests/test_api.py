@@ -5,6 +5,7 @@ HappyBase tests.
 import collections
 import os
 import random
+import sys
 import threading
 
 from nose.tools import (
@@ -43,13 +44,16 @@ connection_kwargs = dict(
 # Yuck, globals
 connection = table = None
 
+if sys.version_info >= (3,):
+    basestring = str
+    xrange = range
 
 def maybe_delete_table():
     if KEEP_TABLE:
         return
 
     if TEST_TABLE_NAME in connection.tables():
-        print "Test table already exists; removing it..."
+        print("Test table already exists; removing it...")
         connection.delete_table(TEST_TABLE_NAME, disable=True)
 
 
@@ -147,7 +151,7 @@ def test_invalid_table_create():
 
 def test_families():
     families = table.families()
-    for name, fdesc in families.iteritems():
+    for name, fdesc in families.items():
         assert_is_instance(name, basestring)
         assert_is_instance(fdesc, dict)
         assert_in('name', fdesc)
@@ -157,7 +161,7 @@ def test_families():
 def test_put():
     table.put('r1', {'cf1:c1': 'v1', 'cf1:c2': 'v2', 'cf2:c3': 'v3'})
     table.put('r1', {'cf1:c4': 'v2'}, timestamp=2345678)
-    table.put('r1', {'cf1:c4': 'v2'}, timestamp=1369168852994L)
+    table.put('r1', {'cf1:c4': 'v2'}, timestamp=1369168852994)
 
 
 def test_atomic_counters():
@@ -356,8 +360,8 @@ def test_scan():
     with assert_raises(TypeError):
         list(table.scan(row_prefix='foobar', row_start='xyz'))
 
-    with assert_raises(ValueError):
-        list(table.scan(batch_size=None))
+    with assert_raises(TypeError):
+        next(table.scan(batch_size=None))
 
     if connection.compat == '0.90':
         with assert_raises(NotImplementedError):
@@ -443,14 +447,14 @@ def test_scan_sorting():
     assert_equal(key, input_key)
     assert_list_equal(
         sorted(input_row.items()),
-        row.items())
+        list(row.items()))
 
 
 def test_scan_filter_and_batch_size():
     # See issue #54 and #56
     filter = "SingleColumnValueFilter ('cf1', 'qual1', =, 'binary:val1')"
     for k, v in table.scan(filter=filter):
-        print v
+        print(v)
 
 
 def test_delete():
@@ -494,7 +498,7 @@ def test_connection_pool():
 
     def run():
         name = threading.current_thread().name
-        print "Thread %s starting" % name
+        print("Thread %s starting" % name)
 
         def inner_function():
             # Nested connection requests must return the same connection
@@ -503,7 +507,7 @@ def test_connection_pool():
 
                 # Fake an exception once in a while
                 if random.random() < .25:
-                    print "Introducing random failure"
+                    print("Introducing random failure")
                     connection.transport.close()
                     raise TTransportException("Fake transport exception")
 
@@ -521,7 +525,7 @@ def test_connection_pool():
 
                 connection.tables()
 
-        print "Thread %s done" % name
+        print("Thread %s done" % name)
 
     N_THREADS = 10
 
@@ -537,7 +541,7 @@ def test_connection_pool():
 
         # filter out finished threads
         threads = [t for t in threads if t.is_alive()]
-        print "%d threads still alive" % len(threads)
+        print("%d threads still alive" % len(threads))
 
 
 def test_pool_exhaustion():
