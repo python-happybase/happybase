@@ -5,6 +5,7 @@ HappyBase connection module.
 """
 
 import logging
+import sys
 
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
@@ -33,6 +34,8 @@ DEFAULT_TRANSPORT = 'buffered'
 DEFAULT_COMPAT = '0.96'
 DEFAULT_PROTOCOL = 'binary'
 
+if sys.version_info >= (3,):
+    basestring = str
 
 class Connection(object):
     """Connection to an HBase Thrift server.
@@ -235,7 +238,7 @@ class Connection(object):
         :return: The table names
         :rtype: List of strings
         """
-        names = self.client.getTableNames()
+        names = (n.decode("utf-8") for n in self.client.getTableNames())
 
         # Filter using prefix, and strip prefix from names
         if self.table_prefix is not None:
@@ -288,21 +291,23 @@ class Connection(object):
                 % name)
 
         column_descriptors = []
-        for cf_name, options in families.iteritems():
+        for cf_name, options in families.items():
             if options is None:
                 options = dict()
 
             kwargs = dict()
-            for option_name, value in options.iteritems():
+            for option_name, value in options.items():
+                if isinstance(value, basestring):
+                    value = value.encode("utf-8")
                 kwargs[pep8_to_camel_case(option_name)] = value
 
             if not cf_name.endswith(':'):
                 cf_name += ':'
-            kwargs['name'] = cf_name
+            kwargs['name'] = cf_name.encode("utf-8")
 
             column_descriptors.append(ColumnDescriptor(**kwargs))
 
-        self.client.createTable(name, column_descriptors)
+        self.client.createTable(name.encode("utf-8"), column_descriptors)
 
     def delete_table(self, name, disable=False):
         """Delete the specified table.
@@ -321,7 +326,7 @@ class Connection(object):
             self.disable_table(name)
 
         name = self._table_name(name)
-        self.client.deleteTable(name)
+        self.client.deleteTable(name.encode("utf-8"))
 
     def enable_table(self, name):
         """Enable the specified table.
@@ -329,7 +334,7 @@ class Connection(object):
         :param str name: The table name
         """
         name = self._table_name(name)
-        self.client.enableTable(name)
+        self.client.enableTable(name.encode("utf-8"))
 
     def disable_table(self, name):
         """Disable the specified table.
@@ -337,7 +342,7 @@ class Connection(object):
         :param str name: The table name
         """
         name = self._table_name(name)
-        self.client.disableTable(name)
+        self.client.disableTable(name.encode("utf-8"))
 
     def is_table_enabled(self, name):
         """Return whether the specified table is enabled.
@@ -348,7 +353,7 @@ class Connection(object):
         :rtype: bool
         """
         name = self._table_name(name)
-        return self.client.isTableEnabled(name)
+        return self.client.isTableEnabled(name.encode("utf-8"))
 
     def compact_table(self, name, major=False):
         """Compact the specified table.
@@ -356,7 +361,7 @@ class Connection(object):
         :param str name: The table name
         :param bool major: Whether to perform a major compaction.
         """
-        name = self._table_name(name)
+        name = self._table_name(name).encode("utf-8")
         if major:
             self.client.majorCompact(name)
         else:

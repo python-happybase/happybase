@@ -75,7 +75,7 @@ struct ColumnDescriptor {
   6:i32 bloomFilterVectorSize = 0,
   7:i32 bloomFilterNbHashes = 0,
   8:bool blockCacheEnabled = 0,
-  9:i32 timeToLive = -1
+  9:i32 timeToLive = 0x7fffffff
 }
 
 /**
@@ -905,22 +905,6 @@ service Hbase {
     /** id of a scanner returned by scannerOpen */
     1:ScannerID id
   ) throws (1:IOError io, 2:IllegalArgument ia)
-
-  /**
-   * Get the row just before the specified one.
-   *
-   * @return value for specified row/column
-   */
-  list<TCell> getRowOrBefore(
-    /** name of table */
-    1:Text tableName,
-
-    /** row key */
-    2:Text row,
-
-    /** column name */
-    3:Text family
-  ) throws (1:IOError io)
 
   /**
    * Get the regininfo for the specified row. It scans
