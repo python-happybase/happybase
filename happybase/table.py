@@ -4,6 +4,7 @@ HappyBase table module.
 
 import logging
 from numbers import Integral
+from operator import attrgetter
 from struct import Struct
 
 from .hbase.ttypes import TScan
@@ -12,29 +13,22 @@ from .batch import Batch
 
 logger = logging.getLogger(__name__)
 
-_pack_i64 = Struct('>q').pack
+make_cell = attrgetter('value')
+make_cell_timestamp = attrgetter('value', 'timestamp')
+pack_i64 = Struct('>q').pack
 
-def make_cell(cell):
-    return cell.value.decode("utf-8")
-
-def make_cell_timestamp(cell):
-    return (make_cell(cell), cell.timestamp)
-
-def pack_i64(value):
-    return _pack_i64(value).decode("utf-8")
 
 def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return dict(
-        (cn.decode("utf-8"), cellfn(cell)) for cn, cell in cell_map.items())
+    return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
 
 
 def make_ordered_row(sorted_columns, include_timestamp):
     """Make a row dict for sorted column results from scans."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
     return OrderedDict(
-        (column.columnName.decode("utf-8"), cellfn(column.cell))
+        (column.columnName, cellfn(column.cell))
         for column in sorted_columns)
 
 
@@ -61,19 +55,17 @@ class Table(object):
         :return: Mapping from column family name to settings dict
         :rtype: dict
         """
-        descriptors = self.connection.client.getColumnDescriptors(
-            self.name.encode("utf-8"))
+        descriptors = self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
-            name = name.decode("utf-8").rstrip(':')
+            name = name.rstrip(':')
             families[name] = thrift_type_to_dict(descriptor)
         return families
 
     def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
-        names = self.connection.client.getColumnDescriptors(
-            self.name.encode("utf-8")).keys()
-        return [name.decode("utf-8").rstrip(':') for name in names]
+        names = self.connection.client.getColumnDescriptors(self.name).keys()
+        return [name.rstrip(':') for name in names]
 
     def regions(self):
         """Retrieve the regions for this table.
@@ -81,9 +73,8 @@ class Table(object):
         :return: regions for this table
         :rtype: list of dicts
         """
-        regions = self.connection.client.getTableRegions(
-            self.name.encode("utf-8"))
-        return list(map(thrift_type_to_dict, regions))
+        regions = self.connection.client.getTableRegions(self.name)
+        return map(thrift_type_to_dict, regions)
 
     #
     # Data retrieval
@@ -116,21 +107,17 @@ class Table(object):
         :return: Mapping of columns (both qualifier and family) to values
         :rtype: dict
         """
-        if columns is not None:
-            if not isinstance(columns, (tuple, list)):
-                raise TypeError("'columns' must be a tuple or list")
-            columns = tuple(c.encode("utf-8") for c in columns)
+        if columns is not None and not isinstance(columns, (tuple, list)):
+            raise TypeError("'columns' must be a tuple or list")
 
-        name = self.name.encode("utf-8")
-        row = row.encode("utf-8")
         if timestamp is None:
             rows = self.connection.client.getRowWithColumns(
-                name, row, columns, {})
+                self.name, row, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             rows = self.connection.client.getRowWithColumnsTs(
-                name, row, columns, timestamp, {})
+                self.name, row, columns, timestamp, {})
 
         if not rows:
             return {}
@@ -156,20 +143,16 @@ class Table(object):
         :return: List of mappings (columns to values)
         :rtype: list of dicts
         """
-        if columns is not None:
-            if not isinstance(columns, (tuple, list)):
-                raise TypeError("'columns' must be a tuple or list")
-            columns = tuple(c.encode("utf-8") for c in columns)
+        if columns is not None and not isinstance(columns, (tuple, list)):
+            raise TypeError("'columns' must be a tuple or list")
 
         if not rows:
             # Avoid round-trip if the result is empty anyway
             return {}
-        rows = tuple(r.encode("utf-8") for r in rows)
 
-        name = self.name.encode("utf-8")
         if timestamp is None:
             results = self.connection.client.getRowsWithColumns(
-                name, rows, columns, {})
+                self.name, rows, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
@@ -178,13 +161,12 @@ class Table(object):
             # timestamp is only applied if columns are specified, at
             # the cost of an extra round-trip.
             if columns is None:
-                columns = tuple(
-                    c.encode("utf-8") for c in self._column_family_names())
+                columns = self._column_family_names()
 
             results = self.connection.client.getRowsWithColumnsTs(
-                name, rows, columns, timestamp, {})
+                self.name, rows, columns, timestamp, {})
 
-        return [(r.row.decode("utf-8"), make_row(r.columns, include_timestamp))
+        return [(r.row, make_row(r.columns, include_timestamp))
                 for r in results]
 
     def cells(self, row, column, versions=None, timestamp=None,
@@ -216,22 +198,19 @@ class Table(object):
             raise ValueError(
                 "'versions' argument must be at least 1 (or None)")
 
-        column = column.encode("utf-8")
-        name = self.name.encode("utf-8")
-        row = row.encode("utf-8")
         if timestamp is None:
             cells = self.connection.client.getVer(
-                name, row, column, versions, {})
+                self.name, row, column, versions, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
             cells = self.connection.client.getVerTs(
-                name, row, column, timestamp, versions, {})
+                self.name, row, column, timestamp, versions, {})
 
         if include_timestamp:
-            return list(map(make_cell_timestamp, cells))
+            return map(make_cell_timestamp, cells)
         else:
-            return list(map(make_cell, cells))
+            return map(make_cell, cells)
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
@@ -312,8 +291,6 @@ class Table(object):
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
         """
-        if not isinstance(batch_size, Integral):
-            raise TypeError("batch_size must be an integral type")
         if batch_size < 1:
             raise ValueError("'batch_size' must be >= 1")
 
@@ -334,18 +311,10 @@ class Table(object):
                     "or 'row_stop'")
 
             row_start = row_prefix
-            row_stop = str_increment(
-                row_prefix.encode("utf-8")).decode("utf-8")
+            row_stop = str_increment(row_prefix)
 
         if row_start is None:
             row_start = ''
-        row_start = row_start.encode("utf-8")
-
-        if row_stop is not None:
-            row_stop = row_stop.encode("utf-8")
-
-        if columns is not None:
-            columns = tuple(c.encode("utf-8") for c in columns)
 
         if self.connection.compat == '0.90':
             # The scannerOpenWithScan() Thrift function is not
@@ -372,8 +341,6 @@ class Table(object):
                         self.name, row_start, row_stop, columns, timestamp, {})
 
         else:
-            if filter is not None:
-                filter = filter.encode("utf-8")
             # XXX: The "batch_size" can be slightly confusing to those
             # familiar with the HBase Java API:
             #
@@ -404,7 +371,7 @@ class Table(object):
                 sortColumns=sorted_columns,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
-                self.name.encode("utf-8"), scan, {})
+                self.name, scan, {})
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
 
@@ -431,7 +398,7 @@ class Table(object):
                     else:
                         row = make_row(item.columns, include_timestamp)
 
-                    yield item.row.decode("utf-8"), row
+                    yield item.row, row
 
                     if limit is not None and n_returned == limit:
                         return  # scan has finished
@@ -589,8 +556,7 @@ class Table(object):
         :rtype: int
         """
         return self.connection.client.atomicIncrement(
-            self.name.encode("utf-8"), row.encode("utf-8"),
-            column.encode("utf-8"), value)
+            self.name, row, column, value)
 
     def counter_dec(self, row, column, value=1):
         """Atomically decrement (or increments) a counter column.

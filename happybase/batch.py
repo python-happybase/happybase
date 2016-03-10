@@ -10,6 +10,7 @@ from .hbase.ttypes import BatchMutation, Mutation
 
 logger = logging.getLogger(__name__)
 
+
 class Batch(object):
     """Batch mutation class.
 
@@ -44,19 +45,17 @@ class Batch(object):
 
     def send(self):
         """Send the batch to the server."""
-        bms = [BatchMutation(row.encode("utf-8"), m)
-               for row, m in self._mutations.items()]
+        bms = [BatchMutation(row, m) for row, m in self._mutations.iteritems()]
         if not bms:
             return
 
         logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
                      self._table.name, self._mutation_count, len(bms))
-        name = self._table.name.encode("utf-8")
         if self._timestamp is None:
-            self._table.connection.client.mutateRows(name, bms, {})
+            self._table.connection.client.mutateRows(self._table.name, bms, {})
         else:
             self._table.connection.client.mutateRowsTs(
-                name, bms, self._timestamp, {})
+                self._table.name, bms, self._timestamp, {})
 
         self._reset_mutations()
 
@@ -78,10 +77,10 @@ class Batch(object):
         self._mutations[row].extend(
             Mutation(
                 isDelete=False,
-                column=column.encode("utf-8"),
-                value=value.encode("utf-8"),
+                column=column,
+                value=value,
                 writeToWAL=wal)
-            for column, value in data.items())
+            for column, value in data.iteritems())
 
         self._mutation_count += len(data)
         if self._batch_size and self._mutation_count >= self._batch_size:
@@ -108,8 +107,7 @@ class Batch(object):
             wal = self._wal
 
         self._mutations[row].extend(
-            Mutation(
-                isDelete=True, column=column.encode("utf-8"), writeToWAL=wal)
+            Mutation(isDelete=True, column=column, writeToWAL=wal)
             for column in columns)
 
         self._mutation_count += len(columns)

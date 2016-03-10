@@ -4,23 +4,15 @@ HappyBase connection pool module.
 
 import contextlib
 import logging
+import Queue
 import socket
-import sys
 import threading
-
-if sys.version_info >= (3,):
-    from queue import Empty, LifoQueue
-else:
-    from Queue import Empty, LifoQueue
 
 from thrift.Thrift import TException
 
 from .connection import Connection
 
 logger = logging.getLogger(__name__)
-
-if sys.version_info >= (3,):
-    xrange = range
 
 #
 # TODO: maybe support multiple Thrift servers. What would a reasonable
@@ -69,7 +61,7 @@ class ConnectionPool(object):
             "Initializing connection pool with %d connections", size)
 
         self._lock = threading.Lock()
-        self._queue = LifoQueue(maxsize=size)
+        self._queue = Queue.LifoQueue(maxsize=size)
         self._thread_connections = threading.local()
 
         connection_kwargs = kwargs
@@ -89,7 +81,7 @@ class ConnectionPool(object):
         """Acquire a connection from the pool."""
         try:
             return self._queue.get(True, timeout)
-        except Empty:
+        except Queue.Empty:
             raise NoConnectionsAvailable(
                 "No connection available from pool within specified "
                 "timeout")
