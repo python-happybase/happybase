@@ -33,7 +33,6 @@ DEFAULT_TRANSPORT = 'buffered'
 DEFAULT_COMPAT = '0.96'
 DEFAULT_PROTOCOL = 'binary'
 
-
 class Connection(object):
     """Connection to an HBase Thrift server.
 
@@ -97,14 +96,14 @@ class Connection(object):
     :param int port: The port to connect to
     :param int timeout: The socket timeout in milliseconds (optional)
     :param bool autoconnect: Whether the connection should be opened directly
-    :param str table_prefix: Prefix used to construct table names (optional)
-    :param str table_prefix_separator: Separator used for `table_prefix`
+    :param bytes table_prefix: Prefix used to construct table names (optional)
+    :param bytes table_prefix_separator: Separator used for `table_prefix`
     :param str compat: Compatibility mode (optional)
     :param str transport: Thrift transport mode (optional)
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
-                 table_prefix_separator='_', compat=DEFAULT_COMPAT,
+                 table_prefix_separator=b'_', compat=DEFAULT_COMPAT,
                  transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
 
         if transport not in THRIFT_TRANSPORTS:
@@ -112,11 +111,11 @@ class Connection(object):
                              % ", ".join(THRIFT_TRANSPORTS.keys()))
 
         if table_prefix is not None \
-                and not isinstance(table_prefix, basestring):
-            raise TypeError("'table_prefix' must be a string")
+                and not isinstance(table_prefix, bytes):
+            raise TypeError("'table_prefix' must be a byte string")
 
-        if not isinstance(table_prefix_separator, basestring):
-            raise TypeError("'table_prefix_separator' must be a string")
+        if not isinstance(table_prefix_separator, bytes):
+            raise TypeError("'table_prefix_separator' must be a byte string")
 
         if compat not in COMPAT_MODES:
             raise ValueError("'compat' must be one of %s"
@@ -213,7 +212,7 @@ class Connection(object):
         argument to the :py:class:`Connection` constructor for more
         information.
 
-        :param str name: the name of the table
+        :param bytes name: the name of the table
         :param bool use_prefix: whether to use the table prefix (if any)
         :return: Table instance
         :rtype: :py:class:`Table`
@@ -233,13 +232,13 @@ class Connection(object):
         tables that have the specified prefix will be listed.
 
         :return: The table names
-        :rtype: List of strings
+        :rtype: List of byte strings
         """
         names = self.client.getTableNames()
 
         # Filter using prefix, and strip prefix from names
         if self.table_prefix is not None:
-            prefix = self._table_name('')
+            prefix = self._table_name(b'')
             offset = len(prefix)
             names = [n[offset:] for n in names if n.startswith(prefix)]
 
@@ -248,7 +247,7 @@ class Connection(object):
     def create_table(self, name, families):
         """Create a table.
 
-        :param str name: The table name
+        :param bytes name: The table name
         :param dict families: The name and options for each column family
 
         The `families` argument is a dictionary mapping column family
@@ -288,16 +287,16 @@ class Connection(object):
                 % name)
 
         column_descriptors = []
-        for cf_name, options in families.iteritems():
+        for cf_name, options in families.items():
             if options is None:
                 options = dict()
 
             kwargs = dict()
-            for option_name, value in options.iteritems():
+            for option_name, value in options.items():
                 kwargs[pep8_to_camel_case(option_name)] = value
 
-            if not cf_name.endswith(':'):
-                cf_name += ':'
+            if not cf_name.endswith(b':'):
+                cf_name += b':'
             kwargs['name'] = cf_name
 
             column_descriptors.append(ColumnDescriptor(**kwargs))
@@ -314,7 +313,7 @@ class Connection(object):
         deleted. If the `disable` argument is `True`, this method first
         disables the table if it wasn't already and then deletes it.
 
-        :param str name: The table name
+        :param bytes name: The table name
         :param bool disable: Whether to first disable the table if needed
         """
         if disable and self.is_table_enabled(name):
@@ -326,7 +325,7 @@ class Connection(object):
     def enable_table(self, name):
         """Enable the specified table.
 
-        :param str name: The table name
+        :param bytes name: The table name
         """
         name = self._table_name(name)
         self.client.enableTable(name)
@@ -334,7 +333,7 @@ class Connection(object):
     def disable_table(self, name):
         """Disable the specified table.
 
-        :param str name: The table name
+        :param bytes name: The table name
         """
         name = self._table_name(name)
         self.client.disableTable(name)
@@ -342,7 +341,7 @@ class Connection(object):
     def is_table_enabled(self, name):
         """Return whether the specified table is enabled.
 
-        :param str name: The table name
+        :param bytes name: The table name
 
         :return: whether the table is enabled
         :rtype: bool
@@ -353,7 +352,7 @@ class Connection(object):
     def compact_table(self, name, major=False):
         """Compact the specified table.
 
-        :param str name: The table name
+        :param bytes name: The table name
         :param bool major: Whether to perform a major compaction.
         """
         name = self._table_name(name)

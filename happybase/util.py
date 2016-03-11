@@ -5,9 +5,9 @@ These functions are not part of the public API.
 """
 
 import re
+import sys
 
 CAPITALS = re.compile('([A-Z])')
-
 
 try:
     # Python 2.7
@@ -23,7 +23,6 @@ except ImportError:
                 "No OrderedDict implementation available; please "
                 "install the 'ordereddict' Package from PyPI.")
 
-
 def camel_case_to_pep8(name):
     """Convert a camel cased name to PEP8 style."""
     converted = CAPITALS.sub(lambda m: '_' + m.groups()[0].lower(), name)
@@ -31,7 +30,6 @@ def camel_case_to_pep8(name):
         return converted[1:]
     else:
         return converted
-
 
 def pep8_to_camel_case(name, initial=False):
     """Convert a PEP8 style name to camel case."""
@@ -53,19 +51,36 @@ def thrift_type_to_dict(obj):
     return dict((camel_case_to_pep8(attr), getattr(obj, attr))
                 for attr in thrift_attrs(obj))
 
+if sys.version_info >= (3,):
 
-def str_increment(s):
-    """Increment and truncate a byte string (for sorting purposes)
+    def str_increment(s):
+        """Increment and truncate a byte string (for sorting purposes)
 
-    This functions returns the shortest string that sorts after the given
-    string when compared using regular string comparison semantics.
+        This functions returns the shortest string that sorts after the given
+        string when compared using regular string comparison semantics.
 
-    This function increments the last byte that is smaller than ``0xFF``, and
-    drops everything after it. If the string only contains ``0xFF`` bytes,
-    `None` is returned.
-    """
-    for i in xrange(len(s) - 1, -1, -1):
-        if s[i] != '\xff':
-            return s[:i] + chr(ord(s[i]) + 1)
+        This function increments the last byte that is smaller than ``0xFF``,
+        and drops everything after it. If the string only contains ``0xFF``
+        bytes, `None` is returned.
+        """
+        for i in range(len(s) - 1, -1, -1):
+            if s[i] != 0xff:
+                return s[:i] + bytes((s[i] + 1,))
+        return None
 
-    return None
+else:
+
+    def str_increment(s):
+        """Increment and truncate a byte string (for sorting purposes)
+
+        This functions returns the shortest string that sorts after the given
+        string when compared using regular string comparison semantics.
+
+        This function increments the last byte that is smaller than ``0xFF``,
+        and drops everything after it. If the string only contains ``0xFF``
+        bytes, `None` is returned.
+        """
+        for i in xrange(len(s) - 1, -1, -1):
+            if s[i] != b'\xff':
+                return s[:i] + chr(ord(s[i]) + 1)
+        return None
