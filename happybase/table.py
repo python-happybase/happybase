@@ -21,7 +21,7 @@ pack_i64 = Struct('>q').pack
 def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
+    return dict((cn, cellfn(cell)) for cn, cell in cell_map.items())
 
 
 def make_ordered_row(sorted_columns, include_timestamp):
@@ -58,14 +58,14 @@ class Table(object):
         descriptors = self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
-            name = name.rstrip(':')
+            name = name.rstrip(b':')
             families[name] = thrift_type_to_dict(descriptor)
         return families
 
     def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
         names = self.connection.client.getColumnDescriptors(self.name).keys()
-        return [name.rstrip(':') for name in names]
+        return [name.rstrip(b':') for name in names]
 
     def regions(self):
         """Retrieve the regions for this table.
@@ -74,7 +74,7 @@ class Table(object):
         :rtype: list of dicts
         """
         regions = self.connection.client.getTableRegions(self.name)
-        return map(thrift_type_to_dict, regions)
+        return list(map(thrift_type_to_dict, regions))
 
     #
     # Data retrieval
@@ -99,7 +99,7 @@ class Table(object):
         whether cells are returned as single values or as `(value, timestamp)`
         tuples.
 
-        :param str row: the row key
+        :param bytes row: the row key
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
@@ -181,8 +181,8 @@ class Table(object):
         The `timestamp` and `include_timestamp` arguments behave exactly the
         same as for :py:meth:`row`.
 
-        :param str row: the row key
-        :param str column: the column name
+        :param bytes row: the row key
+        :param bytes column: the column name
         :param int versions: the maximum number of versions to retrieve
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
@@ -207,10 +207,8 @@ class Table(object):
             cells = self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
-        if include_timestamp:
-            return map(make_cell_timestamp, cells)
-        else:
-            return map(make_cell, cells)
+        f = make_cell_timestamp if include_timestamp else make_cell
+        return list(map(f, cells))
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
@@ -276,11 +274,11 @@ class Table(object):
         .. versionadded:: 0.8
            `scan_batching` argument
 
-        :param str row_start: the row key to start at (inclusive)
-        :param str row_stop: the row key to stop at (exclusive)
-        :param str row_prefix: a prefix of the row key that must match
+        :param bytes row_start: the row key to start at (inclusive)
+        :param bytes row_stop: the row key to stop at (exclusive)
+        :param bytes row_prefix: a prefix of the row key that must match
         :param list_or_tuple columns: list of columns (optional)
-        :param str filter: a filter string (optional)
+        :param bytes filter: a filter string (optional)
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
         :param int batch_size: batch size for retrieving resuls
@@ -291,6 +289,8 @@ class Table(object):
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
         """
+        if not isinstance(batch_size, Integral):
+            raise TypeError("batch_size must be an integral type")
         if batch_size < 1:
             raise ValueError("'batch_size' must be >= 1")
 
@@ -314,7 +314,7 @@ class Table(object):
             row_stop = str_increment(row_prefix)
 
         if row_start is None:
-            row_start = ''
+            row_start = b''
 
         if self.connection.compat == '0.90':
             # The scannerOpenWithScan() Thrift function is not
@@ -427,7 +427,7 @@ class Table(object):
         .. versionadded:: 0.7
            `wal` argument
 
-        :param str row: the row key
+        :param bytes row: the row key
         :param dict data: the data to store
         :param int timestamp: timestamp (optional)
         :param wal bool: whether to write to the WAL (optional)
@@ -447,7 +447,7 @@ class Table(object):
         .. versionadded:: 0.7
            `wal` argument
 
-        :param str row: the row key
+        :param bytes row: the row key
         :param list_or_tuple columns: list of columns (optional)
         :param int timestamp: timestamp (optional)
         :param wal bool: whether to write to the WAL (optional)
@@ -512,8 +512,8 @@ class Table(object):
         :py:meth:`Table.counter_inc` and :py:meth:`Table.counter_dec` methods
         for that.
 
-        :param str row: the row key
-        :param str column: the column name
+        :param bytes row: the row key
+        :param bytes column: the column name
 
         :return: counter value
         :rtype: int
@@ -533,8 +533,8 @@ class Table(object):
         :py:meth:`Table.counter_inc` and :py:meth:`Table.counter_dec` methods
         for that.
 
-        :param str row: the row key
-        :param str column: the column name
+        :param bytes row: the row key
+        :param bytes column: the column name
         :param int value: the counter value to set
         """
         self.put(row, {column: pack_i64(value)})
@@ -548,8 +548,8 @@ class Table(object):
         negative values). If the counter column did not exist, it is
         automatically initialised to 0 before incrementing it.
 
-        :param str row: the row key
-        :param str column: the column name
+        :param bytes row: the row key
+        :param bytes column: the column name
         :param int value: the amount to increment or decrement by (optional)
 
         :return: counter value after incrementing
