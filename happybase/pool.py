@@ -7,7 +7,7 @@ import logging
 import socket
 import threading
 
-from six.moves import queue
+from six.moves import queue, range
 
 from thriftpy.thrift import TException
 
@@ -68,7 +68,7 @@ class ConnectionPool(object):
         connection_kwargs = kwargs
         connection_kwargs['autoconnect'] = False
 
-        for i in xrange(size):
+        for i in range(size):
             connection = Connection(**connection_kwargs)
             self._queue.put(connection)
 

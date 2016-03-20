@@ -6,6 +6,8 @@ These functions are not part of the public API.
 
 import re
 
+from six.moves import range
+
 CAPITALS = re.compile('([A-Z])')
 
 
@@ -64,7 +66,7 @@ def str_increment(s):
     drops everything after it. If the string only contains ``0xFF`` bytes,
     `None` is returned.
     """
-    for i in xrange(len(s) - 1, -1, -1):
+    for i in range(len(s) - 1, -1, -1):
         if s[i] != '\xff':
             return s[:i] + chr(ord(s[i]) + 1)
 
