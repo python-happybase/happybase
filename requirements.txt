@@ -1,1 +1,2 @@
+six
 thriftpy>=0.3.8
