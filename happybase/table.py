@@ -77,7 +77,7 @@ class Table(object):
         :rtype: list of dicts
         """
         regions = self.connection.client.getTableRegions(self.name)
-        return map(thrift_type_to_dict, regions)
+        return [thrift_type_to_dict(r) for r in regions]
 
     #
     # Data retrieval
@@ -210,10 +210,8 @@ class Table(object):
             cells = self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
-        if include_timestamp:
-            return map(make_cell_timestamp, cells)
-        else:
-            return map(make_cell, cells)
+        f = make_cell_timestamp if include_timestamp else make_cell
+        return [f(c) for c in cells]
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
