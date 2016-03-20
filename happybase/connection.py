@@ -6,6 +6,7 @@ HappyBase connection module.
 
 import logging
 
+import six
 from thriftpy.thrift import TClient
 from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
 from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
@@ -15,6 +16,8 @@ from .table import Table
 from .util import pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
+
+STRING_OR_BINARY = (six.binary_type, six.text_type)
 
 COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96')
 THRIFT_TRANSPORTS = dict(
@@ -111,10 +114,10 @@ class Connection(object):
                              % ", ".join(THRIFT_TRANSPORTS.keys()))
 
         if table_prefix is not None \
-                and not isinstance(table_prefix, basestring):
+                and not isinstance(table_prefix, STRING_OR_BINARY):
             raise TypeError("'table_prefix' must be a string")
 
-        if not isinstance(table_prefix_separator, basestring):
+        if not isinstance(table_prefix_separator, STRING_OR_BINARY):
             raise TypeError("'table_prefix_separator' must be a string")
 
         if compat not in COMPAT_MODES:
