@@ -7,6 +7,8 @@ from numbers import Integral
 from operator import attrgetter
 from struct import Struct
 
+from six import iteritems
+
 from .Hbase_thrift import TScan
 
 from .util import thrift_type_to_dict, str_increment, OrderedDict
@@ -22,7 +24,7 @@ pack_i64 = Struct('>q').pack
 def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
+    return dict((cn, cellfn(cell)) for cn, cell in iteritems(cell_map))
 
 
 def make_ordered_row(sorted_columns, include_timestamp):

@@ -290,12 +290,12 @@ class Connection(object):
                 % name)
 
         column_descriptors = []
-        for cf_name, options in families.iteritems():
+        for cf_name, options in six.iteritems(families):
             if options is None:
                 options = dict()
 
             kwargs = dict()
-            for option_name, value in options.iteritems():
+            for option_name, value in six.iteritems(options):
                 kwargs[pep8_to_camel_case(option_name)] = value
 
             if not cf_name.endswith(':'):
