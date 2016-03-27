@@ -6,7 +6,7 @@ from collections import defaultdict
 import logging
 from numbers import Integral
 
-from .hbase.ttypes import BatchMutation, Mutation
+from .Hbase_thrift import BatchMutation, Mutation
 
 logger = logging.getLogger(__name__)
 

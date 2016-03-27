@@ -6,12 +6,11 @@ HappyBase connection module.
 
 import logging
 
-from thrift.transport.TSocket import TSocket
-from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
-from thrift.protocol import TBinaryProtocol, TCompactProtocol
+from thriftpy.thrift import TClient
+from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
+from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
 
-from .hbase import Hbase
-from .hbase.ttypes import ColumnDescriptor
+from .Hbase_thrift import Hbase, ColumnDescriptor
 from .table import Table
 from .util import pep8_to_camel_case
 
@@ -23,8 +22,8 @@ THRIFT_TRANSPORTS = dict(
     framed=TFramedTransport,
 )
 THRIFT_PROTOCOLS = dict(
-    binary=TBinaryProtocol.TBinaryProtocolAccelerated,
-    compact=TCompactProtocol.TCompactProtocol,
+    binary=TBinaryProtocol,
+    compact=TCompactProtocol,
 )
 
 DEFAULT_HOST = 'localhost'
@@ -78,8 +77,8 @@ class Connection(object):
     since otherwise you might see non-obvious connection errors or
     program hangs when making a connection. ``TCompactProtocol`` is
     a more compact binary format that is  typically more efficient to
-    process as well. ``TBinaryAccelerated`` is the default protocol that
-    happybase uses.
+    process as well. ``TBinaryProtocol`` is the default protocol that
+    Happybase uses.
 
     .. versionadded:: 0.9
        `protocol` argument
@@ -148,11 +147,11 @@ class Connection(object):
         """Refresh the Thrift socket, transport, and client."""
         socket = TSocket(self.host, self.port)
         if self.timeout is not None:
-            socket.setTimeout(self.timeout)
+            socket.set_timeout(self.timeout)
 
         self.transport = self._transport_class(socket)
-        protocol = self._protocol_class(self.transport)
-        self.client = Hbase.Client(protocol)
+        protocol = self._protocol_class(self.transport, decode_response=False)
+        self.client = TClient(Hbase, protocol)
 
     def _table_name(self, name):
         """Construct a table name by optionally adding a table name prefix."""
@@ -166,7 +165,7 @@ class Connection(object):
 
         This method opens the underlying Thrift transport (TCP connection).
         """
-        if self.transport.isOpen():
+        if self.transport.is_open():
             return
 
         logger.debug("Opening Thrift transport to %s:%d", self.host, self.port)
@@ -177,7 +176,7 @@ class Connection(object):
 
         This method closes the underlying Thrift transport (TCP connection).
         """
-        if not self.transport.isOpen():
+        if not self.transport.is_open():
             return
 
         if logger is not None:

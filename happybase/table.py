@@ -7,7 +7,8 @@ from numbers import Integral
 from operator import attrgetter
 from struct import Struct
 
-from .hbase.ttypes import TScan
+from .Hbase_thrift import TScan
+
 from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
 

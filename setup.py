@@ -31,6 +31,7 @@ setup(
     url='https://github.com/wbolster/happybase',
     install_requires=get_install_requires(),
     packages=find_packages(exclude=['tests']),
+    include_package_data=True,
     license="MIT",
     classifiers=(
         "Development Status :: 4 - Beta",
