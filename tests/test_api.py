@@ -490,7 +490,7 @@ def test_connection_pool_construction():
 
 def test_connection_pool():
 
-    from thrift.transport.TTransport import TTransportException
+    from thriftpy.thrift import TException
 
     def run():
         name = threading.current_thread().name
@@ -505,7 +505,7 @@ def test_connection_pool():
                 if random.random() < .25:
                     print "Introducing random failure"
                     connection.transport.close()
-                    raise TTransportException("Fake transport exception")
+                    raise TException("Fake transport exception")
 
         for i in xrange(50):
             with pool.connection() as connection:
@@ -513,7 +513,7 @@ def test_connection_pool():
 
                 try:
                     inner_function()
-                except TTransportException:
+                except TException:
                     # This error should have been picked up by the
                     # connection pool, and the connection should have
                     # been replaced by a fresh one
