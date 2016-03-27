@@ -4,7 +4,6 @@ HappyBase table module.
 
 import logging
 from numbers import Integral
-from operator import attrgetter
 from struct import Struct
 
 from six import iteritems
@@ -16,23 +15,27 @@ from .batch import Batch
 
 logger = logging.getLogger(__name__)
 
-make_cell = attrgetter('value')
-make_cell_timestamp = attrgetter('value', 'timestamp')
 pack_i64 = Struct('>q').pack
 
 
 def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
-    cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return dict((cn, cellfn(cell)) for cn, cell in iteritems(cell_map))
+    return {
+        name: (cell.value, cell.timestamp) if include_timestamp else cell.value
+        for name, cell in iteritems(cell_map)
+    }
 
 
 def make_ordered_row(sorted_columns, include_timestamp):
     """Make a row dict for sorted column results from scans."""
-    cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return OrderedDict(
-        (column.columnName, cellfn(column.cell))
-        for column in sorted_columns)
+    od = OrderedDict()
+    for column in sorted_columns:
+        if include_timestamp:
+            value = (column.cell.value, column.cell.timestamp)
+        else:
+            value = column.cell.value
+        od[column.columnName] = value
+    return od
 
 
 class Table(object):
@@ -210,8 +213,10 @@ class Table(object):
             cells = self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
-        f = make_cell_timestamp if include_timestamp else make_cell
-        return [f(c) for c in cells]
+        return [
+            (c.value, c.timestamp) if include_timestamp else c.value
+            for c in cells
+        ]
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
