@@ -10,7 +10,7 @@ from six import iteritems
 
 from .Hbase_thrift import TScan
 
-from .util import thrift_type_to_dict, str_increment, OrderedDict
+from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch
 
 logger = logging.getLogger(__name__)
@@ -317,7 +317,7 @@ class Table(object):
                     "or 'row_stop'")
 
             row_start = row_prefix
-            row_stop = str_increment(row_prefix)
+            row_stop = bytes_increment(row_prefix)
 
         if row_start is None:
             row_start = ''
