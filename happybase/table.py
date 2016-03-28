@@ -64,14 +64,14 @@ class Table(object):
         descriptors = self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
-            name = name.rstrip(':')
+            name = name.rstrip(b':')
             families[name] = thrift_type_to_dict(descriptor)
         return families
 
     def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
         names = self.connection.client.getColumnDescriptors(self.name).keys()
-        return [name.rstrip(':') for name in names]
+        return [name.rstrip(b':') for name in names]
 
     def regions(self):
         """Retrieve the regions for this table.
