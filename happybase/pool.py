@@ -41,16 +41,18 @@ class ConnectionPool(object):
     .. versionadded:: 0.5
 
     The `size` argument specifies how many connections this pool
-    manages. Additional keyword arguments are passed unmodified to the
-    :py:class:`happybase.Connection` constructor, with the exception of
-    the `autoconnect` argument, since maintaining connections is the
-    task of the pool.
+    manages. The `connection_factory` argument specifies a callable
+    that will be used to create connections. Additional keyword 
+    arguments are passed unmodified to the connection factory, with the 
+    exception of the `autoconnect` argument, since maintaining connections 
+    is the task of the pool.
 
     :param int size: the maximum number of concurrently open connections
-    :param kwargs: keyword arguments passed to
-                   :py:class:`happybase.Connection`
+    :param :py:class:`happybase.Connection` connection_factory: callable
+                    used to create connections
+    :param kwargs: keyword arguments passed to `connection_factory`
     """
-    def __init__(self, size, **kwargs):
+    def __init__(self, size, connection_factory=Connection, **kwargs):
         if not isinstance(size, int):
             raise TypeError("Pool 'size' arg must be an integer")
 
@@ -68,7 +70,7 @@ class ConnectionPool(object):
         connection_kwargs['autoconnect'] = False
 
         for i in xrange(size):
-            connection = Connection(**connection_kwargs)
+            connection = connection_factory(**connection_kwargs)
             self._queue.put(connection)
 
         # The first connection is made immediately so that trivial
