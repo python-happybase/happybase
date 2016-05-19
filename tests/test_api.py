@@ -556,6 +556,17 @@ def test_pool_exhaustion():
         t.start()
         t.join()
 
+def test_pool_close():
+    pool = ConnectionPool(size=3, **connection_kwargs)
+
+    with pool.connection():
+        with assert_raises(TypeError):
+            pool.close_connections(timeout='foo')
+
+        with assert_raises(ValueError):
+            pool.close_connections(timeout=0)
+
+        pool.close_connections()
 
 if __name__ == '__main__':
     import logging
