@@ -564,7 +564,7 @@ def test_pool_close():
             pool.close_connections(timeout='foo')
 
         with assert_raises(ValueError):
-            pool.close_connections(timeout=0)
+            pool.close_connections(timeout=-1)
 
         pool.close_connections()
 
