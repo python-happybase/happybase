@@ -100,7 +100,7 @@ class ConnectionPool(object):
                             become available (optional)
         :return: None
         """
-        if timeout:
+        if timeout is not None:
             if not isinstance(timeout, int):
                 raise TypeError("close_connections 'timeout' arg must be an integer")
 
