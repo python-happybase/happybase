@@ -4,7 +4,7 @@ HappyBase
 **HappyBase** is a developer-friendly Python_ library to interact with Apache
 HBase_.
 
-* `Documentation <http://happybase.readthedocs.org/>`_ (Read the Docs)
+* `Documentation <https://happybase.readthedocs.io/>`_ (Read the Docs)
 * `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
 * `Source code <https://github.com/wbolster/happybase>`_ (Github)
 
