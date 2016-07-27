@@ -1,1 +1,1 @@
-thriftpy>=0.3.7
+thriftpy>=0.3.8
