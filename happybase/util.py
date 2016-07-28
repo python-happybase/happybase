@@ -13,7 +13,7 @@ CAPITALS = re.compile('([A-Z])')
 
 
 try:
-    # Python 2.7
+    # Python 2.7 and up
     from collections import OrderedDict
 except ImportError:
     try:
