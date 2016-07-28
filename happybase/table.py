@@ -93,12 +93,13 @@ class Table(object):
         argument and returns the columns and values for this row as
         a dictionary.
 
-        The `row` argument is the row key of the row. If the `columns` argument
-        is specified, only the values for these columns will be returned
-        instead of all available columns. The `columns` argument should be
-        a list or tuple containing strings. Each name can be a column family,
-        such as `cf1` or `cf1:` (the trailing colon is not required), or
-        a column family with a qualifier, such as `cf1:col1`.
+        The `row` argument is the row key of the row. If the `columns`
+        argument is specified, only the values for these columns will be
+        returned instead of all available columns. The `columns`
+        argument should be a list or tuple containing byte strings. Each
+        name can be a column family, such as ``b'cf1'`` or ``b'cf1:'``
+        (the trailing colon is not required), or a column family with a
+        qualifier, such as ``b'cf1:col1'``.
 
         If specified, the `timestamp` argument specifies the maximum version
         that results may have. The `include_timestamp` argument specifies
@@ -424,8 +425,8 @@ class Table(object):
         This method stores the data in the `data` argument for the row
         specified by `row`. The `data` argument is dictionary that maps columns
         to values. Column names must include a family and qualifier part, e.g.
-        `cf:col`, though the qualifier part may be the empty string, e.g.
-        `cf:`.
+        ``b'cf:col'``, though the qualifier part may be the empty string, e.g.
+        ``b'cf:'``.
 
         Note that, in many situations, :py:meth:`batch()` is a more appropriate
         method to manipulate data.
