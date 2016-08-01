@@ -50,7 +50,7 @@ The :py:class:`Connection` class provides the main entry point to interact with
 HBase. For instance, to list the available tables, use
 :py:meth:`Connection.tables`::
 
-   print connection.tables()
+   print(connection.tables())
 
 Most other methods on the :py:class:`Connection` class are intended for system
 management tasks like creating, dropping, enabling and disabling tables. See the
@@ -126,8 +126,8 @@ At this point, :py:meth:`Connection.tables` no longer includes tables in other
 ‘namespaces’. HappyBase will only return tables with a ``myproject_`` prefix,
 and will also remove the prefix transparently when returning results, e.g.::
 
-   print connection.tables()  # Table "myproject_XYZ" in HBase will be
-                              # returned as simply "XYZ"
+   print(connection.tables())  # Table "myproject_XYZ" in HBase will be
+                               # returned as simply "XYZ"
 
 This also applies to other methods that take table names, such as
 :py:meth:`Connection.table`::
@@ -158,27 +158,27 @@ table in HBase. The most basic one is :py:meth:`Table.row`, which retrieves a
 single row from the table, and returns it as a dictionary mapping columns to
 values::
 
-   row = table.row('row-key')
-   print row['cf1:col1']   # prints the value of cf1:col1
+   row = table.row(b'row-key')
+   print(row[b'cf1:col1'])   # prints the value of cf1:col1
 
 The :py:meth:`Table.rows` method works just like :py:meth:`Table.row`, but
 takes multiple row keys and returns those as `(key, data)` tuples::
 
-   rows = table.rows(['row-key-1', 'row-key-2'])
+   rows = table.rows([b'row-key-1', b'row-key-2'])
    for key, data in rows:
-       print key, data
+       print(key, data)
 
 If you want the results that :py:meth:`Table.rows` returns as a dictionary or
 ordered dictionary, you will have to do this yourself. This is really easy
 though, since the return value can be passed directly to the dictionary
 constructor. For a normal dictionary, order is lost::
 
-   rows_as_dict = dict(table.rows(['row-key-1', 'row-key-2']))
+   rows_as_dict = dict(table.rows([b'row-key-1', b'row-key-2']))
 
 …whereas for a :py:class:`OrderedDict`, order is preserved::
 
    from collections import OrderedDict
-   rows_as_ordered_dict = OrderedDict(table.rows(['row-key-1', 'row-key-2']))
+   rows_as_ordered_dict = OrderedDict(table.rows([b'row-key-1', b'row-key-2']))
 
 
 Making more fine-grained selections
@@ -190,16 +190,16 @@ improved by specifying those columns explicitly to :py:meth:`Table.row` and
 :py:meth:`Table.rows`. The `columns` argument takes a list (or tuple) of column
 names::
 
-   row = table.row('row-key', columns=['cf1:col1', 'cf1:col2'])
-   print row['cf1:col1']
-   print row['cf1:col2']
+   row = table.row(b'row-key', columns=[b'cf1:col1', b'cf1:col2'])
+   print(row[b'cf1:col1'])
+   print(row[b'cf1:col2'])
 
 Instead of providing both a column family and a column qualifier, items in the
 `columns` argument may also be just a column family, which means that all
 columns from that column family will be retrieved. For example, to get all
 columns and values in the column family `cf1`, use this::
 
-   row = table.row('row-key', columns=['cf1'])
+   row = table.row(b'row-key', columns=[b'cf1'])
 
 In HBase, each cell has a timestamp attached to it. In case you don't want to
 work with the latest version of data stored in HBase, the methods that retrieve
@@ -207,15 +207,15 @@ data from the database, e.g. :py:meth:`Table.row`, all accept a `timestamp`
 argument that specifies that the results should be restricted to values with a
 timestamp up to the specified timestamp::
 
-   row = table.row('row-key', timestamp=123456789)
+   row = table.row(b'row-key', timestamp=123456789)
 
 By default, HappyBase does not include timestamps in the results it returns. In
 your application needs access to the timestamps, simply set the
 `include_timestamp` argument to ``True``. Now, each cell in the result will be
 returned as a `(value, timestamp)` tuple instead of just a value::
 
-   row = table.row('row-key', columns=['cf1:col1'], include_timestamp=True)
-   value, timestamp = row['cf1:col1']
+   row = table.row(b'row-key', columns=[b'cf1:col1'], include_timestamp=True)
+   value, timestamp = row[b'cf1:col1']
 
 HBase supports storing multiple versions of the same cell. This can be
 configured for each column family. To retrieve all versions of a column for a
@@ -225,13 +225,13 @@ argument specifies the maximum number of versions to return. Just like the
 methods that retrieve rows, the `include_timestamp` argument determines whether
 timestamps are included in the result. Example::
 
-   values = table.cells('row-key', 'cf1:col1', versions=2)
+   values = table.cells(b'row-key', b'cf1:col1', versions=2)
    for value in values:
-       print "Cell data: %s" % value
+       print("Cell data: {}".format(value))
 
-   cells = table.cells('row-key', 'cf1:col1', versions=3, include_timestamp=True)
+   cells = table.cells(b'row-key', b'cf1:col1', versions=3, include_timestamp=True)
    for value, timestamp in cells:
-       print "Cell data at %d: %s" % (timestamp, value)
+       print("Cell data at {}: {}".format(timestamp, value))
 
 Note that the result may contain fewer cells than requested. The cell may just
 have fewer versions, or you may have requested more versions than HBase keeps
@@ -246,32 +246,32 @@ efficiently iterated over using a table scanner, created using
 looks like this::
 
    for key, data in table.scan():
-       print key, data
+       print(key, data)
 
 Doing full table scans like in the example above is prohibitively expensive in
 practice. Scans can be restricted in several ways to make more selective range
 queries. One way is to specify start or stop keys, or both. To iterate over all
 rows from row `aaa` to the end of the table::
 
-   for key, data in table.scan(row_start='aaa'):
-       print key, data
+   for key, data in table.scan(row_start=b'aaa'):
+       print(key, data)
 
 To iterate over all rows from the start of the table up to row `xyz`, use this::
 
-   for key, data in table.scan(row_stop='xyz'):
-       print key, data
+   for key, data in table.scan(row_stop=b'xyz'):
+       print(key, data)
 
 To iterate over all rows between row `aaa` (included) and `xyz` (not included),
 supply both::
 
-   for key, data in table.scan(row_start='aaa', row_stop='xyz'):
-       print key, data
+   for key, data in table.scan(row_start=b'aaa', row_stop=b'xyz'):
+       print(key, data)
 
 An alternative is to use a key prefix. For example, to iterate over all rows
 starting with `abc`::
 
-   for key, data in table.scan(row_prefix='abc'):
-       print key, data
+   for key, data in table.scan(row_prefix=b'abc'):
+       print(key, data)
 
 The scanner examples above only limit the results by row key using the
 `row_start`, `row_stop`, and `row_prefix` arguments, but scanners can also
@@ -287,12 +287,21 @@ supported scanner options.
 Manipulating data
 =================
 
-HBase does not have any notion of *data types*; all row keys, column names and
-column values are simply treated as raw byte strings. By design, HappyBase does
-*not* do any automatic string conversion. This means that data must be
-converted to byte strings in your application before you pass it to HappyBase,
-for instance by calling ``str()`` or by employing more advanced string
-serialisation techniques like ``struct.pack()``.
+HBase does not have any notion of *data types*; all row keys, column
+names and column values are simply treated as raw byte strings.
+
+By design, HappyBase does *not* do any automatic string conversion.
+This means that data must be converted to byte strings in your
+application before you pass it to HappyBase, for instance by calling
+``s.encode('utf-8')`` on text strings (which use Unicode), or by
+employing more advanced string serialisation techniques like
+``struct.pack()``. Look for HBase modelling techniques for more
+details about this. Note that the underlying Thrift library used by
+HappyBase does some automatic encoding of text strings into bytes, but
+relying on this "feature" is strongly discouraged, since returned data
+will not be decoded automatically, resulting in asymmetric and hence
+confusing behaviour. Having explicit encode and decode steps in your
+application code is the correct way.
 
 In HBase, all mutations either store data or mark data for deletion; there is
 no such thing as an in-place `update` or `delete`.  HappyBase provides methods
@@ -306,12 +315,12 @@ To store a single cell of data in our table, we can use :py:meth:`Table.put`,
 which takes the row key, and the data to store. The data should be a dictionary
 mapping the column name to a value::
 
-   table.put('row-key', {'cf:col1': 'value1',
-                         'cf:col2': 'value2'})
+   table.put(b'row-key', {b'cf:col1': b'value1',
+                          b'cf:col2': b'value2'})
 
 Use the `timestamp` argument if you want to provide timestamps explicitly::
 
-   table.put('row-key', {'cf:col1': 'value1'}, timestamp=123456789)
+   table.put(b'row-key', {b'cf:col1': b'value1'}, timestamp=123456789)
 
 If omitted, HBase defaults to the current system time.
 
@@ -321,12 +330,12 @@ Deleting data
 The :py:meth:`Table.delete` method deletes data from a table. To delete a
 complete row, just specify the row key::
 
-   table.delete('row-key')
+   table.delete(b'row-key')
 
 To delete one or more columns instead of a complete row, also specify the
 `columns` argument::
 
-   table.delete('row-key', columns=['cf1:col1', 'cf1:col2'])
+   table.delete(b'row-key', columns=[b'cf1:col1', b'cf1:col2'])
 
 The optional `timestamp` argument restricts the delete operation to data up to
 the specified timestamp.
@@ -344,10 +353,10 @@ delete methods, just like the :py:class:`Table` class, but the changes are sent
 to the server in a single round-trip using :py:meth:`Batch.send`::
 
    b = table.batch()
-   b.put('row-key-1', {'cf:col1': 'value1', 'cf:col2': 'value2'})
-   b.put('row-key-2', {'cf:col2': 'value2', 'cf:col3': 'value3'})
-   b.put('row-key-3', {'cf:col3': 'value3', 'cf:col4': 'value4'})
-   b.delete('row-key-4')
+   b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+   b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+   b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+   b.delete(b'row-key-4')
    b.send()
 
 .. note::
@@ -370,10 +379,10 @@ useful in combination with Python's ``with`` construct. The example above can
 be simplified to read::
 
    with table.batch() as b:
-       b.put('row-key-1', {'cf:col1': 'value1', 'cf:col2': 'value2'})
-       b.put('row-key-2', {'cf:col2': 'value2', 'cf:col3': 'value3'})
-       b.put('row-key-3', {'cf:col3': 'value3', 'cf:col4': 'value4'})
-       b.delete('row-key-4')
+       b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+       b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+       b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+       b.delete(b'row-key-4')
 
 As you can see, there is no call to :py:meth:`Batch.send` anymore. The batch is
 automatically applied when the ``with`` code block terminates, even in case of
@@ -384,13 +393,13 @@ manager this would look something like this::
 
    b = table.batch()
    try:
-       b.put('row-key-1', {'cf:col1': 'value1', 'cf:col2': 'value2'})
-       b.put('row-key-2', {'cf:col2': 'value2', 'cf:col3': 'value3'})
-       b.put('row-key-3', {'cf:col3': 'value3', 'cf:col4': 'value4'})
-       b.delete('row-key-4')
+       b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+       b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+       b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+       b.delete(b'row-key-4')
        raise ValueError("Something went wrong!")
    except ValueError as e:
-       # error handling goes here; nothing is sent to HBase
+       # error handling goes here; nothing will be sent to HBase
        pass
    else:
        # no exceptions; send data
@@ -401,10 +410,10 @@ Obtaining the same behaviour is easier using a ``with`` block. The
 
    try:
        with table.batch(transaction=True) as b:
-           b.put('row-key-1', {'cf:col1': 'value1', 'cf:col2': 'value2'})
-           b.put('row-key-2', {'cf:col2': 'value2', 'cf:col3': 'value3'})
-           b.put('row-key-3', {'cf:col3': 'value3', 'cf:col4': 'value4'})
-           b.delete('row-key-4')
+           b.put(b'row-key-1', {b'cf:col1': b'value1', b'cf:col2': b'value2'})
+           b.put(b'row-key-2', {b'cf:col2': b'value2', b'cf:col3': b'value3'})
+           b.put(b'row-key-3', {b'cf:col3': b'value3', b'cf:col4': b'value4'})
+           b.delete(b'row-key-4')
            raise ValueError("Something went wrong!")
    except ValueError:
        # error handling goes here; nothing is sent to HBase
@@ -426,8 +435,10 @@ example, this will result in three round-trips to the server (two batches with
    with table.batch(batch_size=1000) as b:
        for i in range(1200):
            # this put() will result in two mutations (two cells)
-           b.put('row-%04d' % i, {'cf1:col1': 'v1',
-                                  'cf1:col2': 'v2',})
+           b.put(b'row-%04d'.format(i), {
+               b'cf1:col1': b'v1',
+               b'cf1:col2': b'v2',
+           })
 
 The appropriate `batch_size` is very application-specific since it depends on
 the data size, so just experiment to see how different sizes work for your
@@ -442,23 +453,23 @@ interpreted as big-endian 64-bit signed integers by HBase. Counters are
 automatically initialised to 0 upon first use. When incrementing or
 decrementing a counter, the value after modification is returned. Example::
 
-   print table.counter_inc('row-key', 'cf1:counter')  # prints 1
-   print table.counter_inc('row-key', 'cf1:counter')  # prints 2
-   print table.counter_inc('row-key', 'cf1:counter')  # prints 3
+   print(table.counter_inc(b'row-key', b'cf1:counter'))  # prints 1
+   print(table.counter_inc(b'row-key', b'cf1:counter'))  # prints 2
+   print(table.counter_inc(b'row-key', b'cf1:counter'))  # prints 3
 
-   print table.counter_dec('row-key', 'cf1:counter')  # prints 2
+   print(table.counter_dec(b'row-key', b'cf1:counter'))  # prints 2
 
 The optional `value` argument specifies how much to increment or decrement by::
 
-   print table.counter_inc('row-key', 'cf1:counter', value=3)  # prints 5
+   print(table.counter_inc(b'row-key', b'cf1:counter', value=3))  # prints 5
 
 While counters are typically used with the increment and decrement functions
 shown above, the :py:meth:`Table.counter_get` and :py:meth:`Table.counter_set`
 methods can be used to retrieve or set a counter value directly::
 
-   print table.counter_get('row-key', 'cf1:counter')  # prints 5
+   print(table.counter_get(b'row-key', b'cf1:counter'))  # prints 5
 
-   table.counter_set('row-key', 'cf1:counter', 12)
+   table.counter_set(b'row-key', b'cf1:counter', 12)
 
 .. note::
 
@@ -466,7 +477,6 @@ methods can be used to retrieve or set a counter value directly::
    value, modify it in code and then :py:meth:`~Table.counter_set` the modified
    value; use the atomic :py:meth:`~Table.counter_inc` and
    :py:meth:`~Table.counter_dec` instead!
-
 
 
 Using the connection pool
@@ -505,7 +515,7 @@ are actually returned to the pool after use. Example::
    pool = happybase.ConnectionPool(size=3, host='...')
 
    with pool.connection() as connection:
-       print connection.tables()
+       print(connection.tables())
 
 .. warning::
 
@@ -521,7 +531,7 @@ data outside the ``with`` block::
 
    with pool.connection() as connection:
        table = connection.table('table-name')
-       row = table.row('row-key')
+       row = table.row(b'row-key')
 
    process_data(row)
 

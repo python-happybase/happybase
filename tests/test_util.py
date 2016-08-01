@@ -2,6 +2,8 @@
 HappyBase utility tests.
 """
 
+from codecs import decode, encode
+
 from nose.tools import assert_equal, assert_less
 
 import happybase.util as util
@@ -29,26 +31,26 @@ def test_camel_case_to_pep8():
         yield check, a, b, c
 
 
-def test_str_increment():
+def test_bytes_increment():
     def check(s_hex, expected):
-        s = s_hex.decode('hex')
-        v = util.str_increment(s)
-        v_hex = v.encode('hex')
+        s = decode(s_hex, 'hex')
+        v = util.bytes_increment(s)
+        v_hex = encode(v, 'hex')
         assert_equal(expected, v_hex)
         assert_less(s, v)
 
     test_values = [
-        ('00', '01'),
-        ('01', '02'),
-        ('fe', 'ff'),
-        ('1234', '1235'),
-        ('12fe', '12ff'),
-        ('12ff', '13'),
-        ('424242ff', '424243'),
-        ('4242ffff', '4243'),
+        (b'00', b'01'),
+        (b'01', b'02'),
+        (b'fe', b'ff'),
+        (b'1234', b'1235'),
+        (b'12fe', b'12ff'),
+        (b'12ff', b'13'),
+        (b'424242ff', b'424243'),
+        (b'4242ffff', b'4243'),
     ]
 
-    assert util.str_increment('\xff\xff\xff') is None
+    assert util.bytes_increment(b'\xff\xff\xff') is None
 
     for s, expected in test_values:
         yield check, s, expected

@@ -6,15 +6,18 @@ HappyBase connection module.
 
 import logging
 
+import six
 from thriftpy.thrift import TClient
 from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
 from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
 
 from .Hbase_thrift import Hbase, ColumnDescriptor
 from .table import Table
-from .util import pep8_to_camel_case
+from .util import ensure_bytes, pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
+
+STRING_OR_BINARY = (six.binary_type, six.text_type)
 
 COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96')
 THRIFT_TRANSPORTS = dict(
@@ -103,19 +106,21 @@ class Connection(object):
     """
     def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
                  autoconnect=True, table_prefix=None,
-                 table_prefix_separator='_', compat=DEFAULT_COMPAT,
+                 table_prefix_separator=b'_', compat=DEFAULT_COMPAT,
                  transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
 
         if transport not in THRIFT_TRANSPORTS:
             raise ValueError("'transport' must be one of %s"
                              % ", ".join(THRIFT_TRANSPORTS.keys()))
 
-        if table_prefix is not None \
-                and not isinstance(table_prefix, basestring):
-            raise TypeError("'table_prefix' must be a string")
+        if table_prefix is not None:
+            if not isinstance(table_prefix, STRING_OR_BINARY):
+                raise TypeError("'table_prefix' must be a string")
+            table_prefix = ensure_bytes(table_prefix)
 
-        if not isinstance(table_prefix_separator, basestring):
+        if not isinstance(table_prefix_separator, STRING_OR_BINARY):
             raise TypeError("'table_prefix_separator' must be a string")
+        table_prefix_separator = ensure_bytes(table_prefix_separator)
 
         if compat not in COMPAT_MODES:
             raise ValueError("'compat' must be one of %s"
@@ -155,9 +160,9 @@ class Connection(object):
 
     def _table_name(self, name):
         """Construct a table name by optionally adding a table name prefix."""
+        name = ensure_bytes(name)
         if self.table_prefix is None:
             return name
-
         return self.table_prefix + self.table_prefix_separator + name
 
     def open(self):
@@ -217,6 +222,7 @@ class Connection(object):
         :return: Table instance
         :rtype: :py:class:`Table`
         """
+        name = ensure_bytes(name)
         if use_prefix:
             name = self._table_name(name)
         return Table(name, self)
@@ -238,7 +244,7 @@ class Connection(object):
 
         # Filter using prefix, and strip prefix from names
         if self.table_prefix is not None:
-            prefix = self._table_name('')
+            prefix = self._table_name(b'')
             offset = len(prefix)
             names = [n[offset:] for n in names if n.startswith(prefix)]
 
@@ -287,12 +293,12 @@ class Connection(object):
                 % name)
 
         column_descriptors = []
-        for cf_name, options in families.iteritems():
+        for cf_name, options in six.iteritems(families):
             if options is None:
                 options = dict()
 
             kwargs = dict()
-            for option_name, value in options.iteritems():
+            for option_name, value in six.iteritems(options):
                 kwargs[pep8_to_camel_case(option_name)] = value
 
             if not cf_name.endswith(':'):

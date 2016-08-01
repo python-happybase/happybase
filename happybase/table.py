@@ -4,33 +4,38 @@ HappyBase table module.
 
 import logging
 from numbers import Integral
-from operator import attrgetter
 from struct import Struct
+
+from six import iteritems
 
 from .Hbase_thrift import TScan
 
-from .util import thrift_type_to_dict, str_increment, OrderedDict
+from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch
 
 logger = logging.getLogger(__name__)
 
-make_cell = attrgetter('value')
-make_cell_timestamp = attrgetter('value', 'timestamp')
 pack_i64 = Struct('>q').pack
 
 
 def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
-    cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return dict((cn, cellfn(cell)) for cn, cell in cell_map.iteritems())
+    return {
+        name: (cell.value, cell.timestamp) if include_timestamp else cell.value
+        for name, cell in iteritems(cell_map)
+    }
 
 
 def make_ordered_row(sorted_columns, include_timestamp):
     """Make a row dict for sorted column results from scans."""
-    cellfn = include_timestamp and make_cell_timestamp or make_cell
-    return OrderedDict(
-        (column.columnName, cellfn(column.cell))
-        for column in sorted_columns)
+    od = OrderedDict()
+    for column in sorted_columns:
+        if include_timestamp:
+            value = (column.cell.value, column.cell.timestamp)
+        else:
+            value = column.cell.value
+        od[column.columnName] = value
+    return od
 
 
 class Table(object):
@@ -59,14 +64,14 @@ class Table(object):
         descriptors = self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
-            name = name.rstrip(':')
+            name = name.rstrip(b':')
             families[name] = thrift_type_to_dict(descriptor)
         return families
 
     def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
         names = self.connection.client.getColumnDescriptors(self.name).keys()
-        return [name.rstrip(':') for name in names]
+        return [name.rstrip(b':') for name in names]
 
     def regions(self):
         """Retrieve the regions for this table.
@@ -75,7 +80,7 @@ class Table(object):
         :rtype: list of dicts
         """
         regions = self.connection.client.getTableRegions(self.name)
-        return map(thrift_type_to_dict, regions)
+        return [thrift_type_to_dict(r) for r in regions]
 
     #
     # Data retrieval
@@ -88,12 +93,13 @@ class Table(object):
         argument and returns the columns and values for this row as
         a dictionary.
 
-        The `row` argument is the row key of the row. If the `columns` argument
-        is specified, only the values for these columns will be returned
-        instead of all available columns. The `columns` argument should be
-        a list or tuple containing strings. Each name can be a column family,
-        such as `cf1` or `cf1:` (the trailing colon is not required), or
-        a column family with a qualifier, such as `cf1:col1`.
+        The `row` argument is the row key of the row. If the `columns`
+        argument is specified, only the values for these columns will be
+        returned instead of all available columns. The `columns`
+        argument should be a list or tuple containing byte strings. Each
+        name can be a column family, such as ``b'cf1'`` or ``b'cf1:'``
+        (the trailing colon is not required), or a column family with a
+        qualifier, such as ``b'cf1:col1'``.
 
         If specified, the `timestamp` argument specifies the maximum version
         that results may have. The `include_timestamp` argument specifies
@@ -208,10 +214,10 @@ class Table(object):
             cells = self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
-        if include_timestamp:
-            return map(make_cell_timestamp, cells)
-        else:
-            return map(make_cell, cells)
+        return [
+            (c.value, c.timestamp) if include_timestamp else c.value
+            for c in cells
+        ]
 
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
@@ -312,7 +318,7 @@ class Table(object):
                     "or 'row_stop'")
 
             row_start = row_prefix
-            row_stop = str_increment(row_prefix)
+            row_stop = bytes_increment(row_prefix)
 
         if row_start is None:
             row_start = ''
@@ -419,8 +425,8 @@ class Table(object):
         This method stores the data in the `data` argument for the row
         specified by `row`. The `data` argument is dictionary that maps columns
         to values. Column names must include a family and qualifier part, e.g.
-        `cf:col`, though the qualifier part may be the empty string, e.g.
-        `cf:`.
+        ``b'cf:col'``, though the qualifier part may be the empty string, e.g.
+        ``b'cf:'``.
 
         Note that, in many situations, :py:meth:`batch()` is a more appropriate
         method to manipulate data.
