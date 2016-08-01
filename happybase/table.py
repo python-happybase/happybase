@@ -11,6 +11,7 @@ from .Hbase_thrift import TScan
 
 from .util import thrift_type_to_dict, str_increment, OrderedDict
 from .batch import Batch
+from .counter_batch import CounterBatch
 
 logger = logging.getLogger(__name__)
 
@@ -216,7 +217,7 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
-             limit=None, sorted_columns=False):
+             limit=None, sorted_columns=False, reversed=False):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -271,6 +272,9 @@ class Table(object):
         * The `sorted_columns` argument is only available when using
           HBase 0.96 (or up).
 
+        * The `reversed` option is only available when using HBase 0.98
+          (or up).
+
         .. versionadded:: 0.8
            `sorted_columns` argument
 
@@ -288,6 +292,7 @@ class Table(object):
         :param bool scan_batching: server-side scan batching (optional)
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
+        :param bool reversed: whether or not to reverse the row ordering
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
@@ -370,6 +375,7 @@ class Table(object):
                 filterString=filter,
                 batchSize=scan_batching,
                 sortColumns=sorted_columns,
+                reversed=reversed,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
@@ -497,6 +503,23 @@ class Table(object):
         kwargs = locals().copy()
         del kwargs['self']
         return Batch(table=self, **kwargs)
+
+    def counter_batch(self, batch_size=None):
+        """Create a new batch of counter operation for this table.
+
+        This method returns a new :py:class:`CounterBatch` instance that can be used
+        for mass counter manipulation.
+
+        If given, the `batch_size` argument specifies the maximum batch size
+        after which the batch should send the mutations to the server. By
+        default this is unbounded.
+
+        :param int batch_size: batch size (optional)
+
+        :return: CounterBatch instance
+        :rtype: :py:class:`CounterBatch`
+        """
+        return CounterBatch(table=self, batch_size=batch_size)
 
     #
     # Atomic counters

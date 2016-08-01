@@ -11,4 +11,5 @@ from ._version import __version__
 from .connection import DEFAULT_HOST, DEFAULT_PORT, Connection
 from .table import Table
 from .batch import Batch
+from .counter_batch import CounterBatch
 from .pool import ConnectionPool, NoConnectionsAvailable
