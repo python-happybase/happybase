@@ -239,16 +239,18 @@ def test_batch_context_managers():
 
     with table.batch(batch_size=5) as b:
         for i in range(10):
-            b.put(b'row-batch1-%03d' % i, {b'cf1:': str(i).encode('ascii')})
+            b.put(('row-batch1-%03d' % i).encode('ascii'),
+                  {b'cf1:': str(i).encode('ascii')})
 
     with table.batch(batch_size=20) as b:
         for i in range(95):
-            b.put(b'row-batch2-%03d' % i, {b'cf1:': str(i).encode('ascii')})
+            b.put(('row-batch2-%03d' % i).encode('ascii'),
+                  {b'cf1:': str(i).encode('ascii')})
     assert_equal(95, len(list(table.scan(row_prefix=b'row-batch2-'))))
 
     with table.batch(batch_size=20) as b:
         for i in range(95):
-            b.delete(b'row-batch2-%03d' % i)
+            b.delete(('row-batch2-%03d' % i).encode('ascii'))
     assert_equal(0, len(list(table.scan(row_prefix=b'row-batch2-'))))
 
 
@@ -369,12 +371,12 @@ def test_scan():
 
     with table.batch() as b:
         for i in range(2000):
-            b.put(b'row-scan-a%05d' % i,
+            b.put(('row-scan-a%05d' % i).encode('ascii'),
                   {b'cf1:col1': b'v1',
                    b'cf1:col2': b'v2',
                    b'cf2:col1': b'v1',
                    b'cf2:col2': b'v2'})
-            b.put(b'row-scan-b%05d' % i,
+            b.put(('row-scan-b%05d' % i).encode('ascii'),
                   {b'cf1:col1': b'v1',
                    b'cf1:col2': b'v2'})
 
@@ -432,7 +434,7 @@ def test_scan_sorting():
 
     input_row = {}
     for i in range(100):
-        input_row[b'cf1:col-%03d' % i] = b''
+        input_row[('cf1:col-%03d' % i).encode('ascii')] = b''
     input_key = b'row-scan-sorted'
     table.put(input_key, input_row)
 
