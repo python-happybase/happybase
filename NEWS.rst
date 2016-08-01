@@ -4,6 +4,28 @@ Version history
 .. py:currentmodule:: happybase
 
 
+HappyBase 1.0.0
+---------------
+
+* First 1.x.y release!
+
+  From now on this library uses a semantic versioning scheme.
+  HappyBase is a mature library, but always used 0.x version numbers
+  for no good reason. This has now changed.
+
+* Finally, Python 3 support. Thanks to all the people who contributed!
+  (`issue #40 <https://github.com/wbolster/happybase/issues/40>`_,
+  `pr 116 <https://github.com/wbolster/happybase/pull/116>`_,
+  `pr 108 <https://github.com/wbolster/happybase/pull/108>`_,
+  `pr 111 <https://github.com/wbolster/happybase/pull/111>`_)
+
+* Switch to thriftpy as the underlying Thrift library, which is a much
+  nicer and better maintained library.
+
+* Enable building universal wheels
+  (`issue 78 <https://github.com/wbolster/happybase/pull/78>`_)
+
+
 HappyBase 0.9
 -------------
 
