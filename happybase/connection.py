@@ -11,7 +11,8 @@ from thriftpy.thrift import TClient
 from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
 from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
 
-from .Hbase_thrift import Hbase, ColumnDescriptor
+from Hbase_thrift import Hbase, ColumnDescriptor
+
 from .table import Table
 from .util import ensure_bytes, pep8_to_camel_case
 

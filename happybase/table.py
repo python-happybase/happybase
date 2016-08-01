@@ -8,7 +8,7 @@ from struct import Struct
 
 from six import iteritems
 
-from .Hbase_thrift import TScan
+from Hbase_thrift import TScan
 
 from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch

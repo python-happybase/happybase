@@ -8,7 +8,7 @@ from numbers import Integral
 
 import six
 
-from .Hbase_thrift import BatchMutation, Mutation
+from Hbase_thrift import BatchMutation, Mutation
 
 logger = logging.getLogger(__name__)
 
