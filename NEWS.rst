@@ -7,6 +7,8 @@ Version history
 HappyBase 1.0.0
 ---------------
 
+Release date: 2016-TODO
+
 * First 1.x.y release!
 
   From now on this library uses a semantic versioning scheme.
