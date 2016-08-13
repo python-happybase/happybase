@@ -7,7 +7,7 @@ Version history
 HappyBase 1.0.0
 ---------------
 
-Release date: 2016-TODO
+Release date: 2016-08-13
 
 * First 1.x.y release!
 
