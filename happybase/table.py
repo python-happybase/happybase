@@ -290,7 +290,7 @@ class Table(object):
         :param str filter: a filter string (optional)
         :param int timestamp: timestamp (optional)
         :param bool include_timestamp: whether timestamps are returned
-        :param int batch_size: batch size for retrieving resuls
+        :param int batch_size: batch size for retrieving results
         :param bool scan_batching: server-side scan batching (optional)
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
