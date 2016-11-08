@@ -25,18 +25,22 @@ class RecoveringClient(TClient):
         while True:
             try:
                 return client._req(_api, *args, **kwargs)
-            except (TApplicationException, socket_error, TTransportException):
+            except (TApplicationException, socket_error, TTransportException) as exc:
+                logger.exception("Got exception")
+                while True:
+                    interval = retries.popleft() if retries else interval
+                    logger.info("Sleeping for %d seconds", interval)
+                    sleep(interval)
+                    logger.info("Trying to reconnect")
+                    try:
+                        self._connection._refresh_thrift_client()
+                        self._connection.open()
+                        client = super(RecoveringClient, self._connection.client)
+                        logger.debug("New client is initialized")
+                    except TTransportException:
+                        logger.exception("Got exception, while trying to reconnect. Continuing")
+                        pass
+                    else:
+                        break
                 if no_retry:
-                    raise
-                interval = retries.popleft() if retries else interval
-                logger.exception("Got exception, sleeping for %d.", interval)
-                sleep(interval)
-                logger.info("Trying to reconnect.")
-                try:
-                    self._connection._refresh_thrift_client()
-                    self._connection.open()
-                    client = super(RecoveringClient, self._connection.client)
-                    logger.debug("New client is initialized.")
-                except TTransportException:
-                    logger.exception("Got exception, while trying to reconnect. Continuing.")
-                    pass
+                    raise exc
