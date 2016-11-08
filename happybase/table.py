@@ -563,7 +563,7 @@ class Table(object):
         :rtype: int
         """
         return self.connection.client.atomicIncrement(
-            self.name, row, column, value)
+            self.name, row, column, value, no_retry=True)
 
     def counter_dec(self, row, column, value=1):
         """Atomically decrement (or increments) a counter column.

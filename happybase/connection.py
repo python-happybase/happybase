@@ -7,7 +7,7 @@ HappyBase connection module.
 import logging
 
 import six
-from thriftpy.thrift import TClient
+from client import RecoveringClient
 from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
 from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
 
@@ -157,7 +157,7 @@ class Connection(object):
 
         self.transport = self._transport_class(socket)
         protocol = self._protocol_class(self.transport, decode_response=False)
-        self.client = TClient(Hbase, protocol)
+        self.client = RecoveringClient(Hbase, protocol, connection=self)
 
     def _table_name(self, name):
         """Construct a table name by optionally adding a table name prefix."""
@@ -308,7 +308,7 @@ class Connection(object):
 
             column_descriptors.append(ColumnDescriptor(**kwargs))
 
-        self.client.createTable(name, column_descriptors)
+        self.client.createTable(name, column_descriptors, no_retry=True)
 
     def delete_table(self, name, disable=False):
         """Delete the specified table.
@@ -327,7 +327,7 @@ class Connection(object):
             self.disable_table(name)
 
         name = self._table_name(name)
-        self.client.deleteTable(name)
+        self.client.deleteTable(name, no_retry=True)
 
     def enable_table(self, name):
         """Enable the specified table.
@@ -335,7 +335,7 @@ class Connection(object):
         :param str name: The table name
         """
         name = self._table_name(name)
-        self.client.enableTable(name)
+        self.client.enableTable(name, no_retry=True)
 
     def disable_table(self, name):
         """Disable the specified table.
@@ -343,7 +343,7 @@ class Connection(object):
         :param str name: The table name
         """
         name = self._table_name(name)
-        self.client.disableTable(name)
+        self.client.disableTable(name, no_retry=True)
 
     def is_table_enabled(self, name):
         """Return whether the specified table is enabled.
@@ -364,6 +364,6 @@ class Connection(object):
         """
         name = self._table_name(name)
         if major:
-            self.client.majorCompact(name)
+            self.client.majorCompact(name, no_retry=True)
         else:
-            self.client.compact(name)
+            self.client.compact(name, no_retry=True)
