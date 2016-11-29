@@ -151,9 +151,7 @@ class Connection(object):
 
     def _refresh_thrift_client(self):
         """Refresh the Thrift socket, transport, and client."""
-        socket = TSocket(self.host, self.port)
-        if self.timeout is not None:
-            socket.set_timeout(self.timeout)
+        socket = TSocket(host=self.host, port=self.port, socket_timeout=self.timeout)
 
         self.transport = self._transport_class(socket)
         protocol = self._protocol_class(self.transport, decode_response=False)
