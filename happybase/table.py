@@ -222,7 +222,7 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
-             limit=None, sorted_columns=False):
+             limit=None, sorted_columns=False, reversed=False):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -267,6 +267,11 @@ class Table(object):
         If `sorted_columns` is `True`, the columns in the rows returned
         by this scanner will be retrieved in sorted order, and the data
         will be stored in `OrderedDict` instances.
+        
+        If `reversed` is `True`, the scanner will perform the scan in reverse.
+        This means that `row_start` must be lexicographically after `row_stop`.
+        Note that the start of the range is inclusive, while the end is
+        exclusive just as in the forward scan.
 
         **Compatibility notes:**
 
@@ -276,6 +281,9 @@ class Table(object):
 
         * The `sorted_columns` argument is only available when using
           HBase 0.96 (or up).
+
+        * The `reversed` argument is only available when using HBase 0.98
+          (or up)
 
         .. versionadded:: 0.8
            `sorted_columns` argument
@@ -294,6 +302,7 @@ class Table(object):
         :param bool scan_batching: server-side scan batching (optional)
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
+        :param bool reversed: whether to perform scan in reverse
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
@@ -311,14 +320,22 @@ class Table(object):
             raise NotImplementedError(
                 "'sorted_columns' is only supported in HBase >= 0.96")
 
+        if reversed and self.connection.compat < '0.98':
+            raise NotImplementedError(
+                "'reversed' is only supported in HBase >= 0.98")
+
         if row_prefix is not None:
             if row_start is not None or row_stop is not None:
                 raise TypeError(
                     "'row_prefix' cannot be combined with 'row_start' "
                     "or 'row_stop'")
 
-            row_start = row_prefix
-            row_stop = bytes_increment(row_prefix)
+            if reversed:
+                row_start = bytes_increment(row_prefix)
+                row_stop = row_prefix
+            else:
+                row_start = row_prefix
+                row_stop = bytes_increment(row_prefix)
 
         if row_start is None:
             row_start = ''
@@ -376,6 +393,7 @@ class Table(object):
                 filterString=filter,
                 batchSize=scan_batching,
                 sortColumns=sorted_columns,
+                reversed=reversed
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
