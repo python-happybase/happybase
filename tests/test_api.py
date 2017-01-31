@@ -27,7 +27,7 @@ from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
 HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
 HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
-HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.96')
+HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.98')
 HAPPYBASE_TRANSPORT = os.environ.get('HAPPYBASE_TRANSPORT', 'buffered')
 KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
 
@@ -444,6 +444,34 @@ def test_scan_sorting():
     assert_list_equal(
         sorted(input_row.items()),
         list(row.items()))
+
+
+def test_scan_reverse():
+
+    if connection.compat < '0.98':
+        with assert_raises(NotImplementedError):
+            list(table.scan(reverse=True))
+        return
+
+    with table.batch() as b:
+        for i in range(2000):
+            b.put(('row-scan-reverse-%04d' % i).encode('ascii'),
+                  {b'cf1:col1': b'v1',
+                   b'cf1:col2': b'v2'})
+
+    scan = table.scan(row_prefix=b'row-scan-reverse', reverse=True)
+    assert_equal(2000, len(list(scan)))
+
+    scan = table.scan(limit=10, reverse=True)
+    assert_equal(10, len(list(scan)))
+
+    scan = table.scan(row_start=b'row-scan-reverse-1999',
+                      row_stop=b'row-scan-reverse-0000', reverse=True)
+    key, data = next(scan)
+    assert_equal(b'row-scan-reverse-1999', key)
+
+    key, data = list(scan)[-1]
+    assert_equal(b'row-scan-reverse-0001', key)
 
 
 def test_scan_filter_and_batch_size():

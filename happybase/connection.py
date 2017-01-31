@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 STRING_OR_BINARY = (six.binary_type, six.text_type)
 
-COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96')
+COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96', '0.98')
 THRIFT_TRANSPORTS = dict(
     buffered=TBufferedTransport,
     framed=TFramedTransport,
@@ -33,7 +33,7 @@ THRIFT_PROTOCOLS = dict(
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 9090
 DEFAULT_TRANSPORT = 'buffered'
-DEFAULT_COMPAT = '0.96'
+DEFAULT_COMPAT = '0.98'
 DEFAULT_PROTOCOL = 'binary'
 
 
