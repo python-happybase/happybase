@@ -4,6 +4,22 @@ Version history
 .. py:currentmodule:: happybase
 
 
+HappyBase 1.1.0
+---------------
+
+Release date: 2017-04-03
+
+* Set socket timeout unconditionally on ``TSocket``
+  (`#146 <https://github.com/wbolster/happybase/issues/146>`_)
+
+* Add new ‘0.98’ compatibility mode
+  (`#155 <https://github.com/wbolster/happybase/issues/155>`_)
+
+* Add support for reversed scanners
+  (`#67 <https://github.com/wbolster/happybase/issues/67>`_,
+  `#155 <https://github.com/wbolster/happybase/issues/155>`_)
+
+
 HappyBase 1.0.0
 ---------------
 
