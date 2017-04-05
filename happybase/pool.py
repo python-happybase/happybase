@@ -75,7 +75,9 @@ class ConnectionPool(object):
         # The first connection is made immediately so that trivial
         # mistakes like unresolvable host names are raised immediately.
         # Subsequent connections are connected lazily.
-        with self.connection():
+        with self.connection() as conn:
+            # Close the connection explicitly. Otherwise spawning processes may inherit the open fd.
+            conn.close()
             pass
 
     def _acquire_connection(self, timeout=None):
