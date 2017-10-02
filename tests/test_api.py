@@ -163,6 +163,11 @@ def test_put():
     table.put(b'r1', {b'cf1:c4': b'v2'}, timestamp=2345678)
     table.put(b'r1', {b'cf1:c4': b'v2'}, timestamp=1369168852994)
 
+def test_append():
+    table.append(b'rAppend',{b'cf1:c1':b'test123'})
+    table.append(b'rAppend', {b'cf1:c1':b'test123'})
+    assert_equal((table.row(b'rAppend')[b'cf1:c1']),b'test123test123')
+
 
 def test_atomic_counters():
     row = b'row-with-counter'
