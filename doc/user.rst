@@ -435,7 +435,7 @@ example, this will result in three round-trips to the server (two batches with
    with table.batch(batch_size=1000) as b:
        for i in range(1200):
            # this put() will result in two mutations (two cells)
-           b.put(b'row-%04d'.format(i), {
+           b.put(b'row-%04d' % i, {
                b'cf1:col1': b'v1',
                b'cf1:col2': b'v2',
            })
