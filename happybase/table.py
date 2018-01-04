@@ -8,6 +8,7 @@ from numbers import Integral
 from Hbase_thrift import TScan
 from six import iteritems
 from struct import Struct
+from thriftpy.transport import TTransportException
 
 from .batch import Batch
 from .util import OrderedDict, bytes_increment, thrift_type_to_dict
@@ -41,9 +42,10 @@ def safe_call(function):
     def safe(self, *args, **kwargs):
         try:
             return function(self, *args, **kwargs)
-        except BrokenPipeError:
-            logger.debug("BrokenPipeError: refresh thrift connection")
+        except (BrokenPipeError, TTransportException):
+            logger.debug("Network error: refresh thrift connection")
             self.connection._refresh_thrift_client()
+            self.connection.open()
             return function(self, *args, **kwargs)
 
     return safe
