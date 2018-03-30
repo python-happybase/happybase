@@ -285,7 +285,7 @@ class Table(object):
         * The `reverse` argument is only available when using HBase 0.98
           (or up).
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.1.0
            `reverse` argument
 
         .. versionadded:: 0.8
