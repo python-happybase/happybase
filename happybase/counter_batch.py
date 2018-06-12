@@ -1,4 +1,4 @@
-
+import six
 from Hbase_thrift import Hbase, ColumnDescriptor, TIncrement
 from collections import defaultdict
 
@@ -11,7 +11,6 @@ class CounterBatch(object):
 
     def counter_inc(self, row, column, value=1):
         self.batch[(row, column)] += value
-        self.batch_count += 1
         self._check_send()
 
     def counter_dec(self, row, column, value=1):
@@ -20,7 +19,7 @@ class CounterBatch(object):
     def send(self):
         increment_rows = [
             TIncrement(table=self.table.name, row=key[0], column=key[1], ammount=value)
-            for key, value in self.batch.iteritems()
+            for key, value in six.iteritems(self.batch)
         ]
         self.table.connection.client.incrementRows(increment_rows)
         self.batch.clear()
