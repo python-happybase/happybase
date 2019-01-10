@@ -53,7 +53,7 @@ class Connection(object):
     The optional `table_prefix` and `table_prefix_separator` arguments
     specify a prefix and a separator string to be prepended to all table
     names, e.g. when :py:meth:`Connection.table` is invoked. For
-    example, if `table_prefix` is ``myproject``, all tables tables will
+    example, if `table_prefix` is ``myproject``, all tables will
     have names like ``myproject_XYZ``.
 
     The optional `compat` argument sets the compatibility level for
