@@ -7,9 +7,9 @@ HappyBase connection module.
 import logging
 
 import six
-from thriftpy.thrift import TClient
-from thriftpy.transport import TBufferedTransport, TFramedTransport, TSocket
-from thriftpy.protocol import TBinaryProtocol, TCompactProtocol
+from thriftpy2.thrift import TClient
+from thriftpy2.transport import TBufferedTransport, TFramedTransport, TSocket
+from thriftpy2.protocol import TBinaryProtocol, TCompactProtocol
 
 from Hbase_thrift import Hbase, ColumnDescriptor
 

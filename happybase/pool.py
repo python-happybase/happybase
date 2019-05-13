@@ -9,7 +9,7 @@ import threading
 
 from six.moves import queue, range
 
-from thriftpy.thrift import TException
+from thriftpy2.thrift import TException
 
 from .connection import Connection
 

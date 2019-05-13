@@ -4,7 +4,7 @@ HBase.
 """
 
 import pkg_resources as _pkg_resources
-import thriftpy as _thriftpy
+import thriftpy2 as _thriftpy
 _thriftpy.load(
     _pkg_resources.resource_filename('happybase', 'Hbase.thrift'),
     'Hbase_thrift')

@@ -518,7 +518,7 @@ def test_connection_pool_construction():
 
 def test_connection_pool():
 
-    from thriftpy.thrift import TException
+    from thriftpy2.thrift import TException
 
     def run():
         name = threading.current_thread().name
