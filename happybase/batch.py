@@ -2,6 +2,8 @@
 HappyBase Batch module.
 """
 
+import asyncio as aio
+from functools import partial
 from collections import defaultdict
 import logging
 from numbers import Integral
@@ -40,12 +42,29 @@ class Batch(object):
         self._families = None
         self._reset_mutations()
 
+        # Save mutator partial here to avoid the if check each time
+        if self._timestamp is None:
+            self._mutate_rows = partial(
+                self._table.connection.client.mutateRows,
+                self._table.name,
+                attributes={},
+            )
+        else:
+            self._mutate_rows = partial(
+                self._table.connection.client.mutateRowsTs,
+                self._table.name,
+                timestamp=self._timestamp,
+                attributes={},
+            )
+
+        self._tasks = []
+
     def _reset_mutations(self):
         """Reset the internal mutation buffer."""
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
-    async def send(self):
+    def send(self):
         """Send the batch to the server."""
         bms = [
             BatchMutation(row, m)
@@ -56,12 +75,8 @@ class Batch(object):
 
         logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
                      self._table.name, self._mutation_count, len(bms))
-        if self._timestamp is None:
-            await self._table.connection.client.mutateRows(self._table.name, bms, {})
-        else:
-            await self._table.connection.client.mutateRowsTs(
-                self._table.name, bms, self._timestamp, {})
 
+        self._tasks.append(aio.ensure_future(self._mutate_rows(bms)))
         self._reset_mutations()
 
     #
@@ -79,17 +94,10 @@ class Batch(object):
         if wal is None:
             wal = self._wal
 
-        self._mutations[row].extend(
-            Mutation(
-                isDelete=False,
-                column=column,
-                value=value,
-                writeToWAL=wal)
-            for column, value in six.iteritems(data))
-
-        self._mutation_count += len(data)
-        if self._batch_size and self._mutation_count >= self._batch_size:
-            await self.send()
+        await self._add_mutations(row, [
+            Mutation(isDelete=False, column=column, value=value, writeToWAL=wal)
+            for column, value in six.iteritems(data)
+        ])
 
     async def delete(self, row, columns=None, wal=None):
         """Delete data from the table.
@@ -111,13 +119,16 @@ class Batch(object):
         if wal is None:
             wal = self._wal
 
-        self._mutations[row].extend(
+        await self._add_mutations(row, [
             Mutation(isDelete=True, column=column, writeToWAL=wal)
-            for column in columns)
+            for column in columns
+        ])
 
-        self._mutation_count += len(columns)
+    def _add_mutations(self, row, mutations):
+        self._mutations[row].extend(mutations)
+        self._mutation_count += len(mutations)
         if self._batch_size and self._mutation_count >= self._batch_size:
-            await self.send()
+            self.send()
 
     #
     # Context manager methods
@@ -134,4 +145,6 @@ class Batch(object):
         if self._transaction and exc_type is not None:
             return
 
-        await self.send()
+        self.send()  # Send any remaining mutations
+        await aio.gather(*self._tasks)  # Wait on all previous send tasks
+        self._tasks.clear()  # Clear the send tasks
