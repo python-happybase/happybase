@@ -6,7 +6,6 @@ HappyBase connection module.
 
 import logging
 
-import six
 from thriftpy2.contrib.aio.rpc import make_client
 from thriftpy2.contrib.aio.protocol.binary import TAsyncBinaryProtocolFactory
 from thriftpy2.contrib.aio.transport.buffered import TAsyncBufferedTransportFactory
@@ -18,7 +17,7 @@ from .util import ensure_bytes, pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
 
-STRING_OR_BINARY = (six.binary_type, six.text_type)
+STRING_OR_BINARY = (str, bytes)
 
 COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96', '0.98')
 THRIFT_TRANSPORTS = dict(
@@ -295,12 +294,12 @@ class Connection(object):
                 % name)
 
         column_descriptors = []
-        for cf_name, options in six.iteritems(families):
+        for cf_name, options in families.items():
             if options is None:
                 options = dict()
 
             kwargs = dict()
-            for option_name, value in six.iteritems(options):
+            for option_name, value in options.items():
                 kwargs[pep8_to_camel_case(option_name)] = value
 
             if not cf_name.endswith(':'):

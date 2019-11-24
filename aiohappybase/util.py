@@ -5,26 +5,9 @@ These functions are not part of the public API.
 """
 
 import re
-
-import six
-from six.moves import range
+from collections import OrderedDict
 
 CAPITALS = re.compile('([A-Z])')
-
-
-try:
-    # Python 2.7 and up
-    from collections import OrderedDict
-except ImportError:
-    try:
-        # External package for Python 2.6
-        from ordereddict import OrderedDict
-    except ImportError as exc:
-        # Stub to throw errors at run-time (not import time)
-        def OrderedDict(*args, **kwargs):
-            raise RuntimeError(
-                "No OrderedDict implementation available; please "
-                "install the 'ordereddict' Package from PyPI.")
 
 
 def camel_case_to_pep8(name):
@@ -57,8 +40,7 @@ def thrift_type_to_dict(obj):
                 for attr in thrift_attrs(obj))
 
 
-def ensure_bytes(str_or_bytes, binary_type=six.binary_type,
-                 text_type=six.text_type):
+def ensure_bytes(str_or_bytes, binary_type=bytes, text_type=str):
     """Convert text into bytes, and leaves bytes as-is."""
     if isinstance(str_or_bytes, binary_type):
         return str_or_bytes
@@ -79,7 +61,7 @@ def bytes_increment(b):
     drops everything after it. If the string only contains ``0xFF`` bytes,
     `None` is returned.
     """
-    assert isinstance(b, six.binary_type)
+    assert isinstance(b, bytes)
     b = bytearray(b)  # Used subset of its API is the same on Python 2 and 3.
     for i in range(len(b) - 1, -1, -1):
         if b[i] != 0xff:

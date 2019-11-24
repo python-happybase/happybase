@@ -6,8 +6,7 @@ import contextlib
 import logging
 import socket
 import threading
-
-from six.moves import queue, range
+import queue
 
 from thriftpy2.thrift import TException
 
@@ -69,8 +68,7 @@ class ConnectionPool(object):
         connection_kwargs['autoconnect'] = False
 
         for i in range(size):
-            connection = Connection(**connection_kwargs)
-            self._queue.put(connection)
+            self._queue.put(Connection(**connection_kwargs))
 
         # The first connection is made immediately so that trivial
         # mistakes like unresolvable host names are raised immediately.
