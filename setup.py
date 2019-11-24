@@ -2,7 +2,7 @@ from os.path import join, dirname
 from setuptools import find_packages, setup
 
 __version__ = None
-exec(open('happybase/_version.py', 'r').read())
+exec(open('aiohappybase/_version.py', 'r').read())
 
 
 def get_file_contents(filename):
@@ -21,14 +21,13 @@ def get_install_requires():
 
 
 setup(
-    name='happybase',
+    name='aiohappybase',
     version=__version__,
-    description="A developer-friendly Python library to interact with "
-                "Apache HBase",
+    description="Asyncio fork of HappyBase",
     long_description=get_file_contents('README.rst'),
-    author="Wouter Bolsterlee",
-    author_email="uws@xs4all.nl",
-    url='https://github.com/wbolster/happybase',
+    author="Roger Aiudi",
+    author_email="aiudirog@gmail.com",
+    url='https://github.com/aiudirog/aiohappybase',
     install_requires=get_install_requires(),
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
@@ -37,8 +36,9 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Database",
         "Topic :: Software Development :: Libraries :: Python Modules",
     )
