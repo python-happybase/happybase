@@ -91,8 +91,8 @@ class ConnectionPool(object):
         """Return a connection to the pool."""
         self._queue.put(connection)
 
-    @contextlib.contextmanager
-    def connection(self, timeout=None):
+    @contextlib.asynccontextmanager
+    async def connection(self, timeout=None):
         """
         Obtain a connection from the pool.
 
@@ -133,7 +133,7 @@ class ConnectionPool(object):
         try:
             # Open connection, because connections are opened lazily.
             # This is a no-op for connections that are already open.
-            connection.open()
+            await connection.open()
 
             # Return value from the context manager's __enter__()
             yield connection
@@ -144,7 +144,7 @@ class ConnectionPool(object):
             # the connection is still usable.
             logger.info("Replacing tainted pool connection")
             connection._refresh_thrift_client()
-            connection.open()
+            await connection.open()
 
             # Reraise to caller; see contextlib.contextmanager() docs
             raise

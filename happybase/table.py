@@ -55,38 +55,38 @@ class Table(object):
             self.name,
         )
 
-    def families(self):
+    async def families(self):
         """Retrieve the column families for this table.
 
         :return: Mapping from column family name to settings dict
         :rtype: dict
         """
-        descriptors = self.connection.client.getColumnDescriptors(self.name)
+        descriptors = await self.connection.client.getColumnDescriptors(self.name)
         families = dict()
         for name, descriptor in descriptors.items():
             name = name.rstrip(b':')
             families[name] = thrift_type_to_dict(descriptor)
         return families
 
-    def _column_family_names(self):
+    async def _column_family_names(self):
         """Retrieve the column family names for this table (internal use)"""
-        names = self.connection.client.getColumnDescriptors(self.name).keys()
+        names = await self.connection.client.getColumnDescriptors(self.name).keys()
         return [name.rstrip(b':') for name in names]
 
-    def regions(self):
+    async def regions(self):
         """Retrieve the regions for this table.
 
         :return: regions for this table
         :rtype: list of dicts
         """
-        regions = self.connection.client.getTableRegions(self.name)
+        regions = await self.connection.client.getTableRegions(self.name)
         return [thrift_type_to_dict(r) for r in regions]
 
     #
     # Data retrieval
     #
 
-    def row(self, row, columns=None, timestamp=None, include_timestamp=False):
+    async def row(self, row, columns=None, timestamp=None, include_timestamp=False):
         """Retrieve a single row of data.
 
         This method retrieves the row with the row key specified in the `row`
@@ -118,12 +118,12 @@ class Table(object):
             raise TypeError("'columns' must be a tuple or list")
 
         if timestamp is None:
-            rows = self.connection.client.getRowWithColumns(
+            rows = await self.connection.client.getRowWithColumns(
                 self.name, row, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
-            rows = self.connection.client.getRowWithColumnsTs(
+            rows = await self.connection.client.getRowWithColumnsTs(
                 self.name, row, columns, timestamp, {})
 
         if not rows:
@@ -131,7 +131,7 @@ class Table(object):
 
         return make_row(rows[0].columns, include_timestamp)
 
-    def rows(self, rows, columns=None, timestamp=None,
+    async def rows(self, rows, columns=None, timestamp=None,
              include_timestamp=False):
         """Retrieve multiple rows of data.
 
@@ -158,7 +158,7 @@ class Table(object):
             return {}
 
         if timestamp is None:
-            results = self.connection.client.getRowsWithColumns(
+            results = await self.connection.client.getRowsWithColumns(
                 self.name, rows, columns, {})
         else:
             if not isinstance(timestamp, Integral):
@@ -170,13 +170,13 @@ class Table(object):
             if columns is None:
                 columns = self._column_family_names()
 
-            results = self.connection.client.getRowsWithColumnsTs(
+            results = await self.connection.client.getRowsWithColumnsTs(
                 self.name, rows, columns, timestamp, {})
 
         return [(r.row, make_row(r.columns, include_timestamp))
                 for r in results]
 
-    def cells(self, row, column, versions=None, timestamp=None,
+    async def cells(self, row, column, versions=None, timestamp=None,
               include_timestamp=False):
         """Retrieve multiple versions of a single cell from the table.
 
@@ -206,12 +206,12 @@ class Table(object):
                 "'versions' argument must be at least 1 (or None)")
 
         if timestamp is None:
-            cells = self.connection.client.getVer(
+            cells = await self.connection.client.getVer(
                 self.name, row, column, versions, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
-            cells = self.connection.client.getVerTs(
+            cells = await self.connection.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
         return [
@@ -219,7 +219,7 @@ class Table(object):
             for c in cells
         ]
 
-    def scan(self, row_start=None, row_stop=None, row_prefix=None,
+    async def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
              limit=None, sorted_columns=False, reverse=False):
@@ -354,17 +354,17 @@ class Table(object):
 
             if row_stop is None:
                 if timestamp is None:
-                    scan_id = self.connection.client.scannerOpen(
+                    scan_id = await self.connection.client.scannerOpen(
                         self.name, row_start, columns, {})
                 else:
-                    scan_id = self.connection.client.scannerOpenTs(
+                    scan_id = await self.connection.client.scannerOpenTs(
                         self.name, row_start, columns, timestamp, {})
             else:
                 if timestamp is None:
-                    scan_id = self.connection.client.scannerOpenWithStop(
+                    scan_id = await self.connection.client.scannerOpenWithStop(
                         self.name, row_start, row_stop, columns, {})
                 else:
-                    scan_id = self.connection.client.scannerOpenWithStopTs(
+                    scan_id = await self.connection.client.scannerOpenWithStopTs(
                         self.name, row_start, row_stop, columns, timestamp, {})
 
         else:
@@ -398,7 +398,7 @@ class Table(object):
                 sortColumns=sorted_columns,
                 reversed=reverse,
             )
-            scan_id = self.connection.client.scannerOpenWithScan(
+            scan_id = await self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
 
         logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
@@ -411,7 +411,7 @@ class Table(object):
                 else:
                     how_many = min(batch_size, limit - n_returned)
 
-                items = self.connection.client.scannerGetList(
+                items = await self.connection.client.scannerGetList(
                     scan_id, how_many)
 
                 if not items:
@@ -431,7 +431,7 @@ class Table(object):
                     if limit is not None and n_returned == limit:
                         return  # scan has finished
         finally:
-            self.connection.client.scannerClose(scan_id)
+            await self.connection.client.scannerClose(scan_id)
             logger.debug(
                 "Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
                 scan_id, self.name, n_returned, n_fetched)
@@ -440,7 +440,7 @@ class Table(object):
     # Data manipulation
     #
 
-    def put(self, row, data, timestamp=None, wal=True):
+    async def put(self, row, data, timestamp=None, wal=True):
         """Store data in the table.
 
         This method stores the data in the `data` argument for the row
@@ -460,10 +460,10 @@ class Table(object):
         :param int timestamp: timestamp (optional)
         :param wal bool: whether to write to the WAL (optional)
         """
-        with self.batch(timestamp=timestamp, wal=wal) as batch:
-            batch.put(row, data)
+        async with self.batch(timestamp=timestamp, wal=wal) as batch:
+            await batch.put(row, data)
 
-    def delete(self, row, columns=None, timestamp=None, wal=True):
+    async def delete(self, row, columns=None, timestamp=None, wal=True):
         """Delete data from the table.
 
         This method deletes all columns for the row specified by `row`, or only
@@ -480,8 +480,8 @@ class Table(object):
         :param int timestamp: timestamp (optional)
         :param wal bool: whether to write to the WAL (optional)
         """
-        with self.batch(timestamp=timestamp, wal=wal) as batch:
-            batch.delete(row, columns)
+        async with self.batch(timestamp=timestamp, wal=wal) as batch:
+            await batch.delete(row, columns)
 
     def batch(self, timestamp=None, batch_size=None, transaction=False,
               wal=True):
@@ -529,7 +529,7 @@ class Table(object):
     # Atomic counters
     #
 
-    def counter_get(self, row, column):
+    async def counter_get(self, row, column):
         """Retrieve the current value of a counter column.
 
         This method retrieves the current value of a counter column. If the
@@ -548,9 +548,9 @@ class Table(object):
         """
         # Don't query directly, but increment with value=0 so that the counter
         # is correctly initialised if didn't exist yet.
-        return self.counter_inc(row, column, value=0)
+        return await self.counter_inc(row, column, value=0)
 
-    def counter_set(self, row, column, value=0):
+    async def counter_set(self, row, column, value=0):
         """Set a counter column to a specific value.
 
         This method stores a 64-bit signed integer value in the specified
@@ -565,9 +565,9 @@ class Table(object):
         :param str column: the column name
         :param int value: the counter value to set
         """
-        self.put(row, {column: pack_i64(value)})
+        await self.put(row, {column: pack_i64(value)})
 
-    def counter_inc(self, row, column, value=1):
+    async def counter_inc(self, row, column, value=1):
         """Atomically increment (or decrements) a counter column.
 
         This method atomically increments or decrements a counter column in the
@@ -583,10 +583,10 @@ class Table(object):
         :return: counter value after incrementing
         :rtype: int
         """
-        return self.connection.client.atomicIncrement(
+        return await self.connection.client.atomicIncrement(
             self.name, row, column, value)
 
-    def counter_dec(self, row, column, value=1):
+    async def counter_dec(self, row, column, value=1):
         """Atomically decrement (or increments) a counter column.
 
         This method is a shortcut for calling :py:meth:`Table.counter_inc` with
@@ -595,4 +595,4 @@ class Table(object):
         :return: counter value after decrementing
         :rtype: int
         """
-        return self.counter_inc(row, column, -value)
+        return await self.counter_inc(row, column, -value)

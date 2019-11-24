@@ -45,7 +45,7 @@ class Batch(object):
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
-    def send(self):
+    async def send(self):
         """Send the batch to the server."""
         bms = [
             BatchMutation(row, m)
@@ -57,9 +57,9 @@ class Batch(object):
         logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
                      self._table.name, self._mutation_count, len(bms))
         if self._timestamp is None:
-            self._table.connection.client.mutateRows(self._table.name, bms, {})
+            await self._table.connection.client.mutateRows(self._table.name, bms, {})
         else:
-            self._table.connection.client.mutateRowsTs(
+            await self._table.connection.client.mutateRowsTs(
                 self._table.name, bms, self._timestamp, {})
 
         self._reset_mutations()
@@ -68,7 +68,7 @@ class Batch(object):
     # Mutation methods
     #
 
-    def put(self, row, data, wal=None):
+    async def put(self, row, data, wal=None):
         """Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
@@ -89,9 +89,9 @@ class Batch(object):
 
         self._mutation_count += len(data)
         if self._batch_size and self._mutation_count >= self._batch_size:
-            self.send()
+            await self.send()
 
-    def delete(self, row, columns=None, wal=None):
+    async def delete(self, row, columns=None, wal=None):
         """Delete data from the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
@@ -117,21 +117,21 @@ class Batch(object):
 
         self._mutation_count += len(columns)
         if self._batch_size and self._mutation_count >= self._batch_size:
-            self.send()
+            await self.send()
 
     #
     # Context manager methods
     #
 
-    def __enter__(self):
-        """Called upon entering a ``with`` block"""
+    async def __aenter__(self):
+        """Called upon entering a ``async with`` block"""
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Called upon exiting a ``with`` block"""
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        """Called upon exiting a ``async with`` block"""
         # If the 'with' block raises an exception, the batch will not be
         # sent to the server.
         if self._transaction and exc_type is not None:
             return
 
-        self.send()
+        await self.send()
