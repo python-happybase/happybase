@@ -1,1 +1,2 @@
 thriftpy2>=0.4
+async_generator; python_version < '3.7'

@@ -2,33 +2,51 @@
 HappyBase Batch module.
 """
 
-import asyncio as aio
+import logging
+import queue
+from typing import TYPE_CHECKING, Dict, List, Iterable, Type
 from functools import partial
 from collections import defaultdict
-import logging
 from numbers import Integral
 
+try:
+    from asyncio import create_task
+except ImportError:
+    from asyncio import ensure_future as create_task
+
+try:
+    from queue import SimpleQueue
+except ImportError:
+    from queue import Queue as SimpleQueue
+
 from Hbase_thrift import BatchMutation, Mutation
+
+if TYPE_CHECKING:
+    from .table import Table
 
 logger = logging.getLogger(__name__)
 
 
-class Batch(object):
-    """Batch mutation class.
-
-    This class cannot be instantiated directly; use :py:meth:`Table.batch`
-    instead.
+class Batch:
     """
-    def __init__(self, table, timestamp=None, batch_size=None,
-                 transaction=False, wal=True):
+    Batch mutation class.
+
+    This class cannot be instantiated directly;
+    use :py:meth:`Table.batch` instead.
+    """
+    def __init__(self,
+                 table: 'Table',
+                 timestamp: int = None,
+                 batch_size: int = None,
+                 transaction: bool = False,
+                 wal: bool = True):
         """Initialise a new Batch instance."""
         if not (timestamp is None or isinstance(timestamp, Integral)):
             raise TypeError("'timestamp' must be an integer or None")
 
         if batch_size is not None:
             if transaction:
-                raise TypeError("'transaction' cannot be used when "
-                                "'batch_size' is specified")
+                raise TypeError("'transaction' can't be used with 'batch_size'")
             if not batch_size > 0:
                 raise ValueError("'batch_size' must be > 0")
 
@@ -55,33 +73,38 @@ class Batch(object):
                 attributes={},
             )
 
-        self._tasks = []
+        self._tasks = SimpleQueue()
 
-    def _reset_mutations(self):
+    def _reset_mutations(self) -> None:
         """Reset the internal mutation buffer."""
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
-    def send(self):
-        """Send the batch to the server."""
-        bms = [
-            BatchMutation(row, m)
-            for row, m in self._mutations.items()
-        ]
+    def send(self) -> None:
+        """
+        Send the batch to the server without waiting for it. All tasks will
+        be waited for when the context ends or :py:meth:`close` is called.
+        """
+        bms = [BatchMutation(row, m) for row, m in self._mutations.items()]
         if not bms:
             return
 
-        logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
-                     self._table.name, self._mutation_count, len(bms))
+        logger.debug(
+            f"Sending batch for '{self._table.name}' ({self._mutation_count} "
+            f"mutations on {len(bms)} rows)"
+        )
 
-        self._tasks.append(aio.ensure_future(self._mutate_rows(bms)))
+        self._tasks.put(create_task(self._mutate_rows(bms)))
         self._reset_mutations()
 
     #
     # Mutation methods
     #
 
-    async def put(self, row, data, wal=None):
+    async def put(self,
+                  row: str,
+                  data: Dict[bytes, bytes],
+                  wal: bool = None) -> None:
         """Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
@@ -97,7 +120,10 @@ class Batch(object):
             for column, value in data.items()
         ])
 
-    async def delete(self, row, columns=None, wal=None):
+    async def delete(self,
+                     row: str,
+                     columns: Iterable[bytes] = None,
+                     wal: bool = None) -> None:
         """Delete data from the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
@@ -122,27 +148,34 @@ class Batch(object):
             for column in columns
         ])
 
-    def _add_mutations(self, row, mutations):
+    def _add_mutations(self, row: str, mutations: List[Mutation]):
         self._mutations[row].extend(mutations)
         self._mutation_count += len(mutations)
         if self._batch_size and self._mutation_count >= self._batch_size:
             self.send()
 
+    async def close(self) -> None:
+        """Finalize the batch and make sure all tasks are completed."""
+        self.send()  # Send any remaining mutations
+        while True:
+            try:
+                await self._tasks.get_nowait()
+            except queue.Empty:
+                return
+
     #
     # Context manager methods
     #
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> 'Batch':
         """Called upon entering a ``async with`` block"""
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    async def __aexit__(self, exc_type: Type[Exception], *_) -> None:
         """Called upon exiting a ``async with`` block"""
         # If the 'with' block raises an exception, the batch will not be
         # sent to the server.
         if self._transaction and exc_type is not None:
             return
 
-        self.send()  # Send any remaining mutations
-        await aio.gather(*self._tasks)  # Wait on all previous send tasks
-        self._tasks.clear()  # Clear the send tasks
+        await self.close()

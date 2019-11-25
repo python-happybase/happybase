@@ -5,10 +5,13 @@ HappyBase connection module.
 """
 
 import logging
+import asyncio as aio
+from typing import AnyStr, List, Dict, Any
 
-from thriftpy2.contrib.aio.rpc import make_client
-from thriftpy2.contrib.aio.protocol.binary import TAsyncBinaryProtocolFactory
-from thriftpy2.contrib.aio.transport.buffered import TAsyncBufferedTransportFactory
+from thriftpy2.contrib.aio.protocol.binary import TAsyncBinaryProtocol
+from thriftpy2.contrib.aio.transport.buffered import TAsyncBufferedTransport
+from thriftpy2.contrib.aio.socket import TAsyncSocket
+from thriftpy2.contrib.aio.client import TAsyncClient
 
 from Hbase_thrift import Hbase, ColumnDescriptor
 
@@ -20,11 +23,13 @@ logger = logging.getLogger(__name__)
 STRING_OR_BINARY = (str, bytes)
 
 COMPAT_MODES = ('0.90', '0.92', '0.94', '0.96', '0.98')
+
+# TODO: Auto generate these?
 THRIFT_TRANSPORTS = dict(
-    buffered=TAsyncBinaryProtocolFactory(),
+    buffered=TAsyncBufferedTransport,
 )
 THRIFT_PROTOCOLS = dict(
-    binary=TAsyncBufferedTransportFactory(),
+    binary=TAsyncBinaryProtocol,
 )
 
 DEFAULT_HOST = 'localhost'
@@ -34,7 +39,7 @@ DEFAULT_COMPAT = '0.98'
 DEFAULT_PROTOCOL = 'binary'
 
 
-class Connection(object):
+class Connection:
     """Connection to an HBase Thrift server.
 
     The `host` and `port` arguments specify the host name and TCP port
@@ -93,23 +98,29 @@ class Connection(object):
     .. versionadded:: 0.4
        support for framed Thrift transports
 
-    :param str host: The host to connect to
-    :param int port: The port to connect to
-    :param int timeout: The socket timeout in milliseconds (optional)
-    :param bool autoconnect: Whether the connection should be opened directly
-    :param str table_prefix: Prefix used to construct table names (optional)
-    :param str table_prefix_separator: Separator used for `table_prefix`
-    :param str compat: Compatibility mode (optional)
-    :param str transport: Thrift transport mode (optional)
+    :param host: The host to connect to
+    :param port: The port to connect to
+    :param timeout: The socket timeout in milliseconds (optional)
+    :param autoconnect: Whether the connection should be opened directly
+    :param table_prefix: Prefix used to construct table names (optional)
+    :param table_prefix_separator: Separator used for `table_prefix`
+    :param compat: Compatibility mode (optional)
+    :param transport: Thrift transport mode (optional)
+    :param protocol: Thrift protocol mode (optional)
     """
-    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT, timeout=None,
-                 autoconnect=True, table_prefix=None,
-                 table_prefix_separator=b'_', compat=DEFAULT_COMPAT,
-                 transport=DEFAULT_TRANSPORT, protocol=DEFAULT_PROTOCOL):
+    def __init__(self,
+                 host: str = DEFAULT_HOST,
+                 port: int = DEFAULT_PORT,
+                 timeout: int = None,
+                 autoconnect: bool = True,
+                 table_prefix: str = None,
+                 table_prefix_separator: bytes = b'_',
+                 compat: str = DEFAULT_COMPAT,
+                 transport: str = DEFAULT_TRANSPORT,
+                 protocol: str = DEFAULT_PROTOCOL):
 
         if transport not in THRIFT_TRANSPORTS:
-            raise ValueError("'transport' must be one of %s"
-                             % ", ".join(THRIFT_TRANSPORTS.keys()))
+            raise ValueError(f"'transport' not in {list(THRIFT_TRANSPORTS)}")
 
         if table_prefix is not None:
             if not isinstance(table_prefix, STRING_OR_BINARY):
@@ -121,12 +132,10 @@ class Connection(object):
         table_prefix_separator = ensure_bytes(table_prefix_separator)
 
         if compat not in COMPAT_MODES:
-            raise ValueError("'compat' must be one of %s"
-                             % ", ".join(COMPAT_MODES))
+            raise ValueError(f"'compat' not in {list(COMPAT_MODES)}")
 
         if protocol not in THRIFT_PROTOCOLS:
-            raise ValueError("'protocol' must be one of %s"
-                             % ", ".join(THRIFT_PROTOCOLS))
+            raise ValueError(f"'protocol' not in {list(THRIFT_PROTOCOLS)}")
 
         # Allow host and port to be None, which may be easier for
         # applications wrapping a Connection instance.
@@ -139,34 +148,36 @@ class Connection(object):
 
         self._transport_class = THRIFT_TRANSPORTS[transport]
         self._protocol_class = THRIFT_PROTOCOLS[protocol]
+
         self._refresh_thrift_client()
 
         if autoconnect:
-            self.open()
+            loop = aio.get_event_loop()
+            if loop.is_running():
+                raise RuntimeError(
+                    "'autoconnect' cannot be used inside a running event loop!"
+                )
+            else:
+                loop.run_until_complete(self.open())
 
         self._initialized = True
 
-    def _refresh_thrift_client(self):
+    def _refresh_thrift_client(self) -> None:
         """Refresh the Thrift socket, transport, and client."""
-        self.client = make_client(
-            Hbase,
-            host=self.host,
-            port=self.port,
-            socket_timeout=self.timeout,
-            proto_factory=self._protocol_class,
-            trans_factory=self._transport_class,
-        )
+        # TODO: Support all kwargs to make_client
+        socket = TAsyncSocket(self.host, self.port, socket_timeout=self.timeout)
+        self.transport = self._transport_class(socket)
+        protocol = self._protocol_class(socket)
+        self.client = TAsyncClient(self.transport, protocol)
 
-        self.transport = await self.client._iprot.trans
-
-    def _table_name(self, name):
+    def _table_name(self, name) -> bytes:
         """Construct a table name by optionally adding a table name prefix."""
         name = ensure_bytes(name)
         if self.table_prefix is None:
             return name
         return self.table_prefix + self.table_prefix_separator + name
 
-    async def open(self):
+    async def open(self) -> None:
         """Open the underlying transport to the HBase instance.
 
         This method opens the underlying Thrift transport (TCP connection).
@@ -174,10 +185,10 @@ class Connection(object):
         if self.transport.is_open():
             return
 
-        logger.debug("Opening Thrift transport to %s:%d", self.host, self.port)
+        logger.debug(f"Opening Thrift transport to {self.host}:{self.port}")
         await self.transport.open()
 
-    def close(self):
+    def close(self) -> None:
         """Close the underyling transport to the HBase instance.
 
         This method closes the underlying Thrift transport (TCP connection).
@@ -186,11 +197,8 @@ class Connection(object):
             return
 
         if logger is not None:
-            # If called from __del__(), module variables may no longer
-            # exist.
-            logger.debug(
-                "Closing Thrift transport to %s:%d",
-                self.host, self.port)
+            # If called from __del__(), module variables may no longer exist.
+            logger.debug(f"Closing Thrift transport to {self.host}:{self.port}")
 
         self.transport.close()
 
@@ -203,8 +211,9 @@ class Connection(object):
         else:
             self.close()
 
-    def table(self, name, use_prefix=True):
-        """Return a table object.
+    def table(self, name: AnyStr, use_prefix: bool = True) -> Table:
+        """
+        Return a table object.
 
         Returns a :py:class:`happybase.Table` instance for the table
         named `name`. This does not result in a round-trip to the
@@ -218,10 +227,9 @@ class Connection(object):
         argument to the :py:class:`Connection` constructor for more
         information.
 
-        :param str name: the name of the table
-        :param bool use_prefix: whether to use the table prefix (if any)
+        :param name: the name of the table
+        :param use_prefix: whether to use the table prefix (if any)
         :return: Table instance
-        :rtype: :py:class:`Table`
         """
         name = ensure_bytes(name)
         if use_prefix:
@@ -232,14 +240,14 @@ class Connection(object):
     # Table administration and maintenance
     #
 
-    async def tables(self):
-        """Return a list of table names available in this HBase instance.
+    async def tables(self) -> List[str]:
+        """
+        Return a list of table names available in this HBase instance.
 
         If a `table_prefix` was set for this :py:class:`Connection`, only
         tables that have the specified prefix will be listed.
 
         :return: The table names
-        :rtype: List of strings
         """
         names = await self.client.getTableNames()
 
@@ -251,11 +259,17 @@ class Connection(object):
 
         return names
 
-    async def create_table(self, name, families):
-        """Create a table.
+    async def create_table(self,
+                           name: str,
+                           families: Dict[str, Dict[str, Any]],
+                           use_prefix: bool = True) -> Table:
+        """
+        Create a table.
 
-        :param str name: The table name
-        :param dict families: The name and options for each column family
+        :param name: The table name
+        :param families: The name and options for each column family
+        :param use_prefix: whether to use the table prefix (if any)
+        :return: The created table instance
 
         The `families` argument is a dictionary mapping column family
         names to a dictionary containing the options for this column
@@ -289,18 +303,14 @@ class Connection(object):
             raise TypeError("'families' arg must be a dictionary")
 
         if not families:
-            raise ValueError(
-                "Cannot create table %r (no column families specified)"
-                % name)
+            raise ValueError(f"No column families given for table: {name!r}")
 
         column_descriptors = []
         for cf_name, options in families.items():
-            if options is None:
-                options = dict()
-
-            kwargs = dict()
-            for option_name, value in options.items():
-                kwargs[pep8_to_camel_case(option_name)] = value
+            kwargs = {
+                pep8_to_camel_case(option_name): value
+                for option_name, value in (options or {}).items()
+            }
 
             if not cf_name.endswith(':'):
                 cf_name += ':'
@@ -309,9 +319,11 @@ class Connection(object):
             column_descriptors.append(ColumnDescriptor(**kwargs))
 
         await self.client.createTable(name, column_descriptors)
+        return self.table(name, use_prefix)
 
-    async def delete_table(self, name, disable=False):
-        """Delete the specified table.
+    async def delete_table(self, name: str, disable: bool = False) -> None:
+        """
+        Delete the specified table.
 
         .. versionadded:: 0.5
            `disable` argument
@@ -320,8 +332,8 @@ class Connection(object):
         deleted. If the `disable` argument is `True`, this method first
         disables the table if it wasn't already and then deletes it.
 
-        :param str name: The table name
-        :param bool disable: Whether to first disable the table if needed
+        :param name: The table name
+        :param disable: Whether to first disable the table if needed
         """
         if disable and await self.is_table_enabled(name):
             await self.disable_table(name)
@@ -329,24 +341,27 @@ class Connection(object):
         name = self._table_name(name)
         await self.client.deleteTable(name)
 
-    async def enable_table(self, name):
-        """Enable the specified table.
+    async def enable_table(self, name: str) -> None:
+        """
+        Enable the specified table.
 
-        :param str name: The table name
+        :param name: The table name
         """
         name = self._table_name(name)
         await self.client.enableTable(name)
 
-    async def disable_table(self, name):
-        """Disable the specified table.
+    async def disable_table(self, name) -> None:
+        """
+        Disable the specified table.
 
-        :param str name: The table name
+        :param name: The table name
         """
         name = self._table_name(name)
         await self.client.disableTable(name)
 
-    async def is_table_enabled(self, name):
-        """Return whether the specified table is enabled.
+    async def is_table_enabled(self, name) -> None:
+        """
+        Return whether the specified table is enabled.
 
         :param str name: The table name
 
@@ -356,7 +371,7 @@ class Connection(object):
         name = self._table_name(name)
         return await self.client.isTableEnabled(name)
 
-    async def compact_table(self, name, major=False):
+    async def compact_table(self, name, major=False) -> None:
         """Compact the specified table.
 
         :param str name: The table name

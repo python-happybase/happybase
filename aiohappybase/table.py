@@ -5,18 +5,35 @@ HappyBase table module.
 import logging
 from numbers import Integral
 from struct import Struct
+from functools import partial
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    List,
+    Tuple,
+    Any,
+    Iterable,
+    Iterator,
+    Union,
+)
 
-from Hbase_thrift import TScan
+from Hbase_thrift import TScan, TCell, TColumn
 
-from .util import thrift_type_to_dict, bytes_increment, OrderedDict
+from .util import thrift_type_to_dict, bytes_increment, map_dict
 from .batch import Batch
 
+if TYPE_CHECKING:
+    from .connection import Connection
+
 logger = logging.getLogger(__name__)
+
+Data = Dict[bytes, bytes]
+Row = Union[Dict[bytes, bytes], Dict[bytes, Tuple[bytes, int]]]
 
 pack_i64 = Struct('>q').pack
 
 
-def make_row(cell_map, include_timestamp):
+def make_row(cell_map: Dict[bytes, TCell], include_timestamp: bool) -> Row:
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     return {
         name: (cell.value, cell.timestamp) if include_timestamp else cell.value
@@ -24,68 +41,72 @@ def make_row(cell_map, include_timestamp):
     }
 
 
-def make_ordered_row(sorted_columns, include_timestamp):
+def make_ordered_row(sorted_columns: List[TColumn],
+                     include_timestamp: bool) -> Row:
     """Make a row dict for sorted column results from scans."""
-    od = OrderedDict()
-    for column in sorted_columns:
-        if include_timestamp:
-            value = (column.cell.value, column.cell.timestamp)
-        else:
-            value = column.cell.value
-        od[column.columnName] = value
-    return od
+    # No need for ordered dict any more, Python dictionaries retain order now
+    return make_row(
+        cell_map={c.columnName: c.cell for c in sorted_columns},
+        include_timestamp=include_timestamp,
+    )
 
 
-class Table(object):
-    """HBase table abstraction class.
-
-    This class cannot be instantiated directly; use :py:meth:`Connection.table`
-    instead.
+class Table:
     """
-    def __init__(self, name, connection):
+    HBase table abstraction class.
+
+    This class cannot be instantiated directly;
+    use :py:meth:`Connection.table` instead.
+    """
+    def __init__(self, name: bytes, connection: 'Connection'):
         self.name = name
         self.connection = connection
 
-    def __repr__(self):
-        return '<%s.%s name=%r>' % (
-            __name__,
-            self.__class__.__name__,
-            self.name,
-        )
+    @property
+    def client(self):
+        return self.connection.client
 
-    async def families(self):
-        """Retrieve the column families for this table.
+    def __repr__(self):
+        return f'<{__name__}.{self.__class__.__name__} name={self.name!r}>'
+
+    async def families(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Retrieve the column families for this table.
 
         :return: Mapping from column family name to settings dict
-        :rtype: dict
         """
-        descriptors = await self.connection.client.getColumnDescriptors(self.name)
-        families = dict()
-        for name, descriptor in descriptors.items():
-            name = name.rstrip(b':')
-            families[name] = thrift_type_to_dict(descriptor)
-        return families
+        descriptors = await self._column_family_descriptors()
+        return map_dict(descriptors, values=thrift_type_to_dict)
 
-    async def _column_family_names(self):
-        """Retrieve the column family names for this table (internal use)"""
-        names = await self.connection.client.getColumnDescriptors(self.name).keys()
-        return [name.rstrip(b':') for name in names]
+    async def _column_family_names(self) -> List[str]:
+        """Retrieve the column family names for this table"""
+        return list(await self._column_family_descriptors())
 
-    async def regions(self):
-        """Retrieve the regions for this table.
+    async def _column_family_descriptors(self) -> Dict[str, Any]:
+        """Retrieve the column family descriptors for this table"""
+        descriptors = await self.client.getColumnDescriptors(self.name)
+        return map_dict(descriptors, keys=partial(bytes.rstrip, b':'))
+
+    async def regions(self) -> List[Dict[str, Any]]:
+        """
+        Retrieve the regions for this table.
 
         :return: regions for this table
-        :rtype: list of dicts
         """
-        regions = await self.connection.client.getTableRegions(self.name)
+        regions = await self.client.getTableRegions(self.name)
         return [thrift_type_to_dict(r) for r in regions]
 
     #
     # Data retrieval
     #
 
-    async def row(self, row, columns=None, timestamp=None, include_timestamp=False):
-        """Retrieve a single row of data.
+    async def row(self,
+                  row: str,
+                  columns: Iterable[bytes] = None,
+                  timestamp: int = None,
+                  include_timestamp: bool = False) -> Row:
+        """
+        Retrieve a single row of data.
 
         This method retrieves the row with the row key specified in the `row`
         argument and returns the columns and values for this row as
@@ -104,24 +125,23 @@ class Table(object):
         whether cells are returned as single values or as `(value, timestamp)`
         tuples.
 
-        :param str row: the row key
-        :param list_or_tuple columns: list of columns (optional)
-        :param int timestamp: timestamp (optional)
-        :param bool include_timestamp: whether timestamps are returned
+        :param row: the row key
+        :param columns: list of columns (optional)
+        :param timestamp: timestamp (optional)
+        :param include_timestamp: whether timestamps are returned
 
         :return: Mapping of columns (both qualifier and family) to values
-        :rtype: dict
         """
         if columns is not None and not isinstance(columns, (tuple, list)):
             raise TypeError("'columns' must be a tuple or list")
 
         if timestamp is None:
-            rows = await self.connection.client.getRowWithColumns(
+            rows = await self.client.getRowWithColumns(
                 self.name, row, columns, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
-            rows = await self.connection.client.getRowWithColumnsTs(
+            rows = await self.client.getRowWithColumnsTs(
                 self.name, row, columns, timestamp, {})
 
         if not rows:
@@ -129,9 +149,13 @@ class Table(object):
 
         return make_row(rows[0].columns, include_timestamp)
 
-    async def rows(self, rows, columns=None, timestamp=None,
-             include_timestamp=False):
-        """Retrieve multiple rows of data.
+    async def rows(self,
+                   rows: str,
+                   columns: Iterable[bytes] = None,
+                   timestamp: int = None,
+                   include_timestamp: bool = False) -> List[Tuple[str, Row]]:
+        """
+        Retrieve multiple rows of data.
 
         This method retrieves the rows with the row keys specified in the
         `rows` argument, which should be should be a list (or tuple) of row
@@ -140,23 +164,22 @@ class Table(object):
         The `columns`, `timestamp` and `include_timestamp` arguments behave
         exactly the same as for :py:meth:`row`.
 
-        :param list rows: list of row keys
-        :param list_or_tuple columns: list of columns (optional)
-        :param int timestamp: timestamp (optional)
-        :param bool include_timestamp: whether timestamps are returned
+        :param rows: list of row keys
+        :param columns: list of columns (optional)
+        :param timestamp: timestamp (optional)
+        :param include_timestamp: whether timestamps are returned
 
         :return: List of mappings (columns to values)
-        :rtype: list of dicts
         """
         if columns is not None and not isinstance(columns, (tuple, list)):
             raise TypeError("'columns' must be a tuple or list")
 
         if not rows:
             # Avoid round-trip if the result is empty anyway
-            return {}
+            return []
 
         if timestamp is None:
-            results = await self.connection.client.getRowsWithColumns(
+            results = await self.client.getRowsWithColumns(
                 self.name, rows, columns, {})
         else:
             if not isinstance(timestamp, Integral):
@@ -168,15 +191,22 @@ class Table(object):
             if columns is None:
                 columns = self._column_family_names()
 
-            results = await self.connection.client.getRowsWithColumnsTs(
+            results = await self.client.getRowsWithColumnsTs(
                 self.name, rows, columns, timestamp, {})
 
-        return [(r.row, make_row(r.columns, include_timestamp))
-                for r in results]
+        return [
+            (r.row, make_row(r.columns, include_timestamp))
+            for r in results
+        ]
 
-    async def cells(self, row, column, versions=None, timestamp=None,
-              include_timestamp=False):
-        """Retrieve multiple versions of a single cell from the table.
+    async def cells(self,
+                    row: str,
+                    column: bytes,
+                    versions: int = None,
+                    timestamp: int = None,
+                    include_timestamp: bool = False) -> List[Tuple[bytes, int]]:
+        """
+        Retrieve multiple versions of a single cell from the table.
 
         This method retrieves multiple versions of a cell (if any).
 
@@ -186,14 +216,13 @@ class Table(object):
         The `timestamp` and `include_timestamp` arguments behave exactly the
         same as for :py:meth:`row`.
 
-        :param str row: the row key
-        :param str column: the column name
-        :param int versions: the maximum number of versions to retrieve
-        :param int timestamp: timestamp (optional)
-        :param bool include_timestamp: whether timestamps are returned
+        :param row: the row key
+        :param column: the column name
+        :param versions: the maximum number of versions to retrieve
+        :param timestamp: timestamp (optional)
+        :param include_timestamp: whether timestamps are returned
 
         :return: cell values
-        :rtype: list of values
         """
         if versions is None:
             versions = (2 ** 31) - 1  # Thrift type is i32
@@ -204,12 +233,12 @@ class Table(object):
                 "'versions' argument must be at least 1 (or None)")
 
         if timestamp is None:
-            cells = await self.connection.client.getVer(
+            cells = await self.client.getVer(
                 self.name, row, column, versions, {})
         else:
             if not isinstance(timestamp, Integral):
                 raise TypeError("'timestamp' must be an integer")
-            cells = await self.connection.client.getVerTs(
+            cells = await self.client.getVerTs(
                 self.name, row, column, timestamp, versions, {})
 
         return [
@@ -217,11 +246,21 @@ class Table(object):
             for c in cells
         ]
 
-    async def scan(self, row_start=None, row_stop=None, row_prefix=None,
-             columns=None, filter=None, timestamp=None,
-             include_timestamp=False, batch_size=1000, scan_batching=None,
-             limit=None, sorted_columns=False, reverse=False):
-        """Create a scanner for data in the table.
+    async def scan(self,
+                   row_start: str = None,
+                   row_stop: str = None,
+                   row_prefix: str = None,
+                   columns: Iterable[bytes] = None,
+                   filter: str = None,
+                   timestamp: int = None,
+                   include_timestamp: bool = False,
+                   batch_size: int = 1000,
+                   scan_batching: int = None,
+                   limit: int = None,
+                   sorted_columns: bool = False,
+                   reverse: bool = False) -> Iterator[Tuple[str, Data]]:
+        """
+        Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
         matching rows. Scanners can be created in two ways:
@@ -259,7 +298,7 @@ class Table(object):
         translates to `Scan.setBatching()` at the Java side (inside the
         Thrift server). By setting this value rows may be split into
         partial rows, so result rows may be incomplete, and the number
-        of results returned by te scanner may no longer correspond to
+        of results returned by the scanner may no longer correspond to
         the number of rows matched by the scan.
 
         If `sorted_columns` is `True`, the columns in the rows returned
@@ -292,18 +331,18 @@ class Table(object):
         .. versionadded:: 0.8
            `scan_batching` argument
 
-        :param str row_start: the row key to start at (inclusive)
-        :param str row_stop: the row key to stop at (exclusive)
-        :param str row_prefix: a prefix of the row key that must match
-        :param list_or_tuple columns: list of columns (optional)
-        :param str filter: a filter string (optional)
-        :param int timestamp: timestamp (optional)
-        :param bool include_timestamp: whether timestamps are returned
-        :param int batch_size: batch size for retrieving results
-        :param bool scan_batching: server-side scan batching (optional)
-        :param int limit: max number of rows to return
-        :param bool sorted_columns: whether to return sorted columns
-        :param bool reverse: whether to perform scan in reverse
+        :param row_start: the row key to start at (inclusive)
+        :param row_stop: the row key to stop at (exclusive)
+        :param row_prefix: a prefix of the row key that must match
+        :param columns: list of columns (optional)
+        :param filter: a filter string (optional)
+        :param timestamp: timestamp (optional)
+        :param include_timestamp: whether timestamps are returned
+        :param batch_size: batch size for retrieving results
+        :param scan_batching: server-side scan batching (optional)
+        :param limit: max number of rows to return
+        :param sorted_columns: whether to return sorted columns
+        :param reverse: whether to perform scan in reverse
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
@@ -332,11 +371,11 @@ class Table(object):
                     "or 'row_stop'")
 
             if reverse:
-                row_start = bytes_increment(row_prefix)
+                row_start = bytes_increment(row_prefix.encode())
                 row_stop = row_prefix
             else:
                 row_start = row_prefix
-                row_stop = bytes_increment(row_prefix)
+                row_stop = bytes_increment(row_prefix.encode())
 
         if row_start is None:
             row_start = ''
@@ -352,17 +391,17 @@ class Table(object):
 
             if row_stop is None:
                 if timestamp is None:
-                    scan_id = await self.connection.client.scannerOpen(
+                    scan_id = await self.client.scannerOpen(
                         self.name, row_start, columns, {})
                 else:
-                    scan_id = await self.connection.client.scannerOpenTs(
+                    scan_id = await self.client.scannerOpenTs(
                         self.name, row_start, columns, timestamp, {})
             else:
                 if timestamp is None:
-                    scan_id = await self.connection.client.scannerOpenWithStop(
+                    scan_id = await self.client.scannerOpenWithStop(
                         self.name, row_start, row_stop, columns, {})
                 else:
-                    scan_id = await self.connection.client.scannerOpenWithStopTs(
+                    scan_id = await self.client.scannerOpenWithStopTs(
                         self.name, row_start, row_stop, columns, timestamp, {})
 
         else:
@@ -396,10 +435,9 @@ class Table(object):
                 sortColumns=sorted_columns,
                 reversed=reverse,
             )
-            scan_id = await self.connection.client.scannerOpenWithScan(
-                self.name, scan, {})
+            scan_id = await self.client.scannerOpenWithScan(self.name, scan, {})
 
-        logger.debug("Opened scanner (id=%d) on '%s'", scan_id, self.name)
+        logger.debug(f"Opened scanner (id={scan_id}) on '{self.name}'")
 
         n_returned = n_fetched = 0
         try:
@@ -409,8 +447,7 @@ class Table(object):
                 else:
                     how_many = min(batch_size, limit - n_returned)
 
-                items = await self.connection.client.scannerGetList(
-                    scan_id, how_many)
+                items = await self.client.scannerGetList(scan_id, how_many)
 
                 if not items:
                     return  # scan has finished
@@ -429,17 +466,23 @@ class Table(object):
                     if limit is not None and n_returned == limit:
                         return  # scan has finished
         finally:
-            await self.connection.client.scannerClose(scan_id)
+            await self.client.scannerClose(scan_id)
             logger.debug(
-                "Closed scanner (id=%d) on '%s' (%d returned, %d fetched)",
-                scan_id, self.name, n_returned, n_fetched)
+                f"Closed scanner (id={scan_id}) on '{self.name}' "
+                f"({n_returned} returned, {n_fetched} fetched)"
+            )
 
     #
     # Data manipulation
     #
 
-    async def put(self, row, data, timestamp=None, wal=True):
-        """Store data in the table.
+    async def put(self,
+                  row: str,
+                  data: Data,
+                  timestamp: int = None,
+                  wal: bool = True) -> None:
+        """
+        Store data in the table.
 
         This method stores the data in the `data` argument for the row
         specified by `row`. The `data` argument is dictionary that maps columns
@@ -453,16 +496,21 @@ class Table(object):
         .. versionadded:: 0.7
            `wal` argument
 
-        :param str row: the row key
-        :param dict data: the data to store
-        :param int timestamp: timestamp (optional)
-        :param wal bool: whether to write to the WAL (optional)
+        :param row: the row key
+        :param data: the data to store
+        :param timestamp: timestamp (optional)
+        :param wal: whether to write to the WAL (optional)
         """
         async with self.batch(timestamp=timestamp, wal=wal) as batch:
             await batch.put(row, data)
 
-    async def delete(self, row, columns=None, timestamp=None, wal=True):
-        """Delete data from the table.
+    async def delete(self,
+                     row: str,
+                     columns: Iterable[bytes] = None,
+                     timestamp: int = None,
+                     wal: bool = True) -> None:
+        """
+        Delete data from the table.
 
         This method deletes all columns for the row specified by `row`, or only
         some columns if the `columns` argument is specified.
@@ -473,17 +521,21 @@ class Table(object):
         .. versionadded:: 0.7
            `wal` argument
 
-        :param str row: the row key
-        :param list_or_tuple columns: list of columns (optional)
-        :param int timestamp: timestamp (optional)
-        :param wal bool: whether to write to the WAL (optional)
+        :param row: the row key
+        :param columns: list of columns (optional)
+        :param timestamp: timestamp (optional)
+        :param wal: whether to write to the WAL (optional)
         """
         async with self.batch(timestamp=timestamp, wal=wal) as batch:
             await batch.delete(row, columns)
 
-    def batch(self, timestamp=None, batch_size=None, transaction=False,
-              wal=True):
-        """Create a new batch operation for this table.
+    def batch(self,
+              timestamp: int = None,
+              batch_size: int = None,
+              transaction: bool = False,
+              wal: bool = True) -> Batch:
+        """
+        Create a new batch operation for this table.
 
         This method returns a new :py:class:`Batch` instance that can be used
         for mass data manipulation. The `timestamp` argument applies to all
@@ -509,15 +561,14 @@ class Table(object):
         .. versionadded:: 0.7
            `wal` argument
 
-        :param bool transaction: whether this batch should behave like
-                                 a transaction (only useful when used as a
-                                 context manager)
-        :param int batch_size: batch size (optional)
-        :param int timestamp: timestamp (optional)
-        :param wal bool: whether to write to the WAL (optional)
+        :param transaction:
+            whether this batch should behave like a transaction
+            (only useful when used as a context manager)
+        :param batch_size: batch size (optional)
+        :param timestamp: timestamp (optional)
+        :param wal: whether to write to the WAL (optional)
 
         :return: Batch instance
-        :rtype: :py:class:`Batch`
         """
         kwargs = locals().copy()
         del kwargs['self']
@@ -527,8 +578,9 @@ class Table(object):
     # Atomic counters
     #
 
-    async def counter_get(self, row, column):
-        """Retrieve the current value of a counter column.
+    async def counter_get(self, row: str, column: bytes) -> int:
+        """
+        Retrieve the current value of a counter column.
 
         This method retrieves the current value of a counter column. If the
         counter column does not exist, this function initialises it to `0`.
@@ -538,18 +590,21 @@ class Table(object):
         :py:meth:`Table.counter_inc` and :py:meth:`Table.counter_dec` methods
         for that.
 
-        :param str row: the row key
-        :param str column: the column name
+        :param row: the row key
+        :param column: the column name
 
         :return: counter value
-        :rtype: int
         """
         # Don't query directly, but increment with value=0 so that the counter
         # is correctly initialised if didn't exist yet.
         return await self.counter_inc(row, column, value=0)
 
-    async def counter_set(self, row, column, value=0):
-        """Set a counter column to a specific value.
+    async def counter_set(self,
+                          row: str,
+                          column: bytes,
+                          value: int = 0) -> None:
+        """
+        Set a counter column to a specific value.
 
         This method stores a 64-bit signed integer value in the specified
         column.
@@ -559,14 +614,15 @@ class Table(object):
         :py:meth:`Table.counter_inc` and :py:meth:`Table.counter_dec` methods
         for that.
 
-        :param str row: the row key
-        :param str column: the column name
-        :param int value: the counter value to set
+        :param row: the row key
+        :param column: the column name
+        :param value: the counter value to set
         """
         await self.put(row, {column: pack_i64(value)})
 
-    async def counter_inc(self, row, column, value=1):
-        """Atomically increment (or decrements) a counter column.
+    async def counter_inc(self, row: str, column: bytes, value: int = 1) -> int:
+        """
+        Atomically increment (or decrements) a counter column.
 
         This method atomically increments or decrements a counter column in the
         row specified by `row`. The `value` argument specifies how much the
@@ -574,23 +630,21 @@ class Table(object):
         negative values). If the counter column did not exist, it is
         automatically initialised to 0 before incrementing it.
 
-        :param str row: the row key
-        :param str column: the column name
-        :param int value: the amount to increment or decrement by (optional)
+        :param row: the row key
+        :param column: the column name
+        :param value: the amount to increment or decrement by (optional)
 
         :return: counter value after incrementing
-        :rtype: int
         """
-        return await self.connection.client.atomicIncrement(
-            self.name, row, column, value)
+        return await self.client.atomicIncrement(self.name, row, column, value)
 
-    async def counter_dec(self, row, column, value=1):
-        """Atomically decrement (or increments) a counter column.
+    async def counter_dec(self, row: str, column: bytes, value: int = 1) -> int:
+        """
+        Atomically decrement (or increments) a counter column.
 
         This method is a shortcut for calling :py:meth:`Table.counter_inc` with
         the value negated.
 
         :return: counter value after decrementing
-        :rtype: int
         """
         return await self.counter_inc(row, column, -value)
