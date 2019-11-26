@@ -16,7 +16,7 @@ from typing import (
     AsyncGenerator as AsyncGen,
 )
 
-from Hbase_thrift import TScan, TCell, TColumn
+from Hbase_thrift import TScan, TRowResult
 
 from ._util import thrift_type_to_dict, bytes_increment, map_dict
 from .batch import Batch
@@ -32,22 +32,18 @@ Row = Union[Dict[bytes, bytes], Dict[bytes, Tuple[bytes, int]]]
 pack_i64 = Struct('>q').pack
 
 
-def make_row(cell_map: Dict[bytes, TCell], include_timestamp: bool) -> Row:
-    """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
+def make_row(row: TRowResult, include_timestamp: bool) -> Row:
+    """Make a row dict for a given row result."""
+    if row.sortedColumns is not None:
+        cell_map = {c.columnName: c.cell for c in row.sortedColumns},
+    elif row.columns is not None:
+        cell_map = row.columns
+    else:
+        raise RuntimeError("Neither columns nor sortedColumns is available!")
     return {
         name: (cell.value, cell.timestamp) if include_timestamp else cell.value
         for name, cell in cell_map.items()
     }
-
-
-def make_ordered_row(sorted_columns: List[TColumn],
-                     include_timestamp: bool) -> Row:
-    """Make a row dict for sorted column results from scans."""
-    # No need for ordered dict any more, Python dictionaries retain order now
-    return make_row(
-        cell_map={c.columnName: c.cell for c in sorted_columns},
-        include_timestamp=include_timestamp,
-    )
 
 
 class Table:
@@ -146,7 +142,7 @@ class Table:
         if not rows:
             return {}
 
-        return make_row(rows[0].columns, include_timestamp)
+        return make_row(rows[0], include_timestamp)
 
     async def rows(self,
                    rows: List[bytes],
@@ -193,10 +189,7 @@ class Table:
             results = await self.client.getRowsWithColumnsTs(
                 self.name, rows, columns, timestamp, {})
 
-        return [
-            (r.row, make_row(r.columns, include_timestamp))
-            for r in results
-        ]
+        return [(r.row, make_row(r, include_timestamp)) for r in results]
 
     async def cells(self,
                     row: bytes,
@@ -356,12 +349,10 @@ class Table:
             raise ValueError("'scan_batching' must be >= 1")
 
         if sorted_columns and self.connection.compat < '0.96':
-            raise NotImplementedError(
-                "'sorted_columns' is only supported in HBase >= 0.96")
+            raise NotImplementedError("'sorted_columns' requires HBase >= 0.96")
 
         if reverse and self.connection.compat < '0.98':
-            raise NotImplementedError(
-                "'reverse' is only supported in HBase >= 0.98")
+            raise NotImplementedError("'reverse' requires HBase >= 0.98")
 
         if row_prefix is not None:
             if row_start is not None or row_stop is not None:
@@ -377,7 +368,7 @@ class Table:
                 row_stop = bytes_increment(row_prefix)
 
         if row_start is None:
-            row_start = ''
+            row_start = b''
 
         if self.connection.compat == '0.90':
             # The scannerOpenWithScan() Thrift function is not
@@ -385,23 +376,20 @@ class Table:
             # other scannerOpen*() Thrift functions
 
             if filter is not None:
-                raise NotImplementedError(
-                    "'filter' is not supported in HBase 0.90")
+                raise NotImplementedError("'filter' requires HBase > 0.90")
 
-            if row_stop is None:
-                if timestamp is None:
-                    scan_id = await self.client.scannerOpen(
-                        self.name, row_start, columns, {})
-                else:
-                    scan_id = await self.client.scannerOpenTs(
-                        self.name, row_start, columns, timestamp, {})
-            else:
-                if timestamp is None:
-                    scan_id = await self.client.scannerOpenWithStop(
-                        self.name, row_start, row_stop, columns, {})
-                else:
-                    scan_id = await self.client.scannerOpenWithStopTs(
-                        self.name, row_start, row_stop, columns, timestamp, {})
+            args = [self.name, row_start, columns]
+            scan_func = 'scannerOpen'
+
+            if row_stop is not None:
+                scan_func += 'WithStop'
+                args.insert(2, row_stop)
+
+            if timestamp is not None:
+                scan_func += 'Ts'
+                args.append(timestamp)
+
+            scan_id = await getattr(self.client, scan_func)(*args, {})
 
         else:
             # XXX: The "batch_size" can be slightly confusing to those
@@ -454,13 +442,7 @@ class Table:
                 n_fetched += len(items)
 
                 for n_returned, item in enumerate(items, n_returned + 1):
-                    if sorted_columns:
-                        row = make_ordered_row(item.sortedColumns,
-                                               include_timestamp)
-                    else:
-                        row = make_row(item.columns, include_timestamp)
-
-                    yield item.row, row
+                    yield item.row, make_row(item, include_timestamp)
 
                     if limit is not None and n_returned == limit:
                         return  # scan has finished
