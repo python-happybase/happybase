@@ -187,8 +187,9 @@ class Connection:
         logger.debug(f"Opening Thrift transport to {self.host}:{self.port}")
         await self.transport.open()
 
-    def close(self) -> None:
-        """Close the underyling transport to the HBase instance.
+    async def close(self) -> None:
+        """
+        Close the underlying transport to the HBase instance.
 
         This method closes the underlying Thrift transport (TCP connection).
         """
@@ -200,6 +201,8 @@ class Connection:
             logger.debug(f"Closing Thrift transport to {self.host}:{self.port}")
 
         self.transport.close()
+        # Socket isn't really closed yet, wait for it
+        await aio.sleep(0)
 
     def __del__(self):
         try:
@@ -208,7 +211,11 @@ class Connection:
             # Failure from constructor
             return
         else:
-            self.close()
+            try:
+                aio.get_event_loop().run_until_complete(self.close())
+            except RuntimeError:  # Event loop running
+                if self.transport.is_open():
+                    self.transport.close()
 
     def table(self, name: AnyStr, use_prefix: bool = True) -> Table:
         """
@@ -379,3 +386,22 @@ class Connection:
             await self.client.majorCompact(name)
         else:
             await self.client.compact(name)
+
+    # Support async context usage
+    async def __aenter__(self) -> 'Connection':
+        await self.open()
+        return self
+
+    async def __aexit__(self, *_exc) -> None:
+        await self.close()
+
+    # Support context usage
+    def __enter__(self) -> 'Connection':
+        try:
+            aio.get_event_loop().run_until_complete(self.open())
+        except RuntimeError:
+            raise RuntimeError("Use async with inside a running event loop!")
+        return self
+
+    def __exit__(self, *_exc):
+        aio.get_event_loop().run_until_complete(self.close())
