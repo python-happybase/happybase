@@ -12,7 +12,8 @@ from typing import Dict, List, Any, AnyStr, Optional, TypeVar, Callable
 # Patch TAsyncSocket to use readall
 import asyncio
 from thriftpy2.contrib.aio.socket import TAsyncSocket
-from thriftpy2.contrib.aio.transport.buffered import readall
+from thriftpy2.contrib.aio.transport.buffered import \
+    readall, TAsyncBufferedTransport
 
 TAsyncSocket._read = TAsyncSocket.read
 
@@ -23,6 +24,10 @@ def read(self, sz):
 
 
 TAsyncSocket.read = read
+
+# Patch read size bug
+# Max was used instead of min, so trick it :P
+TAsyncBufferedTransport._read.__globals__['max'] = min
 ################################################################################
 
 T = TypeVar('T')
