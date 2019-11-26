@@ -40,7 +40,8 @@ DEFAULT_PROTOCOL = 'binary'
 
 
 class Connection:
-    """Connection to an HBase Thrift server.
+    """
+    Connection to an HBase Thrift server.
 
     The `host` and `port` arguments specify the host name and TCP port
     of the HBase Thrift server to connect to. If omitted or ``None``,
@@ -112,7 +113,7 @@ class Connection:
                  host: str = DEFAULT_HOST,
                  port: int = DEFAULT_PORT,
                  timeout: int = None,
-                 autoconnect: bool = True,
+                 autoconnect: bool = False,
                  table_prefix: str = None,
                  table_prefix_separator: bytes = b'_',
                  compat: str = DEFAULT_COMPAT,
@@ -167,10 +168,10 @@ class Connection:
         # TODO: Support all kwargs to make_client
         socket = TAsyncSocket(self.host, self.port, socket_timeout=self.timeout)
         self.transport = self._transport_class(socket)
-        protocol = self._protocol_class(socket)
-        self.client = TAsyncClient(self.transport, protocol)
+        protocol = self._protocol_class(socket, decode_response=False)
+        self.client = TAsyncClient(Hbase, protocol)
 
-    def _table_name(self, name) -> bytes:
+    def _table_name(self, name: AnyStr) -> bytes:
         """Construct a table name by optionally adding a table name prefix."""
         name = ensure_bytes(name)
         if self.table_prefix is None:
@@ -240,7 +241,7 @@ class Connection:
     # Table administration and maintenance
     #
 
-    async def tables(self) -> List[str]:
+    async def tables(self) -> List[bytes]:
         """
         Return a list of table names available in this HBase instance.
 
@@ -260,15 +261,13 @@ class Connection:
         return names
 
     async def create_table(self,
-                           name: str,
-                           families: Dict[str, Dict[str, Any]],
-                           use_prefix: bool = True) -> Table:
+                           name: AnyStr,
+                           families: Dict[str, Dict[str, Any]]) -> Table:
         """
         Create a table.
 
         :param name: The table name
         :param families: The name and options for each column family
-        :param use_prefix: whether to use the table prefix (if any)
         :return: The created table instance
 
         The `families` argument is a dictionary mapping column family
@@ -319,9 +318,9 @@ class Connection:
             column_descriptors.append(ColumnDescriptor(**kwargs))
 
         await self.client.createTable(name, column_descriptors)
-        return self.table(name, use_prefix)
+        return self.table(name, use_prefix=False)
 
-    async def delete_table(self, name: str, disable: bool = False) -> None:
+    async def delete_table(self, name: AnyStr, disable: bool = False) -> None:
         """
         Delete the specified table.
 
@@ -341,7 +340,7 @@ class Connection:
         name = self._table_name(name)
         await self.client.deleteTable(name)
 
-    async def enable_table(self, name: str) -> None:
+    async def enable_table(self, name: AnyStr) -> None:
         """
         Enable the specified table.
 
@@ -350,7 +349,7 @@ class Connection:
         name = self._table_name(name)
         await self.client.enableTable(name)
 
-    async def disable_table(self, name) -> None:
+    async def disable_table(self, name: AnyStr) -> None:
         """
         Disable the specified table.
 
@@ -359,7 +358,7 @@ class Connection:
         name = self._table_name(name)
         await self.client.disableTable(name)
 
-    async def is_table_enabled(self, name) -> None:
+    async def is_table_enabled(self, name: AnyStr) -> None:
         """
         Return whether the specified table is enabled.
 
@@ -371,7 +370,7 @@ class Connection:
         name = self._table_name(name)
         return await self.client.isTableEnabled(name)
 
-    async def compact_table(self, name, major=False) -> None:
+    async def compact_table(self, name: AnyStr, major: bool = False) -> None:
         """Compact the specified table.
 
         :param str name: The table name

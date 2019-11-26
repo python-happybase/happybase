@@ -1,0 +1,7 @@
+FROM dajobe/hbase:latest
+
+COPY . .
+
+RUN python3 -m pip install -r test-requirements.txt
+
+RUN python setup.py test

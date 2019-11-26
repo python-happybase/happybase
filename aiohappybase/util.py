@@ -39,7 +39,7 @@ def thrift_attrs(obj_or_cls) -> List[str]:
     return [v[1] for v in obj_or_cls.thrift_spec.values()]
 
 
-def thrift_type_to_dict(obj: Any) -> Dict[str, Any]:
+def thrift_type_to_dict(obj: Any) -> Dict[bytes, Any]:
     """Convert a Thrift data type to a regular dictionary."""
     return {
         camel_case_to_pep8(attr): getattr(obj, attr)

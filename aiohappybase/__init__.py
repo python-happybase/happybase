@@ -6,8 +6,9 @@ HBase.
 import pkg_resources as _pkg_resources
 import thriftpy2 as _thriftpy
 _thriftpy.load(
-    _pkg_resources.resource_filename('happybase', 'Hbase.thrift'),
-    'Hbase_thrift')
+    _pkg_resources.resource_filename(__name__, 'Hbase.thrift'),
+    'Hbase_thrift',
+)
 
 from ._version import __version__  # noqa
 

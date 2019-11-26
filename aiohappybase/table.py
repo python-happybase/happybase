@@ -5,7 +5,6 @@ HappyBase table module.
 import logging
 from numbers import Integral
 from struct import Struct
-from functools import partial
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -13,8 +12,8 @@ from typing import (
     Tuple,
     Any,
     Iterable,
-    Iterator,
     Union,
+    AsyncGenerator as AsyncGen,
 )
 
 from Hbase_thrift import TScan, TCell, TColumn
@@ -69,7 +68,7 @@ class Table:
     def __repr__(self):
         return f'<{__name__}.{self.__class__.__name__} name={self.name!r}>'
 
-    async def families(self) -> Dict[str, Dict[str, Any]]:
+    async def families(self) -> Dict[bytes, Dict[bytes, Any]]:
         """
         Retrieve the column families for this table.
 
@@ -78,14 +77,14 @@ class Table:
         descriptors = await self._column_family_descriptors()
         return map_dict(descriptors, values=thrift_type_to_dict)
 
-    async def _column_family_names(self) -> List[str]:
+    async def _column_family_names(self) -> List[bytes]:
         """Retrieve the column family names for this table"""
         return list(await self._column_family_descriptors())
 
-    async def _column_family_descriptors(self) -> Dict[str, Any]:
+    async def _column_family_descriptors(self) -> Dict[bytes, Any]:
         """Retrieve the column family descriptors for this table"""
         descriptors = await self.client.getColumnDescriptors(self.name)
-        return map_dict(descriptors, keys=partial(bytes.rstrip, b':'))
+        return map_dict(descriptors, keys=lambda k: k.rstrip(b':'))
 
     async def regions(self) -> List[Dict[str, Any]]:
         """
@@ -101,7 +100,7 @@ class Table:
     #
 
     async def row(self,
-                  row: str,
+                  row: bytes,
                   columns: Iterable[bytes] = None,
                   timestamp: int = None,
                   include_timestamp: bool = False) -> Row:
@@ -150,10 +149,10 @@ class Table:
         return make_row(rows[0].columns, include_timestamp)
 
     async def rows(self,
-                   rows: str,
+                   rows: List[bytes],
                    columns: Iterable[bytes] = None,
                    timestamp: int = None,
-                   include_timestamp: bool = False) -> List[Tuple[str, Row]]:
+                   include_timestamp: bool = False) -> List[Tuple[bytes, Row]]:
         """
         Retrieve multiple rows of data.
 
@@ -189,7 +188,7 @@ class Table:
             # timestamp is only applied if columns are specified, at
             # the cost of an extra round-trip.
             if columns is None:
-                columns = self._column_family_names()
+                columns = await self._column_family_names()
 
             results = await self.client.getRowsWithColumnsTs(
                 self.name, rows, columns, timestamp, {})
@@ -200,7 +199,7 @@ class Table:
         ]
 
     async def cells(self,
-                    row: str,
+                    row: bytes,
                     column: bytes,
                     versions: int = None,
                     timestamp: int = None,
@@ -247,18 +246,18 @@ class Table:
         ]
 
     async def scan(self,
-                   row_start: str = None,
-                   row_stop: str = None,
-                   row_prefix: str = None,
+                   row_start: bytes = None,
+                   row_stop: bytes = None,
+                   row_prefix: bytes = None,
                    columns: Iterable[bytes] = None,
-                   filter: str = None,
+                   filter: bytes = None,
                    timestamp: int = None,
                    include_timestamp: bool = False,
                    batch_size: int = 1000,
                    scan_batching: int = None,
                    limit: int = None,
                    sorted_columns: bool = False,
-                   reverse: bool = False) -> Iterator[Tuple[str, Data]]:
+                   reverse: bool = False) -> AsyncGen[Tuple[bytes, Data], None]:
         """
         Create a scanner for data in the table.
 
@@ -371,11 +370,11 @@ class Table:
                     "or 'row_stop'")
 
             if reverse:
-                row_start = bytes_increment(row_prefix.encode())
+                row_start = bytes_increment(row_prefix)
                 row_stop = row_prefix
             else:
                 row_start = row_prefix
-                row_stop = bytes_increment(row_prefix.encode())
+                row_stop = bytes_increment(row_prefix)
 
         if row_start is None:
             row_start = ''
@@ -477,7 +476,7 @@ class Table:
     #
 
     async def put(self,
-                  row: str,
+                  row: bytes,
                   data: Data,
                   timestamp: int = None,
                   wal: bool = True) -> None:
@@ -505,7 +504,7 @@ class Table:
             await batch.put(row, data)
 
     async def delete(self,
-                     row: str,
+                     row: bytes,
                      columns: Iterable[bytes] = None,
                      timestamp: int = None,
                      wal: bool = True) -> None:
@@ -578,7 +577,7 @@ class Table:
     # Atomic counters
     #
 
-    async def counter_get(self, row: str, column: bytes) -> int:
+    async def counter_get(self, row: bytes, column: bytes) -> int:
         """
         Retrieve the current value of a counter column.
 
@@ -600,7 +599,7 @@ class Table:
         return await self.counter_inc(row, column, value=0)
 
     async def counter_set(self,
-                          row: str,
+                          row: bytes,
                           column: bytes,
                           value: int = 0) -> None:
         """
@@ -620,7 +619,10 @@ class Table:
         """
         await self.put(row, {column: pack_i64(value)})
 
-    async def counter_inc(self, row: str, column: bytes, value: int = 1) -> int:
+    async def counter_inc(self,
+                          row: bytes,
+                          column: bytes,
+                          value: int = 1) -> int:
         """
         Atomically increment (or decrements) a counter column.
 
@@ -638,7 +640,10 @@ class Table:
         """
         return await self.client.atomicIncrement(self.name, row, column, value)
 
-    async def counter_dec(self, row: str, column: bytes, value: int = 1) -> int:
+    async def counter_dec(self,
+                          row: bytes,
+                          column: bytes,
+                          value: int = 1) -> int:
         """
         Atomically decrement (or increments) a counter column.
 

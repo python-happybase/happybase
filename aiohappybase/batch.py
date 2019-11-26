@@ -3,21 +3,10 @@ HappyBase Batch module.
 """
 
 import logging
-import queue
 from typing import TYPE_CHECKING, Dict, List, Iterable, Type
 from functools import partial
 from collections import defaultdict
 from numbers import Integral
-
-try:
-    from asyncio import create_task
-except ImportError:
-    from asyncio import ensure_future as create_task
-
-try:
-    from queue import SimpleQueue
-except ImportError:
-    from queue import Queue as SimpleQueue
 
 from Hbase_thrift import BatchMutation, Mutation
 
@@ -73,18 +62,13 @@ class Batch:
                 attributes={},
             )
 
-        self._tasks = SimpleQueue()
-
     def _reset_mutations(self) -> None:
         """Reset the internal mutation buffer."""
         self._mutations = defaultdict(list)
         self._mutation_count = 0
 
-    def send(self) -> None:
-        """
-        Send the batch to the server without waiting for it. All tasks will
-        be waited for when the context ends or :py:meth:`close` is called.
-        """
+    async def send(self) -> None:
+        """Send the batch to the server."""
         bms = [BatchMutation(row, m) for row, m in self._mutations.items()]
         if not bms:
             return
@@ -94,7 +78,7 @@ class Batch:
             f"mutations on {len(bms)} rows)"
         )
 
-        self._tasks.put(create_task(self._mutate_rows(bms)))
+        await self._mutate_rows(bms)
         self._reset_mutations()
 
     #
@@ -102,10 +86,11 @@ class Batch:
     #
 
     async def put(self,
-                  row: str,
+                  row: bytes,
                   data: Dict[bytes, bytes],
                   wal: bool = None) -> None:
-        """Store data in the table.
+        """
+        Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
         and `wal` arguments. The `wal` argument should normally not be
@@ -121,10 +106,11 @@ class Batch:
         ])
 
     async def delete(self,
-                     row: str,
+                     row: bytes,
                      columns: Iterable[bytes] = None,
                      wal: bool = None) -> None:
-        """Delete data from the table.
+        """
+        Delete data from the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
         and `wal` arguments. The `wal` argument should normally not be
@@ -137,7 +123,7 @@ class Batch:
         # batch instance.
         if columns is None:
             if self._families is None:
-                self._families = self._table._column_family_names()
+                self._families = await self._table._column_family_names()
             columns = self._families
 
         if wal is None:
@@ -148,20 +134,15 @@ class Batch:
             for column in columns
         ])
 
-    def _add_mutations(self, row: str, mutations: List[Mutation]):
+    async def _add_mutations(self, row: bytes, mutations: List[Mutation]):
         self._mutations[row].extend(mutations)
         self._mutation_count += len(mutations)
         if self._batch_size and self._mutation_count >= self._batch_size:
-            self.send()
+            await self.send()
 
     async def close(self) -> None:
         """Finalize the batch and make sure all tasks are completed."""
-        self.send()  # Send any remaining mutations
-        while True:
-            try:
-                await self._tasks.get_nowait()
-            except queue.Empty:
-                return
+        await self.send()  # Send any remaining mutations
 
     #
     # Context manager methods
@@ -179,3 +160,10 @@ class Batch:
             return
 
         await self.close()
+
+    # Guard against porting mistakes
+    def __enter__(self):
+        raise RuntimeError("Use async with")
+
+    def __exit__(self, *_exc):
+        raise RuntimeError("Use async with")

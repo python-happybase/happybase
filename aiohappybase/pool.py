@@ -6,6 +6,7 @@ import logging
 import socket
 import threading
 import queue
+from numbers import Real
 
 from thriftpy2.thrift import TException
 
@@ -51,12 +52,10 @@ class ConnectionPool:
     task of the pool.
 
     :param int size: the maximum number of concurrently open connections
-    :param kwargs: keyword arguments passed to
-                   :py:class:`happybase.Connection`
+    :param kwargs:
+        keyword arguments passed to :py:class:`happybase.Connection`
     """
-    def __init__(self,
-                 size: int,
-                 **kwargs):
+    def __init__(self, size: int, **kwargs):
         if not isinstance(size, int):
             raise TypeError("Pool 'size' arg must be an integer")
 
@@ -75,13 +74,7 @@ class ConnectionPool:
         for i in range(size):
             self._queue.put(Connection(**connection_kwargs))
 
-        # The first connection is made immediately so that trivial
-        # mistakes like unresolvable host names are raised immediately.
-        # Subsequent connections are connected lazily.
-        with self.connection():
-            pass
-
-    def _acquire_connection(self, timeout: int = None) -> Connection:
+    def _acquire_connection(self, timeout: Real = None) -> Connection:
         """Acquire a connection from the pool."""
         try:
             return self._queue.get(True, timeout)
@@ -95,7 +88,7 @@ class ConnectionPool:
         self._queue.put(connection)
 
     @asynccontextmanager
-    async def connection(self, timeout: int = None) -> Connection:
+    async def connection(self, timeout: Real = None) -> Connection:
         """
         Obtain a connection from the pool.
 
@@ -110,7 +103,7 @@ class ConnectionPool:
         :py:exc:`NoConnectionsAvailable` is raised. If omitted, this
         method waits forever for a connection to become available.
 
-        :param int timeout: number of seconds to wait (optional)
+        :param timeout: number of seconds to wait (optional)
         :return: active connection from the pool
         :rtype: :py:class:`happybase.Connection`
         """
