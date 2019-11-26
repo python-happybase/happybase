@@ -7,6 +7,24 @@ These functions are not part of the public API.
 import re
 from typing import Dict, List, Any, AnyStr, Optional, TypeVar, Callable
 
+################################################################################
+# FIXME: Remove this once ThriftPy2 PR-99 is closed
+# Patch TAsyncSocket to use readall
+import asyncio
+from thriftpy2.contrib.aio.socket import TAsyncSocket
+from thriftpy2.contrib.aio.transport.buffered import readall
+
+TAsyncSocket._read = TAsyncSocket.read
+
+
+@asyncio.coroutine
+def read(self, sz):
+    return (yield from readall(self._read, sz))
+
+
+TAsyncSocket.read = read
+################################################################################
+
 T = TypeVar('T')
 
 KTI = TypeVar('KTI')
