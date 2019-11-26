@@ -6,6 +6,7 @@ import os
 import random
 import threading
 import asyncio as aio
+from functools import wraps
 from typing import AsyncGenerator
 
 import asynctest
@@ -34,44 +35,67 @@ connection_kwargs = dict(
 )
 
 
-class TestAPI(asynctest.TestCase):
-    use_default_loop = True
+def with_new_loop(func):
+    @wraps(func)
+    def _wrapper(*args, **kwargs):
+        try:
+            old_loop = aio.get_event_loop()
+        except RuntimeError:  # No event loop
+            old_loop = None
+        loop = aio.new_event_loop()
+        aio.set_event_loop(loop)
+        try:
+            return func(*args, loop=loop, **kwargs)
+        finally:
+            if old_loop is not None:
+                aio.set_event_loop(old_loop)
+            loop.close()
+    return _wrapper
 
+
+@asynctest.strict
+class TestAPI(asynctest.TestCase):
     connection: Connection
     table: Table
 
     @classmethod
-    def setUpClass(cls):
-        loop = aio.get_event_loop()
+    @with_new_loop
+    def setUpClass(cls, loop):
         run = loop.run_until_complete
 
-        conn = cls.connection = Connection(**connection_kwargs)
-        assert cls.connection is not None
+        with Connection(**connection_kwargs) as conn:
+            assert conn is not None
 
-        run(conn.open())
+            tables = run(conn.tables())
+            if TEST_TABLE_NAME in tables:
+                print("Test table already exists; removing it...")
+                run(conn.delete_table(TEST_TABLE_NAME, disable=True))
 
-        tables = run(conn.tables())
-        if TEST_TABLE_NAME in tables:
-            print("Test table already exists; removing it...")
-            run(conn.delete_table(TEST_TABLE_NAME, disable=True))
-
-        cfs = {
-            'cf1': {},
-            'cf2': None,
-            'cf3': {'max_versions': 1},
-        }
-        cls.table = run(conn.create_table(TEST_TABLE_NAME, families=cfs))
-        assert cls.table is not None
+            cfs = {
+                'cf1': {},
+                'cf2': None,
+                'cf3': {'max_versions': 1},
+            }
+            table = run(conn.create_table(TEST_TABLE_NAME, families=cfs))
+            assert table is not None
 
     @classmethod
-    def tearDownClass(cls):
-        loop = aio.get_event_loop()
-        loop.run_until_complete(
-            cls.connection.delete_table(TEST_TABLE_NAME, disable=True)
-        )
-        cls.connection.close()
-        del cls.connection
-        del cls.table
+    @with_new_loop
+    def tearDownClass(cls, loop):
+        run = loop.run_until_complete
+
+        with Connection(**connection_kwargs) as conn:
+            run(conn.delete_table(TEST_TABLE_NAME, disable=True))
+
+    async def setUp(self):
+        self.connection = Connection(**connection_kwargs)
+        await self.connection.open()
+        self.table = self.connection.table(TEST_TABLE_NAME)
+
+    async def tearDown(self):
+        await self.connection.close()
+        del self.connection
+        del self.table
 
     async def _scan_list(self, *args, **kwargs):
         return [x async for x in self.table.scan(*args, **kwargs)]
@@ -554,10 +578,9 @@ class TestAPI(asynctest.TestCase):
 
             print("Thread %s done" % name)
 
-        def run():
-            loop = aio.new_event_loop()
+        @with_new_loop
+        def run(loop):
             loop.run_until_complete(_run())
-            loop.close()
 
         n_threads = 10
         pool = ConnectionPool(size=3, **connection_kwargs)
@@ -582,10 +605,9 @@ class TestAPI(asynctest.TestCase):
                 async with pool.connection(timeout=.1) as connection:
                     connection.tables()
 
-        def run():
-            loop = aio.new_event_loop()
+        @with_new_loop
+        def run(loop):
             loop.run_until_complete(_run())
-            loop.close()
 
         async with pool.connection():
             # At this point the only connection is assigned to this thread,
