@@ -1,5 +1,3 @@
-# coding: UTF-8
-
 """
 HappyBase connection module.
 """
@@ -16,7 +14,7 @@ from thriftpy2.contrib.aio.client import TAsyncClient
 from Hbase_thrift import Hbase, ColumnDescriptor
 
 from .table import Table
-from .util import ensure_bytes, pep8_to_camel_case
+from ._util import ensure_bytes, pep8_to_camel_case
 
 logger = logging.getLogger(__name__)
 

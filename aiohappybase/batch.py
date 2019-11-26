@@ -11,7 +11,7 @@ from numbers import Integral
 from Hbase_thrift import BatchMutation, Mutation
 
 if TYPE_CHECKING:
-    from .table import Table
+    from .table import Table  # Avoid circular import
 
 logger = logging.getLogger(__name__)
 
@@ -50,13 +50,13 @@ class Batch:
         # Save mutator partial here to avoid the if check each time
         if self._timestamp is None:
             self._mutate_rows = partial(
-                self._table.connection.client.mutateRows,
+                self._table.client.mutateRows,
                 self._table.name,
                 attributes={},
             )
         else:
             self._mutate_rows = partial(
-                self._table.connection.client.mutateRowsTs,
+                self._table.client.mutateRowsTs,
                 self._table.name,
                 timestamp=self._timestamp,
                 attributes={},
@@ -80,10 +80,6 @@ class Batch:
 
         await self._mutate_rows(bms)
         self._reset_mutations()
-
-    #
-    # Mutation methods
-    #
 
     async def put(self,
                   row: bytes,
@@ -144,10 +140,7 @@ class Batch:
         """Finalize the batch and make sure all tasks are completed."""
         await self.send()  # Send any remaining mutations
 
-    #
-    # Context manager methods
-    #
-
+    # Support usage as an async context manager
     async def __aenter__(self) -> 'Batch':
         """Called upon entering a ``async with`` block"""
         return self

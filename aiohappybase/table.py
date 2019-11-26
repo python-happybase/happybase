@@ -18,7 +18,7 @@ from typing import (
 
 from Hbase_thrift import TScan, TCell, TColumn
 
-from .util import thrift_type_to_dict, bytes_increment, map_dict
+from ._util import thrift_type_to_dict, bytes_increment, map_dict
 from .batch import Batch
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class Table:
         descriptors = await self.client.getColumnDescriptors(self.name)
         return map_dict(descriptors, keys=lambda k: k.rstrip(b':'))
 
-    async def regions(self) -> List[Dict[str, Any]]:
+    async def regions(self) -> List[Dict[bytes, Any]]:
         """
         Retrieve the regions for this table.
 
@@ -250,7 +250,7 @@ class Table:
                    row_stop: bytes = None,
                    row_prefix: bytes = None,
                    columns: Iterable[bytes] = None,
-                   filter: bytes = None,
+                   filter: bytes = None,  # noqa
                    timestamp: int = None,
                    include_timestamp: bool = False,
                    batch_size: int = 1000,
