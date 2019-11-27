@@ -9,6 +9,6 @@ RUN 'python3.6' -m pip install -r requirements.txt
 RUN 'python3.7' -m pip install -r requirements.txt
 
 RUN chmod +x entrypoint.sh
-RUN mv entrypoint.sh /
+COPY entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
