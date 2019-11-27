@@ -7,34 +7,6 @@ These functions are not part of the public API.
 import re
 from typing import Dict, List, Any, AnyStr, Optional, TypeVar, Callable
 
-################################################################################
-# FIXME: Remove this once ThriftPy2 PR-102 is closed
-# Patch TAsyncBufferedTransport to handle extra data properly
-import asyncio
-from io import BytesIO
-from thriftpy2.contrib.aio.transport.buffered import TAsyncBufferedTransport
-
-
-@asyncio.coroutine
-def _read(self, sz):
-    ret = self._rbuf.read(sz)
-
-    rest_len = sz - len(ret)
-    if rest_len == 0:
-        return ret
-
-    buf = yield from self._trans.read(max(rest_len, self._buf_size))
-
-    ret = ret + buf[:rest_len]
-    buf = buf[rest_len:]
-
-    self._rbuf = BytesIO(buf)
-    return ret
-
-
-TAsyncBufferedTransport._read = _read
-################################################################################
-
 T = TypeVar('T')
 
 KTI = TypeVar('KTI')
