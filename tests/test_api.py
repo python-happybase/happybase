@@ -11,12 +11,15 @@ from typing import AsyncGenerator
 
 import asynctest
 
+from thriftpy2.thrift import TException
+
 from aiohappybase import (
     Connection,
     Table,
     ConnectionPool,
     NoConnectionsAvailable,
 )
+from aiohappybase.pool import current_task  # Easiest way to get the right one
 
 AIOHAPPYBASE_HOST = os.environ.get('AIOHAPPYBASE_HOST', 'localhost')
 AIOHAPPYBASE_PORT = int(os.environ.get('AIOHAPPYBASE_PORT', '9090'))
@@ -474,6 +477,7 @@ class TestAPI(asynctest.TestCase):
         key, row = await scan.__anext__()
         self.assertEqual(key, input_key)
         self.assertListEqual(sorted(input_row.items()), list(row.items()))
+        await scan.aclose()
 
     async def test_scan_reverse(self):
 
@@ -543,18 +547,17 @@ class TestAPI(asynctest.TestCase):
         with self.assertRaises(ValueError):
             ConnectionPool(size=0)
 
-    def test_connection_pool(self):
+    async def test_connection_pool(self):
 
-        from thriftpy2.thrift import TException
+        async def run():
+            task_id = hex(id(current_task()))
 
-        async def _run():
-            name = threading.current_thread().name
-            print("Thread %s starting" % name)
+            print(f"Task {task_id} starting")
 
             async def inner_function():
                 # Nested connection requests must return the same connection
                 async with pool.connection() as another_connection:
-                    assert connection is another_connection
+                    self.assertIs(connection, another_connection)
 
                     # Fake an exception once in a while
                     if random.random() < .25:
@@ -576,46 +579,24 @@ class TestAPI(asynctest.TestCase):
 
                     await connection.tables()
 
-            print("Thread %s done" % name)
+            print(f"Task {task_id} done")
 
-        @with_new_loop
-        def run(loop):
-            loop.run_until_complete(_run())
-
-        n_threads = 10
-        pool = ConnectionPool(size=3, **connection_kwargs)
-        threads = [threading.Thread(target=run) for _ in range(n_threads)]
-
-        for t in threads:
-            t.start()
-
-        while threads:
-            for t in threads:
-                t.join(timeout=.1)
-
-            # filter out finished threads
-            threads = [t for t in threads if t.is_alive()]
-            print(f"{len(threads)} threads still alive")
+        loop = aio.get_event_loop()
+        async with ConnectionPool(size=3, **connection_kwargs) as pool:
+            await aio.gather(*(loop.create_task(run()) for _ in range(10)))
 
     async def test_pool_exhaustion(self):
-        pool = ConnectionPool(size=1, **connection_kwargs)
 
-        async def _run():
+        async def run():
             with self.assertRaises(NoConnectionsAvailable):
                 async with pool.connection(timeout=.1) as connection:
-                    connection.tables()
+                    await connection.tables()
 
-        @with_new_loop
-        def run(loop):
-            loop.run_until_complete(_run())
-
-        async with pool.connection():
-            # At this point the only connection is assigned to this thread,
-            # so another thread cannot obtain a connection at this point.
-
-            t = threading.Thread(target=run)
-            t.start()
-            t.join()
+        async with ConnectionPool(size=1, **connection_kwargs) as pool:
+            async with pool.connection():
+                # At this point the only connection is assigned to this task,
+                # so another task cannot obtain a connection.
+                await aio.get_event_loop().create_task(run())
 
 
 if __name__ == '__main__':

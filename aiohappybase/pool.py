@@ -4,13 +4,17 @@ HappyBase connection pool module.
 
 import logging
 import socket
-import threading
-import queue
+import asyncio as aio
 from numbers import Real
 
 from thriftpy2.thrift import TException
 
 from .connection import Connection
+
+try:
+    from asyncio import current_task
+except ImportError:  # < 3.7
+    current_task = aio.Task.current_task
 
 try:
     from contextlib import asynccontextmanager
@@ -41,9 +45,18 @@ class NoConnectionsAvailable(RuntimeError):
 
 class ConnectionPool:
     """
-    Thread-safe connection pool.
+    Asyncio-safe connection pool.
 
     .. versionadded:: 0.5
+
+    Connection pools in sync code (like :py:class:`happybase.ConnectionPool`)
+    work by creating multiple connections and providing one whenever a thread
+    asks. When a thread is done with it, it returns it too the pool to be
+    made available to other threads. In async code, instead of threads,
+    tasks make the request to the pool for a connection.
+
+    If a task nests calls to :py:meth:`connection`, it will get the
+    same connection back, just like in HappyBase.
 
     The `size` argument specifies how many connections this pool
     manages. Additional keyword arguments are passed unmodified to the
@@ -52,8 +65,7 @@ class ConnectionPool:
     task of the pool.
 
     :param int size: the maximum number of concurrently open connections
-    :param kwargs:
-        keyword arguments passed to :py:class:`happybase.Connection`
+    :param kwargs: keyword arguments for :py:class:`happybase.Connection`
     """
     def __init__(self, size: int, **kwargs):
         if not isinstance(size, int):
@@ -64,28 +76,33 @@ class ConnectionPool:
 
         logger.debug(f"Initializing connection pool with {size} connections")
 
-        self._lock = threading.Lock()
-        self._queue = queue.LifoQueue(maxsize=size)
-        self._thread_connections = threading.local()
+        self._queue = aio.LifoQueue(maxsize=size)
+        self._task_connections = {}
 
-        connection_kwargs = kwargs
-        connection_kwargs['autoconnect'] = False
+        kwargs['autoconnect'] = False
 
         for i in range(size):
-            self._queue.put(Connection(**connection_kwargs))
+            self._queue.put_nowait(Connection(**kwargs))
 
-    def _acquire_connection(self, timeout: Real = None) -> Connection:
+    async def close(self):
+        """Clean up all pool connections and delete the queue."""
+        while True:
+            try:
+                await self._queue.get_nowait().close()
+            except aio.QueueEmpty:
+                break
+        del self._queue
+
+    async def _acquire_connection(self, timeout: Real = None) -> Connection:
         """Acquire a connection from the pool."""
         try:
-            return self._queue.get(True, timeout)
-        except queue.Empty:
-            raise NoConnectionsAvailable(
-                "No connection available from pool within specified "
-                "timeout")
+            return await aio.wait_for(self._queue.get(), timeout)
+        except aio.futures.TimeoutError:
+            raise NoConnectionsAvailable("Timeout waiting for a connection")
 
-    def _return_connection(self, connection: Connection) -> None:
+    async def _return_connection(self, connection: Connection) -> None:
         """Return a connection to the pool."""
-        self._queue.put(connection)
+        await self._queue.put(connection)
 
     @asynccontextmanager
     async def connection(self, timeout: Real = None) -> Connection:
@@ -95,7 +112,7 @@ class ConnectionPool:
         This method *must* be used as a context manager, i.e. with
         Python's ``with`` block. Example::
 
-            with pool.connection() as connection:
+            async with pool.connection() as connection:
                 pass  # do something with the connection
 
         If `timeout` is specified, this is the number of seconds to wait
@@ -107,24 +124,17 @@ class ConnectionPool:
         :return: active connection from the pool
         :rtype: :py:class:`happybase.Connection`
         """
-
-        connection = getattr(self._thread_connections, 'current', None)
+        task_id = id(current_task())
+        connection = self._task_connections.get(task_id)
 
         return_after_use = False
         if connection is None:
-            # This is the outermost connection requests for this thread.
+            # This is the outermost connection requests for this task.
             # Obtain a new connection from the pool and keep a reference
-            # in a thread local so that nested connection requests from
-            # the same thread can return the same connection instance.
-            #
-            # Note: this code acquires a lock before assigning to the
-            # thread local; see
-            # http://emptysquare.net/blog/another-thing-about-pythons-
-            # threadlocals/
+            # by the task id so that nested calls get the same connection
             return_after_use = True
-            connection = self._acquire_connection(timeout)
-            with self._lock:
-                self._thread_connections.current = connection
+            connection = await self._acquire_connection(timeout)
+            self._task_connections[task_id] = connection
 
         try:
             # Open connection, because connections are opened lazily.
@@ -150,5 +160,25 @@ class ConnectionPool:
             # block ends. Afterwards the thread no longer owns the
             # connection.
             if return_after_use:
-                del self._thread_connections.current
-                self._return_connection(connection)
+                del self._task_connections[task_id]
+                await self._return_connection(connection)
+
+    # Support async context usage
+    async def __aenter__(self) -> 'ConnectionPool':
+        return self
+
+    async def __aexit__(self, *_exc) -> None:
+        await self.close()
+
+    # Support context usage
+    def __enter__(self) -> 'ConnectionPool':
+        if aio.get_event_loop().is_running():
+            raise RuntimeError("Use async with inside a running event loop!")
+        return self
+
+    def __exit__(self, *_exc) -> None:
+        aio.get_event_loop().run_until_complete(self.close())
+
+    def __del__(self) -> None:
+        if hasattr(self, '_queue'):
+            logger.warning(f"{self} was not closed!")

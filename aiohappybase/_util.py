@@ -15,15 +15,13 @@ from thriftpy2.contrib.aio.socket import TAsyncSocket
 from thriftpy2.contrib.aio.transport.buffered import \
     readall, TAsyncBufferedTransport
 
-TAsyncSocket._read = TAsyncSocket.read
-
 
 @asyncio.coroutine
 def read(self, sz):
     return (yield from readall(self._read, sz))
 
 
-TAsyncSocket.read = read
+TAsyncSocket._read, TAsyncSocket.read = TAsyncSocket.read, read
 
 # Patch read size bug
 # Max was used instead of min, so trick it :P

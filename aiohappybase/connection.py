@@ -204,19 +204,6 @@ class Connection:
         # Socket isn't really closed yet, wait for it
         await aio.sleep(0)
 
-    def __del__(self):
-        try:
-            self._initialized
-        except AttributeError:
-            # Failure from constructor
-            return
-        else:
-            try:
-                aio.get_event_loop().run_until_complete(self.close())
-            except RuntimeError:  # Event loop running
-                if self.transport.is_open():
-                    self.transport.close()
-
     def table(self, name: AnyStr, use_prefix: bool = True) -> Table:
         """
         Return a table object.
@@ -242,9 +229,7 @@ class Connection:
             name = self._table_name(name)
         return Table(name, self)
 
-    #
     # Table administration and maintenance
-    #
 
     async def tables(self) -> List[bytes]:
         """
@@ -403,5 +388,12 @@ class Connection:
             raise RuntimeError("Use async with inside a running event loop!")
         return self
 
-    def __exit__(self, *_exc):
+    def __exit__(self, *_exc) -> None:
         aio.get_event_loop().run_until_complete(self.close())
+
+    def __del__(self) -> None:
+        try:
+            if self.transport.is_open():
+                logger.warning(f"{self} was not closed!")
+        except:  # noqa
+            pass

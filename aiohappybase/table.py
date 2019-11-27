@@ -35,7 +35,7 @@ pack_i64 = Struct('>q').pack
 def make_row(row: TRowResult, include_timestamp: bool) -> Row:
     """Make a row dict for a given row result."""
     if row.sortedColumns is not None:
-        cell_map = {c.columnName: c.cell for c in row.sortedColumns},
+        cell_map = {c.columnName: c.cell for c in row.sortedColumns}
     elif row.columns is not None:
         cell_map = row.columns
     else:
@@ -91,9 +91,7 @@ class Table:
         regions = await self.client.getTableRegions(self.name)
         return [thrift_type_to_dict(r) for r in regions]
 
-    #
-    # Data retrieval
-    #
+    # Data retrieval methods
 
     async def row(self,
                   row: bytes,
@@ -453,9 +451,7 @@ class Table:
                 f"({n_returned} returned, {n_fetched} fetched)"
             )
 
-    #
-    # Data manipulation
-    #
+    # Data manipulation methods
 
     async def put(self,
                   row: bytes,
@@ -555,9 +551,7 @@ class Table:
         del kwargs['self']
         return Batch(table=self, **kwargs)
 
-    #
     # Atomic counters
-    #
 
     async def counter_get(self, row: bytes, column: bytes) -> int:
         """
