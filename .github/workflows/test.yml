@@ -13,10 +13,9 @@ jobs:
         uses: actions/checkout@v1
       -
         name: Run Tests
-        uses: buildtool/build-action@v1
-        with:
-          docker-build-args: '--build-arg python_version=3.6'
-          dockerfile: Dockerfile.test
+        uses: ./.github/actions/test
+        env:
+          PYTHON_VERSION: '3.6'
   test37:
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +24,6 @@ jobs:
         uses: actions/checkout@v1
       -
         name: Run Tests
-        uses: buildtool/build-action@v1
-        with:
-          docker-build-args: '--build-arg python_version=3.7'
-          dockerfile: Dockerfile.test
+        uses: ./.github/actions/test
+        env:
+          PYTHON_VERSION: '3.7'
