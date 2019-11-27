@@ -166,7 +166,7 @@ class Connection:
         # TODO: Support all kwargs to make_client
         socket = TAsyncSocket(self.host, self.port, socket_timeout=self.timeout)
         self.transport = self._transport_class(socket)
-        protocol = self._protocol_class(socket, decode_response=False)
+        protocol = self._protocol_class(self.transport, decode_response=False)
         self.client = TAsyncClient(Hbase, protocol)
 
     def _table_name(self, name: AnyStr) -> bytes:
