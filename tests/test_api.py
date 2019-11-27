@@ -4,7 +4,6 @@ HappyBase tests.
 
 import os
 import random
-import threading
 import asyncio as aio
 from functools import wraps
 from typing import AsyncGenerator
@@ -602,16 +601,6 @@ class TestAPI(asynctest.TestCase):
 if __name__ == '__main__':
     import logging
     import sys
-
-    # Dump stacktraces using 'kill -USR1', useful for debugging hanging
-    # programs and multi threading issues.
-    try:
-        import faulthandler  # noqa
-    except ImportError:
-        pass
-    else:
-        import signal
-        faulthandler.register(signal.SIGUSR1)
 
     logging.basicConfig(level=logging.DEBUG)
 
