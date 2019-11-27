@@ -8,22 +8,18 @@ jobs:
   test36:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v1
-      -
-        name: Run Tests
+      - name: Run Tests
         uses: ./.github/actions/test
         env:
           PYTHON_VERSION: '3.6'
   test37:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v1
-      -
-        name: Run Tests
+      - name: Run Tests
         uses: ./.github/actions/test
         env:
           PYTHON_VERSION: '3.7'
