@@ -10,7 +10,8 @@ doc:
 
 test:
 	-find coverage/ -mindepth 1 -delete
-	python $$(which nosetests) $${TESTS}
+	coverage run -m unittest $${TESTS}
+	coverage html
 
 clean:
 	find . -name '*.py[co]' -delete

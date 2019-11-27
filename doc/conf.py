@@ -40,8 +40,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'HappyBase'
-copyright = u'2012'
+project = u'AIOHappyBase'
+copyright = u'2019'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -50,7 +50,7 @@ copyright = u'2012'
 # The short X.Y version.
 version_file = os.path.join(
     os.path.dirname(__file__),
-    '../happybase/_version.py')
+    '../aiohappybase/_version.py')
 with open(version_file, 'r') as fp:
     exec(fp.read())
 version = __version__

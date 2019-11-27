@@ -3,8 +3,12 @@ Frequently asked questions
 ==========================
 
 
-I love HappyBase! Can I donate?
-===============================
+I love AIOHappyBase! Can I donate?
+==================================
+
+While I am not accepting donations at this time, the original author is:
+
+**From the original HappyBase author, Wouter Bolsterlee:**
 
 Thanks, I'm glad to hear that you appreciate my work! If you feel like, please
 make a small donation_ to sponsor my (spare time!) work on HappyBase. Small
@@ -25,39 +29,55 @@ applications using Thrift directly need to deal with many imports, sockets,
 transports, protocols, clients, Thrift types and mutation objects. For instance,
 look at the code required to connect to HBase and store two values::
 
-   from thrift import Thrift
-   from thrift.transport import TSocket, TTransport
-   from thrift.protocol import TBinaryProtocol
+    import asyncio as aio
 
-   from hbase import ttypes
-   from hbase.Hbase import Client, Mutation
+    from thriftpy2.contrib.aio.client import TAsyncClient
+    from thriftpy2.contrib.aio.socket import TAsyncSocket
+    from thriftpy2.contrib.aio.transport.buffered import TAsyncBufferedTransport
+    from thriftpy2.contrib.aio.protocol.binary import TAsyncBinaryProtocol
 
-   sock = TSocket.TSocket('hostname', 9090)
-   transport = TTransport.TBufferedTransport(sock)
-   protocol = TBinaryProtocol.TBinaryProtocol(transport)
-   client = Client(protocol)
-   transport.open()
+    from hbase import Hbase, Mutation
 
-   mutations = [Mutation(column='family:qual1', value='value1'),
-                Mutation(column='family:qual2', value='value2')]
-   client.mutateRow('table-name', 'row-key', mutations)
+    async def main():
+
+        sock = TAsyncSocket('hostname', 9090)
+        transport = TAsyncBufferedTransport(sock)
+        protocol = TAsyncBinaryProtocol(transport)
+        client = TAsyncClient(Hbase, protocol)
+        transport.open()
+
+        mutations = [
+            Mutation(column=b'family:qual1', value=b'value1'),
+            Mutation(column=b'family:qual2', value=b'value2'),
+        ]
+        await client.mutateRow(b'table-name', b'row-key', mutations)
+
+    aio.run(main())
+
 
 :pep:`20` taught us that simple is better than complex, and as you can see,
-Thrift is certainly complex. HappyBase hides all the Thrift cruft below a
+Thrift is certainly complex. AIOHappyBase hides all the Thrift cruft below a
 friendly API. The resulting application code will be cleaner, more productive
-to write, and more maintainable. With HappyBase, the example above can be
+to write, and more maintainable. With AIOHappyBase, the example above can be
 simplified to this::
 
-   import happybase
+    import asyncio as aio
 
-   connection = happybase.Connection('hostname')
-   table = connection.table('table-name')
-   table.put('row-key', {'family:qual1': 'value1',
-                         'family:qual2': 'value2'})
+    from aiohappybase import Connection
+
+    async def main():
+        async with Connection('hostname') as conn:
+            table = conn.table(b'table-name')
+            await table.put(b'row-key', {
+                 b'family:qual1': b'value1',
+                 b'family:qual2': b'value2',
+            })
+
+    aio.run(main())
 
 If you're not convinced and still think the Thrift API is not that bad, please
 try to accomplish some other common tasks, e.g. retrieving rows and scanning
-over a part of a table, and compare that to the HappyBase equivalents. If
-you're still not convinced by then, we're sorry to inform you that HappyBase is
-not the project for you, and we wish you all of luck maintaining your code ‒ or
-is it just Thrift boilerplate?
+over a part of a table, and compare that to the AIOHappyBase equivalents. If
+you're still not convinced by then, we're sorry to inform you that AIOHappyBase
+is not the project for you, and we wish you all of luck maintaining your code
+‒ or is it just Thrift boilerplate?

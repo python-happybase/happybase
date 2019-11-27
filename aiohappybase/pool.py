@@ -97,7 +97,7 @@ class ConnectionPool:
         """Acquire a connection from the pool."""
         try:
             return await aio.wait_for(self._queue.get(), timeout)
-        except aio.futures.TimeoutError:
+        except aio.TimeoutError:
             raise NoConnectionsAvailable("Timeout waiting for a connection")
 
     async def _return_connection(self, connection: Connection) -> None:

@@ -1,7 +1,22 @@
 Version history
 ===============
 
-.. py:currentmodule:: happybase
+.. py:currentmodule:: aiohappybase
+
+
+AIOHappyBase 1.2.0
+------------------
+
+Release date: 2019-11-??
+
+First release of the async version of HappyBase!
+
+The version number is the same because the API is almost identical (albeit async) except for a few updates:
+
+- Only Python 3.6+ will be supported (I like f-strings and ordered dictionaries, sue me:P)
+- ``Connection`` and ``ConnectionPool`` objects can be used as context managers (async and regular).
+- ``Connection.create_table()`` now returns the table instance.
+- Support for the framed transport and compact protocol have been dropped until thriftpy2.contrib.aio supports them as well.
 
 
 HappyBase 1.2.0

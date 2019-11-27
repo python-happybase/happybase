@@ -2,19 +2,19 @@
 License
 *******
 
-HappyBase itself is licensed under a `MIT License
-<http://www.opensource.org/licenses/MIT>`_. HappyBase contains code originating
-from HBase sources, licensed under the `Apache License
+AIOHappyBase itself is licensed under a `MIT License
+<http://www.opensource.org/licenses/MIT>`_. AIOHappyBase contains code originating from HBase sources, licensed under the `Apache License
 <http://www.apache.org/licenses/>`_ (version 2.0). Both license texts are
 included below.
 
 
-HappyBase License
+AIOHappyBase License
 =================
 
 (This is the `MIT License <http://www.opensource.org/licenses/MIT>`_.)
 
-Copyright © 2012 Wouter Bolsterlee
+Copyright © 2012 Wouter Bolsterlee    // Original HappyBase author
+Copyright © 2019 Roger Aiudi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

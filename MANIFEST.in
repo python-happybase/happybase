@@ -1,5 +1,5 @@
 include Makefile
 include requirements.txt
-include happybase/*.thrift
+include aiohappybase/*.thrift
 include *.rst
 include doc/conf.py doc/*.rst
