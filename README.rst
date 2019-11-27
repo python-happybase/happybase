@@ -2,7 +2,7 @@ AIOHappyBase
 ============
 
 **AIOHappyBase** is a developer-friendly Python_ library to interact asynchronously with Apache
-HBase_. It is a fork of the original [HappyBase](https://github.com/wbolster/happybase) library aiming to deliver a very similar API.
+HBase_. It is a fork of the original `HappyBase <https://github.com/wbolster/happybase>`_ library aiming to deliver a very similar API.
 
 * `Documentation <https://happybase.readthedocs.io/>`_ (Docs) (TODO)
 * `Downloads <http://pypi.python.org/pypi/aiohappybase/>`_ (PyPI) (TODO)

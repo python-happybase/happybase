@@ -1,7 +1,16 @@
 FROM dajobe/hbase:latest
 
+ARG python_version=3.7
+ENV PYTHON=python$python_version
+
+RUN apt-get update
+RUN apt-get install -y $PYTHON python3-pip $PYTHON-dev
+
 COPY . .
 
-RUN python3 -m pip install -r test-requirements.txt
+RUN $PYTHON -m pip install -r test-requirements.txt
 
-RUN python setup.py test
+RUN chmod +x docker-test.sh
+RUN mv docker-test.sh /bin
+
+RUN /bin/docker-test.sh
