@@ -1,10 +1,10 @@
 FROM dajobe/hbase:latest
 
 ENV PYTHON_VESRION=3.7
-ENV PYTHON=python$PYTHON_VERSION
+ENV PYTHON=python${PYTHON_VERSION}
 
 RUN apt-get update
-RUN apt-get install -y $PYTHON $PYTHON-dev python3-pip net-tools
+RUN apt-get install -y ${PYTHON} ${PYTHON}-dev python3-pip net-tools
 
 COPY . .
 
