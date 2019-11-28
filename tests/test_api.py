@@ -510,7 +510,7 @@ class TestAPI(asynctest.TestCase):
         # See issue #54 and #56
         filt = b"SingleColumnValueFilter ('cf1', 'qual1', =, 'binary:val1')"
         async for k, v in self.table.scan(filter=filt):
-            print(v)
+            pass
 
     async def test_delete(self):
         row_key = b'row-test-delete'
