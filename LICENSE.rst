@@ -9,7 +9,7 @@ included below.
 
 
 AIOHappyBase License
-=================
+====================
 
 (This is the `MIT License <http://www.opensource.org/licenses/MIT>`_.)
 

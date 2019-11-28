@@ -1,6 +1,6 @@
-=========
+============
 AIOHappyBase
-=========
+============
 
 .. py:currentmodule:: aiohappybase
 
