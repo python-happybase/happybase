@@ -1,5 +1,5 @@
 """
-HappyBase Batch module.
+AIOHappyBase Batch module.
 """
 
 import logging

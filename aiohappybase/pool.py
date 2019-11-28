@@ -1,5 +1,5 @@
 """
-HappyBase connection pool module.
+AIOHappyBase connection pool module.
 """
 
 import logging

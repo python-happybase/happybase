@@ -1,6 +1,6 @@
 """
-HappyBase, a developer-friendly Python library to interact with Apache
-HBase.
+AIOHappyBase, a developer-friendly Python library to interact asynchronously
+with Apache HBase.
 """
 
 __all__ = [

@@ -1,5 +1,5 @@
 """
-HappyBase utility module.
+AIOHappyBase utility module.
 
 These functions are not part of the public API.
 """

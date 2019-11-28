@@ -1,5 +1,5 @@
 """
-HappyBase version module.
+AIOHappyBase version module.
 
 This module defines the package version for use in __init__.py and
 setup.py.
