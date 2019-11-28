@@ -5,6 +5,10 @@ AIOHappyBase
    :target: https://aiohappybase.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://github.com/aiudirog/aiohappybase/workflows/test/badge.svg
+   :target: https://github.com/aiudirog/aiohappybase
+   :alt: Workflow Status
+
 **AIOHappyBase** is a developer-friendly Python_ library to interact asynchronously with Apache
 HBase_. It is a fork of the original `HappyBase <https://github.com/wbolster/happybase>`_ library aiming to deliver a very similar API.
 
