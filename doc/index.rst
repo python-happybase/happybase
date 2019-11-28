@@ -87,9 +87,13 @@ Additional documentation
 External links
 ==============
 
-* `Online documentation <https://happybase.readthedocs.io/>`_ (Read the Docs)
-* `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
-* `Source code <https://github.com/wbolster/happybase>`_ (Github)
+* `Online Documentation <https://aiohappybase.readthedocs.io/>`_ (Read the Docs)
+* `Downloads <http://pypi.python.org/pypi/aiohappybase/>`_ (PyPI)
+* `Source Code <https://github.com/aiudirog/aiohappybase>`_ (Github)
+
+* `HappyBase Online Documentation <https://happybase.readthedocs.io/>`_ (Read the Docs)
+* `HappyBase Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
+* `HappyBase Source Code <https://github.com/wbolster/happybase>`_ (Github)
 
 
 Indices and tables
