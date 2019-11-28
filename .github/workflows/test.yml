@@ -5,21 +5,13 @@ on:
   push:
 
 jobs:
-  test36:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.6', '3.7']
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      - name: Run Tests
-        uses: ./.github/actions/test
+      - uses: actions/checkout@v1
+      - uses: ./.github/actions/test
         env:
-          PYTHON_VERSION: '3.6'
-  test37:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v1
-      - name: Run Tests
-        uses: ./.github/actions/test
-        env:
-          PYTHON_VERSION: '3.7'
+          PYTHON_VERSION: ${{ matrix.python }}
