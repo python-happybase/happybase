@@ -4,6 +4,7 @@ HappyBase connection module.
 
 import logging
 import asyncio as aio
+import inspect
 from typing import AnyStr, List, Dict, Any
 
 from thriftpy2.contrib.aio.protocol.binary import TAsyncBinaryProtocol
@@ -200,7 +201,9 @@ class Connection:
             # If called from __del__(), module variables may no longer exist.
             logger.debug(f"Closing Thrift transport to {self.host}:{self.port}")
 
-        self.transport.close()
+        closer = self.transport.close()
+        if inspect.isawaitable(closer):  # Allow async close methods
+            await closer
         # Socket isn't really closed yet, wait for it
         await aio.sleep(0)
 
