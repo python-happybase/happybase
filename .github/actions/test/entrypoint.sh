@@ -2,6 +2,8 @@
 
 set -xe
 
+PYTHON=/usr/bin/python${PYTHON_VERSION}
+
 ${PYTHON} -m pip install -U -r test-requirements.txt
 
 /opt/hbase-server & &> /dev/null  # It's already got its own logs
