@@ -48,10 +48,14 @@ class ConnectionPool(object):
     task of the pool.
 
     :param int size: the maximum number of concurrently open connections
+    :param bool autoconnect: Whether a connection should be created upon
+        instantiation to test connection availability.
+        Note: the `autoconnect` flag of Connection instance inside the pool
+        is always False.
     :param kwargs: keyword arguments passed to
                    :py:class:`happybase.Connection`
     """
-    def __init__(self, size, **kwargs):
+    def __init__(self, size, autoconnect=True, **kwargs):
         if not isinstance(size, int):
             raise TypeError("Pool 'size' arg must be an integer")
 
@@ -72,11 +76,12 @@ class ConnectionPool(object):
             connection = Connection(**connection_kwargs)
             self._queue.put(connection)
 
-        # The first connection is made immediately so that trivial
-        # mistakes like unresolvable host names are raised immediately.
-        # Subsequent connections are connected lazily.
-        with self.connection():
-            pass
+        if autoconnect:
+            # The first connection is made immediately so that trivial
+            # mistakes like unresolvable host names are raised immediately.
+            # Subsequent connections are connected lazily.
+            with self.connection():
+                pass
 
     def _acquire_connection(self, timeout=None):
         """Acquire a connection from the pool."""

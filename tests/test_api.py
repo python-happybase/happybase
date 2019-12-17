@@ -16,6 +16,7 @@ from nose.tools import (
     assert_false,
     assert_in,
     assert_is_instance,
+    assert_is_none,
     assert_is_not_none,
     assert_list_equal,
     assert_not_in,
@@ -514,6 +515,9 @@ def test_connection_pool_construction():
 
     with assert_raises(ValueError):
         ConnectionPool(size=0)
+
+    pool = ConnectionPool(size=1, autoconnect=False)
+    assert_is_none(getattr(pool._thread_connections, 'current'))
 
 
 def test_connection_pool():
