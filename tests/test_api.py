@@ -10,19 +10,6 @@ import threading
 import six
 from six.moves import range
 
-from nose.tools import (
-    assert_dict_equal,
-    assert_equal,
-    assert_false,
-    assert_in,
-    assert_is_instance,
-    assert_is_not_none,
-    assert_list_equal,
-    assert_not_in,
-    assert_raises,
-    assert_true,
-)
-
 from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
 HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
@@ -60,7 +47,7 @@ def setup_module():
     global connection, table
     connection = Connection(**connection_kwargs)
 
-    assert_is_not_none(connection)
+    assert connection is not None
 
     maybe_delete_table()
     cfs = {
@@ -71,7 +58,7 @@ def setup_module():
     connection.create_table(TEST_TABLE_NAME, families=cfs)
 
     table = connection.table(TEST_TABLE_NAME)
-    assert_is_not_none(table)
+    assert table is not None
 
 
 def teardown_module():
@@ -92,11 +79,11 @@ def test_timeout_arg():
 
 
 def test_enabling():
-    assert_true(connection.is_table_enabled(TEST_TABLE_NAME))
+    assert connection.is_table_enabled(TEST_TABLE_NAME)
     connection.disable_table(TEST_TABLE_NAME)
-    assert_false(connection.is_table_enabled(TEST_TABLE_NAME))
+    assert not connection.is_table_enabled(TEST_TABLE_NAME)
     connection.enable_table(TEST_TABLE_NAME)
-    assert_true(connection.is_table_enabled(TEST_TABLE_NAME))
+    assert connection.is_table_enabled(TEST_TABLE_NAME)
 
 
 def test_compaction():
@@ -105,14 +92,14 @@ def test_compaction():
 
 
 def test_prefix():
-    assert_equal(TABLE_PREFIX + b'_', connection._table_name(''))
-    assert_equal(TABLE_PREFIX + b'_foo', connection._table_name('foo'))
+    assert TABLE_PREFIX + b'_' == connection._table_name('')
+    assert TABLE_PREFIX + b'_foo' == connection._table_name('foo')
 
-    assert_equal(connection.table('foobar').name, TABLE_PREFIX + b'_foobar')
-    assert_equal(connection.table('foobar', use_prefix=False).name, b'foobar')
+    assert connection.table('foobar').name == TABLE_PREFIX + b'_foobar'
+    assert connection.table('foobar', use_prefix=False).name == b'foobar'
 
     c = Connection(autoconnect=False)
-    assert_equal(b'foo', c._table_name('foo'))
+    assert b'foo' == c._table_name('foo')
 
     with assert_raises(TypeError):
         Connection(autoconnect=False, table_prefix=123)
@@ -130,13 +117,13 @@ def test_stringify():
 
 def test_table_listing():
     names = connection.tables()
-    assert_is_instance(names, list)
-    assert_in(TEST_TABLE_NAME, names)
+    assert isinstance(names, list)
+    assert TEST_TABLE_NAME in names
 
 
 def test_table_regions():
     regions = table.regions()
-    assert_is_instance(regions, list)
+    assert isinstance(regions, list)
 
 
 def test_invalid_table_create():
@@ -151,11 +138,11 @@ def test_invalid_table_create():
 def test_families():
     families = table.families()
     for name, fdesc in six.iteritems(families):
-        assert_is_instance(name, bytes)
-        assert_is_instance(fdesc, dict)
-        assert_in('name', fdesc)
-        assert_is_instance(fdesc['name'], six.binary_type)
-        assert_in('max_versions', fdesc)
+        assert isinstance(name, bytes)
+        assert isinstance(fdesc, dict)
+        assert 'name' in fdesc
+        assert isinstance(fdesc['name'], six.binary_type)
+        assert 'max_versions' in fdesc
 
 
 def test_put():
@@ -168,23 +155,23 @@ def test_atomic_counters():
     row = b'row-with-counter'
     column = 'cf1:counter'
 
-    assert_equal(0, table.counter_get(row, column))
+    assert 0 == table.counter_get(row, column)
 
-    assert_equal(10, table.counter_inc(row, column, 10))
-    assert_equal(10, table.counter_get(row, column))
+    assert 10 == table.counter_inc(row, column, 10)
+    assert 10 == table.counter_get(row, column)
 
     table.counter_set(row, column, 0)
-    assert_equal(1, table.counter_inc(row, column))
-    assert_equal(4, table.counter_inc(row, column, 3))
-    assert_equal(4, table.counter_get(row, column))
+    assert 1 == table.counter_inc(row, column)
+    assert 4 == table.counter_inc(row, column, 3)
+    assert 4 == table.counter_get(row, column)
 
     table.counter_set(row, column, 3)
-    assert_equal(3, table.counter_get(row, column))
-    assert_equal(8, table.counter_inc(row, column, 5))
-    assert_equal(6, table.counter_inc(row, column, -2))
-    assert_equal(5, table.counter_dec(row, column))
-    assert_equal(3, table.counter_dec(row, column, 2))
-    assert_equal(10, table.counter_dec(row, column, -7))
+    assert 3 == table.counter_get(row, column)
+    assert 8 == table.counter_inc(row, column, 5)
+    assert 6 == table.counter_inc(row, column, -2)
+    assert 5 == table.counter_dec(row, column)
+    assert 3 == table.counter_dec(row, column, 2)
+    assert 10 == table.counter_dec(row, column, -7)
 
 
 def test_batch():
@@ -229,13 +216,13 @@ def test_batch_context_managers():
         with table.batch(transaction=True) as b:
             b.put(b'fooz', {b'cf1:bar': b'baz'})
             raise ValueError
-    assert_dict_equal({}, table.row(b'fooz', [b'cf1:bar']))
+    assert {} == table.row(b'fooz', [b'cf1:bar'])
 
     with assert_raises(ValueError):
         with table.batch(transaction=False) as b:
             b.put(b'fooz', {b'cf1:bar': b'baz'})
             raise ValueError
-    assert_dict_equal({b'cf1:bar': b'baz'}, table.row(b'fooz', [b'cf1:bar']))
+    assert {b'cf1:bar': b'baz'} == table.row(b'fooz', [b'cf1:bar'])
 
     with table.batch(batch_size=5) as b:
         for i in range(10):
@@ -246,12 +233,12 @@ def test_batch_context_managers():
         for i in range(95):
             b.put(('row-batch2-%03d' % i).encode('ascii'),
                   {b'cf1:': str(i).encode('ascii')})
-    assert_equal(95, len(list(table.scan(row_prefix=b'row-batch2-'))))
+    assert 95 == len(list(table.scan(row_prefix=b'row-batch2-')))
 
     with table.batch(batch_size=20) as b:
         for i in range(95):
             b.delete(('row-batch2-%03d' % i).encode('ascii'))
-    assert_equal(0, len(list(table.scan(row_prefix=b'row-batch2-'))))
+    assert 0 == len(list(table.scan(row_prefix=b'row-batch2-')))
 
 
 def test_row():
@@ -275,26 +262,26 @@ def test_row():
            b'cf1:col2': b'v2',
            b'cf2:col1': b'v3',
            b'cf2:col2': b'v4'}
-    assert_dict_equal(exp, row(row_key))
+    assert exp == row(row_key)
 
     exp = {b'cf1:col1': b'v1new',
            b'cf1:col2': b'v2'}
-    assert_dict_equal(exp, row(row_key, [b'cf1']))
+    assert exp == row(row_key, [b'cf1'])
 
     exp = {b'cf1:col1': b'v1new',
            b'cf2:col2': b'v4'}
-    assert_dict_equal(exp, row(row_key, [b'cf1:col1', b'cf2:col2']))
+    assert exp == row(row_key, [b'cf1:col1', b'cf2:col2'])
 
     exp = {b'cf1:col1': b'v1old',
            b'cf2:col2': b'v4'}
-    assert_dict_equal(exp, row(row_key, timestamp=2345))
+    assert exp == row(row_key, timestamp=2345)
 
-    assert_dict_equal({}, row(row_key, timestamp=123))
+    assert {} == row(row_key, timestamp=123)
 
     res = row(row_key, include_timestamp=True)
-    assert_equal(len(res), 4)
-    assert_equal(b'v1new', res[b'cf1:col1'][0])
-    assert_is_instance(res[b'cf1:col1'][1], int)
+    assert len(res) == 4
+    assert b'v1new' == res[b'cf1:col1'][0]
+    assert isinstance(res[b'cf1:col1'][1], int)
 
 
 def test_rows():
@@ -314,17 +301,17 @@ def test_rows():
     for row_key in row_keys:
         table.put(row_key, data_new)
 
-    assert_dict_equal({}, table.rows([]))
+    assert {} == table.rows([])
 
     rows = dict(table.rows(row_keys))
     for row_key in row_keys:
-        assert_in(row_key, rows)
-        assert_dict_equal(data_new, rows[row_key])
+        assert row_key in rows
+        assert data_new == rows[row_key]
 
     rows = dict(table.rows(row_keys, timestamp=5000))
     for row_key in row_keys:
-        assert_in(row_key, rows)
-        assert_dict_equal(data_old, rows[row_key])
+        assert row_key in rows
+        assert data_old == rows[row_key]
 
 
 def test_cells():
@@ -344,18 +331,18 @@ def test_cells():
         table.cells(row_key, col, versions=0)
 
     results = table.cells(row_key, col, versions=1)
-    assert_equal(len(results), 1)
-    assert_equal(b'new', results[0])
+    assert len(results) == 1
+    assert b'new' == results[0]
 
     results = table.cells(row_key, col)
-    assert_equal(len(results), 2)
-    assert_equal(b'new', results[0])
-    assert_equal(b'old', results[1])
+    assert len(results) == 2
+    assert b'new' == results[0]
+    assert b'old' == results[1]
 
     results = table.cells(row_key, col, timestamp=2345, include_timestamp=True)
-    assert_equal(len(results), 1)
-    assert_equal(b'old', results[0][0])
-    assert_equal(1234, results[0][1])
+    assert len(results) == 1
+    assert b'old' == results[0][0]
+    assert 1234 == results[0][1]
 
 
 def test_scan():
@@ -389,36 +376,36 @@ def test_scan():
 
     scanner = table.scan(row_start=b'row-scan-a00012',
                          row_stop=b'row-scan-a00022')
-    assert_equal(10, calc_len(scanner))
+    assert 10 == calc_len(scanner)
 
     scanner = table.scan(row_start=b'xyz')
-    assert_equal(0, calc_len(scanner))
+    assert 0 == calc_len(scanner)
 
     scanner = table.scan(row_start=b'xyz', row_stop=b'zyx')
-    assert_equal(0, calc_len(scanner))
+    assert 0 == calc_len(scanner)
 
     scanner = table.scan(row_start=b'row-scan-', row_stop=b'row-scan-a999',
                          columns=[b'cf1:col1', b'cf2:col2'])
     row_key, row = next(scanner)
-    assert_equal(row_key, b'row-scan-a00000')
-    assert_dict_equal(row, {b'cf1:col1': b'v1',
-                            b'cf2:col2': b'v2'})
-    assert_equal(2000 - 1, calc_len(scanner))
+    assert row_key == b'row-scan-a00000'
+    assert row == {b'cf1:col1': b'v1',
+                            b'cf2:col2': b'v2'}
+    assert 2000 - 1 == calc_len(scanner)
 
     scanner = table.scan(row_prefix=b'row-scan-a', batch_size=499, limit=1000)
-    assert_equal(1000, calc_len(scanner))
+    assert 1000 == calc_len(scanner)
 
     scanner = table.scan(row_prefix=b'row-scan-b', batch_size=1, limit=10)
-    assert_equal(10, calc_len(scanner))
+    assert 10 == calc_len(scanner)
 
     scanner = table.scan(row_prefix=b'row-scan-b', batch_size=5, limit=10)
-    assert_equal(10, calc_len(scanner))
+    assert 10 == calc_len(scanner)
 
     scanner = table.scan(timestamp=123)
-    assert_equal(0, calc_len(scanner))
+    assert 0 == calc_len(scanner)
 
     scanner = table.scan(row_prefix=b'row', timestamp=123)
-    assert_equal(0, calc_len(scanner))
+    assert 0 == calc_len(scanner)
 
     scanner = table.scan(batch_size=20)
     next(scanner)
@@ -440,9 +427,9 @@ def test_scan_sorting():
 
     scan = table.scan(row_start=input_key, sorted_columns=True)
     key, row = next(scan)
-    assert_equal(key, input_key)
-    assert_list_equal(
-        sorted(input_row.items()),
+    assert key == input_key
+    assert (
+        sorted(input_row.items()) ==
         list(row.items()))
 
 
@@ -460,18 +447,18 @@ def test_scan_reverse():
                    b'cf1:col2': b'v2'})
 
     scan = table.scan(row_prefix=b'row-scan-reverse', reverse=True)
-    assert_equal(2000, len(list(scan)))
+    assert 2000 == len(list(scan))
 
     scan = table.scan(limit=10, reverse=True)
-    assert_equal(10, len(list(scan)))
+    assert 10 == len(list(scan))
 
     scan = table.scan(row_start=b'row-scan-reverse-1999',
                       row_stop=b'row-scan-reverse-0000', reverse=True)
     key, data = next(scan)
-    assert_equal(b'row-scan-reverse-1999', key)
+    assert b'row-scan-reverse-1999' == key
 
     key, data = list(scan)[-1]
-    assert_equal(b'row-scan-reverse-0001', key)
+    assert b'row-scan-reverse-0001' == key
 
 
 def test_scan_filter_and_batch_size():
@@ -490,22 +477,22 @@ def test_delete():
     table.put(row_key, data)
 
     table.delete(row_key, [b'cf1:col2'], timestamp=2345)
-    assert_equal(1, len(table.cells(row_key, b'cf1:col2', versions=2)))
-    assert_dict_equal(data, table.row(row_key))
+    assert 1 == len(table.cells(row_key, b'cf1:col2', versions=2))
+    assert data == table.row(row_key)
 
     table.delete(row_key, [b'cf1:col1'])
     res = table.row(row_key)
-    assert_not_in(b'cf1:col1', res)
-    assert_in(b'cf1:col2', res)
-    assert_in(b'cf1:col3', res)
+    assert b'cf1:col1' not in res
+    assert b'cf1:col2' in res
+    assert b'cf1:col3' in res
 
     table.delete(row_key, timestamp=12345)
     res = table.row(row_key)
-    assert_in(b'cf1:col2', res)
-    assert_in(b'cf1:col3', res)
+    assert b'cf1:col2' in res
+    assert b'cf1:col3' in res
 
     table.delete(row_key)
-    assert_dict_equal({}, table.row(row_key))
+    assert {} == table.row(row_key)
 
 
 def test_connection_pool_construction():
