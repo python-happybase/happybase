@@ -12,7 +12,3 @@ future, depending on time, demand, and technical possibilities.
   Thrift layer. Maybe wrap the errors in a HappyBase.Error?
 
 * Automatic retries for failed operations (but only those that can be retried)
-
-* Port HappyBase over to the (still experimental) HBase Thrift2 API when it
-  becomes mainstream, and expose more of the underlying features nicely in the
-  HappyBase API.
