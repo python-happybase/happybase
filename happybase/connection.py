@@ -176,7 +176,7 @@ class Connection(object):
         self.transport.open()
 
     def close(self):
-        """Close the underyling transport to the HBase instance.
+        """Close the underlying transport to the HBase instance.
 
         This method closes the underlying Thrift transport (TCP connection).
         """
