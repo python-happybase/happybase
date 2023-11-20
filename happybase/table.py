@@ -136,7 +136,7 @@ class Table(object):
         """Retrieve multiple rows of data.
 
         This method retrieves the rows with the row keys specified in the
-        `rows` argument, which should be should be a list (or tuple) of row
+        `rows` argument, which should be a list (or tuple) of row
         keys. The return value is a list of `(row_key, row_dict)` tuples.
 
         The `columns`, `timestamp` and `include_timestamp` arguments behave
