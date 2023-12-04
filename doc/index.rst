@@ -7,12 +7,12 @@ HappyBase
 **HappyBase** is a developer-friendly Python__ library to interact with `Apache
 HBase`__. HappyBase is designed for use in standard HBase setups, and offers
 application developers a Pythonic API to interact with HBase. Below the surface,
-HappyBase uses the `Python Thrift library`__ to connect to HBase using its
+HappyBase uses the `Python ThriftPy2 library`__ to connect to HBase using its
 Thrift__ gateway, which is included in the standard HBase 0.9x releases.
 
 __ http://python.org/
 __ http://hbase.apache.org/
-__ http://pypi.python.org/pypi/thrift
+__ http://pypi.python.org/pypi/thriftpy2
 __ http://thrift.apache.org/
 
 
