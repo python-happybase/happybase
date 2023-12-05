@@ -12,6 +12,7 @@ from Hbase_thrift import TScan
 
 from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch
+from .counter_batch import CounterBatch
 
 logger = logging.getLogger(__name__)
 
@@ -524,6 +525,23 @@ class Table(object):
         kwargs = locals().copy()
         del kwargs['self']
         return Batch(table=self, **kwargs)
+
+    def counter_batch(self, batch_size=None):
+        """Create a new batch of counter operation for this table.
+
+        This method returns a new :py:class:`CounterBatch` instance that can be used
+        for mass counter manipulation.
+
+        If given, the `batch_size` argument specifies the maximum batch size
+        after which the batch should send the mutations to the server. By
+        default this is unbounded.
+
+        :param int batch_size: batch size (optional)
+
+        :return: CounterBatch instance
+        :rtype: :py:class:`CounterBatch`
+        """
+        return CounterBatch(table=self, batch_size=batch_size)
 
     #
     # Atomic counters
