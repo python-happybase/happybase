@@ -3,10 +3,11 @@ HappyBase, a developer-friendly Python library to interact with Apache
 HBase.
 """
 
-import pkg_resources as _pkg_resources
+import importlib_resources as _importlib_resources
 import thriftpy2 as _thriftpy
+
 _thriftpy.load(
-    _pkg_resources.resource_filename('happybase', 'Hbase.thrift'),
+    str(_importlib_resources.files('happybase') / 'Hbase.thrift'),
     'Hbase_thrift')
 
 from ._version import __version__  # noqa
