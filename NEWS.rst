@@ -4,6 +4,18 @@ Version history
 .. py:currentmodule:: happybase
 
 
+HappyBase 1.3.0
+---------------
+
+Release date: 2025-09-26
+
+* Switch to pytest
+  (`pr 238 <https://github.com/wbolster/happybase/pull/238>`_)
+* Use ``importlib_resources`` package because ``pkg_resources`` is
+  deprecated in Python 3.12
+  (`pr 261 <https://github.com/wbolster/happybase/pull/261>`_)
+
+
 HappyBase 1.2.0
 ---------------
 
@@ -12,7 +24,7 @@ Release date: 2019-05-14
 * Switch from ``thriftpy`` to its successor ``thriftpy2``,
   which supports Python 3.7.
   (`issue #221 <https://github.com/wbolster/happybase/issues/221>`_,
-  `pr 222 <https://github.com/wbolster/happybase/pull/222>`_,
+  `pr 222 <https://github.com/wbolster/happybase/pull/222>`_)
 
 
 HappyBase 1.1.0
