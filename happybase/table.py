@@ -8,7 +8,7 @@ from struct import Struct
 
 from six import iteritems
 
-from Hbase_thrift import TScan
+from Hbase_thrift import TScan, TAppend
 
 from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch
@@ -439,6 +439,28 @@ class Table(object):
     #
     # Data manipulation
     #
+
+    def append(self, row, data):
+        """Appends data to an existing row.
+
+        This method appends data in the `data` argument to
+        existing data for the row specified by `row`. The `data argument is a
+        dictionary that maps columns to values.
+        Column names must include a family and qualifier part, e.g.
+        ``b'cf:col'``, though the qualifier part may be the empty string, e.g.
+        ``b'cf:'``.
+        If there is no data for the specified cell, append will act like put.
+
+
+       :param row: the row key
+        :param data: the data to store
+        """
+        columns, values = map(list, zip(*data.items()))
+        append = TAppend(table=self.name,
+                         row=row,
+                         columns=columns,
+                         values=values)
+        self.connection.client.append(append)
 
     def put(self, row, data, timestamp=None, wal=True):
         """Store data in the table.
