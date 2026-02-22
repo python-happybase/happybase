@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  tests:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    services:
+      hbase:
+        image: dajobe/hbase
+        ports:
+          - 9090:9090
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: pip install pytest pytest-cov -r requirements.txt
+
+      - name: Wait for HBase Thrift server
+        run: |
+          echo "Waiting for HBase Thrift server on port 9090..."
+          timeout 120 bash -c 'until nc -z localhost 9090; do echo "Still waiting..."; sleep 5; done'
+          echo "HBase Thrift server is ready"
+
+      - name: Run tests
+        env:
+          HAPPYBASE_HOST: localhost
+          HAPPYBASE_PORT: "9090"
+        run: pytest tests/ -v --tb=short
