@@ -13,7 +13,7 @@ from six.moves import range
 from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
 HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
-HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
+HAPPYBASE_PORT = int(os.environ['HAPPYBASE_PORT']) if 'HAPPYBASE_PORT' in os.environ else None
 HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.98')
 HAPPYBASE_TRANSPORT = os.environ.get('HAPPYBASE_TRANSPORT', 'buffered')
 KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
