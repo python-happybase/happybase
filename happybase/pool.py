@@ -91,6 +91,33 @@ class ConnectionPool(object):
         """Return a connection to the pool."""
         self._queue.put(connection)
 
+    def close_connections(self, timeout=None):
+        """
+        Attempts to politely close all connections in the pool.
+        Waits for used connections to become available or until the
+        timeout is exceeded.
+
+        :param int timeout: number of seconds to wait for a connection to
+                            become available (optional)
+        :return: None
+        """
+        if timeout is not None:
+            if not isinstance(timeout, int):
+                raise TypeError("close_connections 'timeout' arg must be an integer")
+
+            if not timeout > 0:
+                raise ValueError("close_connections 'timeout' arg must be greater than zero")
+
+        while not self._queue.empty():
+            try:
+                conn = self._queue.get(block=True, timeout=timeout)
+                conn.close()
+                conn = None
+            except Queue.Empty:
+                raise NoConnectionsAvailable(
+                    "Closing connections failed: No connection available from "
+                    "pool within specified timeout of {}".format(timeout))
+
     @contextlib.contextmanager
     def connection(self, timeout=None):
         """
