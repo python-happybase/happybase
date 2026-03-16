@@ -7,13 +7,14 @@ import os
 import random
 import threading
 
+import pytest
 import six
 from six.moves import range
 
 from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
 HAPPYBASE_HOST = os.environ.get('HAPPYBASE_HOST')
-HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
+HAPPYBASE_PORT = int(os.environ['HAPPYBASE_PORT']) if 'HAPPYBASE_PORT' in os.environ else None
 HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.98')
 HAPPYBASE_TRANSPORT = os.environ.get('HAPPYBASE_TRANSPORT', 'buffered')
 KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
@@ -68,7 +69,7 @@ def teardown_module():
 
 
 def test_connection_compat():
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         Connection(compat='0.1.invalid.version')
 
 
@@ -101,10 +102,10 @@ def test_prefix():
     c = Connection(autoconnect=False)
     assert b'foo' == c._table_name('foo')
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         Connection(autoconnect=False, table_prefix=123)
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         Connection(autoconnect=False, table_prefix_separator=2.1)
 
 
@@ -127,11 +128,11 @@ def test_table_regions():
 
 
 def test_invalid_table_create():
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         connection.create_table('sometable', families={})
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         connection.create_table('sometable', families=0)
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         connection.create_table('sometable', families=[])
 
 
@@ -175,7 +176,7 @@ def test_atomic_counters():
 
 
 def test_batch():
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         table.batch(timestamp='invalid')
 
     b = table.batch()
@@ -192,10 +193,10 @@ def test_batch():
     b.put(b'row1', {b'cf1:col5': b'value5'})
     b.send()
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         b = table.batch(batch_size=0)
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         b = table.batch(transaction=True, batch_size=10)
 
 
@@ -212,13 +213,13 @@ def test_batch_context_managers():
                        b'cf1:c5': b'anothervalue'})
         b.delete(b'row', [b'cf1:c3'])
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         with table.batch(transaction=True) as b:
             b.put(b'fooz', {b'cf1:bar': b'baz'})
             raise ValueError
     assert {} == table.row(b'fooz', [b'cf1:bar'])
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         with table.batch(transaction=False) as b:
             b.put(b'fooz', {b'cf1:bar': b'baz'})
             raise ValueError
@@ -246,10 +247,10 @@ def test_row():
     put = table.put
     row_key = b'row-test'
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         row(row_key, 123)
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         row(row_key, timestamp='invalid')
 
     put(row_key, {b'cf1:col1': b'v1old'}, timestamp=1234)
@@ -289,10 +290,10 @@ def test_rows():
     data_old = {b'cf1:col1': b'v1old', b'cf1:col2': b'v2old'}
     data_new = {b'cf1:col1': b'v1new', b'cf1:col2': b'v2new'}
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         table.rows(row_keys, object())
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         table.rows(row_keys, timestamp='invalid')
 
     for row_key in row_keys:
@@ -321,13 +322,13 @@ def test_cells():
     table.put(row_key, {col: b'old'}, timestamp=1234)
     table.put(row_key, {col: b'new'})
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         table.cells(row_key, col, versions='invalid')
 
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         table.cells(row_key, col, versions=3, timestamp='invalid')
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         table.cells(row_key, col, versions=0)
 
     results = table.cells(row_key, col, versions=1)
@@ -346,14 +347,14 @@ def test_cells():
 
 
 def test_scan():
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         list(table.scan(row_prefix='foobar', row_start='xyz'))
 
     if connection.compat == '0.90':
-        with assert_raises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             list(table.scan(filter='foo'))
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         list(table.scan(limit=0))
 
     with table.batch() as b:
@@ -411,7 +412,7 @@ def test_scan():
     next(scanner)
     next(scanner)
     scanner.close()
-    with assert_raises(StopIteration):
+    with pytest.raises(StopIteration):
         next(scanner)
 
 
@@ -436,7 +437,7 @@ def test_scan_sorting():
 def test_scan_reverse():
 
     if connection.compat < '0.98':
-        with assert_raises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             list(table.scan(reverse=True))
         return
 
@@ -496,10 +497,10 @@ def test_delete():
 
 
 def test_connection_pool_construction():
-    with assert_raises(TypeError):
+    with pytest.raises(TypeError):
         ConnectionPool(size='abc')
 
-    with assert_raises(ValueError):
+    with pytest.raises(ValueError):
         ConnectionPool(size=0)
 
 
@@ -559,7 +560,7 @@ def test_pool_exhaustion():
     pool = ConnectionPool(size=1, **connection_kwargs)
 
     def run():
-        with assert_raises(NoConnectionsAvailable):
+        with pytest.raises(NoConnectionsAvailable):
             with pool.connection(timeout=.1) as connection:
                 connection.tables()
 
