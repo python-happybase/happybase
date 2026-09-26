@@ -402,6 +402,9 @@ def test_scan():
     scanner = table.scan(row_prefix=b'row-scan-b', batch_size=5, limit=10)
     assert 10 == calc_len(scanner)
 
+    scanner = table.scan(row_prefix=b'row-scan-b', cache_blocks=False)
+    assert 2000 == calc_len(scanner)
+
     scanner = table.scan(timestamp=123)
     assert 0 == calc_len(scanner)
 

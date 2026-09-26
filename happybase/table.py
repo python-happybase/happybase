@@ -222,7 +222,8 @@ class Table(object):
     def scan(self, row_start=None, row_stop=None, row_prefix=None,
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
-             limit=None, sorted_columns=False, reverse=False):
+             limit=None, sorted_columns=False, reverse=False,
+             cache_blocks=None):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -273,6 +274,10 @@ class Table(object):
         Note that the start of the range is inclusive, while the end is
         exclusive just as in the forward scan.
 
+        The optional `cache_blocks` translates to `Scan.setCacheBlocks()`
+        at the Java side. Set it to `False` to avoid filling the block
+        cache on the region servers, e.g. for large full table scans.
+
         **Compatibility notes:**
 
         * The `filter` argument is only available when using HBase 0.92
@@ -284,6 +289,9 @@ class Table(object):
 
         * The `reverse` argument is only available when using HBase 0.98
           (or up).
+
+        .. versionadded:: 1.4.0
+           `cache_blocks` argument
 
         .. versionadded:: 1.1.0
            `reverse` argument
@@ -306,6 +314,7 @@ class Table(object):
         :param int limit: max number of rows to return
         :param bool sorted_columns: whether to return sorted columns
         :param bool reverse: whether to perform scan in reverse
+        :param bool cache_blocks: whether to use the server side block cache
 
         :return: generator yielding the rows matching the scan
         :rtype: iterable of `(row_key, row_data)` tuples
@@ -397,6 +406,7 @@ class Table(object):
                 batchSize=scan_batching,
                 sortColumns=sorted_columns,
                 reversed=reverse,
+                cacheBlocks=cache_blocks,
             )
             scan_id = self.connection.client.scannerOpenWithScan(
                 self.name, scan, {})
