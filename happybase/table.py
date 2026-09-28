@@ -223,7 +223,7 @@ class Table(object):
              columns=None, filter=None, timestamp=None,
              include_timestamp=False, batch_size=1000, scan_batching=None,
              limit=None, sorted_columns=False, reverse=False,
-             cache_blocks=None):
+             cache_blocks=True):
         """Create a scanner for data in the table.
 
         This method returns an iterable that can be used for looping over the
@@ -274,9 +274,10 @@ class Table(object):
         Note that the start of the range is inclusive, while the end is
         exclusive just as in the forward scan.
 
-        The optional `cache_blocks` translates to `Scan.setCacheBlocks()`
-        at the Java side. Set it to `False` to avoid filling the block
-        cache on the region servers, e.g. for large full table scans.
+        The `cache_blocks` argument translates to `Scan.setCacheBlocks()`
+        at the Java side and defaults to `True`. Set it to `False` to avoid
+        filling the block cache on the region servers, e.g. for large full
+        table scans.
 
         **Compatibility notes:**
 
