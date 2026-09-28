@@ -573,6 +573,17 @@ def test_pool_exhaustion():
         t.join()
 
 
+def test_pool_close():
+    with ConnectionPool(size=1, **connection_kwargs) as pool:
+        with pool.connection() as connection:
+            pass
+    assert not connection.transport.is_open()
+
+    with pytest.raises(RuntimeError):
+        with pool.connection():
+            pass
+
+
 if __name__ == '__main__':
     import logging
     import sys

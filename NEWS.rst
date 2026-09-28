@@ -4,6 +4,16 @@ Version history
 .. py:currentmodule:: happybase
 
 
+HappyBase 1.4.0
+---------------
+
+Release date: *not yet released*
+
+* Add :py:meth:`ConnectionPool.close` and support using the pool as a
+  context manager
+  (`issue 229 <https://github.com/python-happybase/happybase/issues/229>`_)
+
+
 HappyBase 1.3.0
 ---------------
 

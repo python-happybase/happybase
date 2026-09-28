@@ -64,6 +64,7 @@ class ConnectionPool(object):
         self._lock = threading.Lock()
         self._queue = queue.LifoQueue(maxsize=size)
         self._thread_connections = threading.local()
+        self._closed = False
 
         connection_kwargs = kwargs
         connection_kwargs['autoconnect'] = False
@@ -80,6 +81,8 @@ class ConnectionPool(object):
 
     def _acquire_connection(self, timeout=None):
         """Acquire a connection from the pool."""
+        if self._closed:
+            raise RuntimeError("Connection pool is closed")
         try:
             return self._queue.get(True, timeout)
         except queue.Empty:
@@ -89,7 +92,36 @@ class ConnectionPool(object):
 
     def _return_connection(self, connection):
         """Return a connection to the pool."""
+        with self._lock:
+            if self._closed:
+                connection.close()
+                return
         self._queue.put(connection)
+
+    def close(self):
+        """
+        Close all connections in the pool.
+
+        Connections that are in use are closed when they are returned.
+
+        .. versionadded:: 1.4
+        """
+        with self._lock:
+            if self._closed:
+                return
+            self._closed = True
+        while True:
+            try:
+                connection = self._queue.get_nowait()
+            except queue.Empty:
+                break
+            connection.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
     @contextlib.contextmanager
     def connection(self, timeout=None):
