@@ -8,7 +8,7 @@ from struct import Struct
 
 from six import iteritems
 
-from Hbase_thrift import TScan
+from Hbase_thrift import TAppend, TScan
 
 from .util import thrift_type_to_dict, bytes_increment, OrderedDict
 from .batch import Batch
@@ -493,6 +493,36 @@ class Table(object):
         """
         with self.batch(timestamp=timestamp, wal=wal) as batch:
             batch.delete(row, columns)
+
+    def append(self, row, data, include_timestamp=False):
+        """Atomically append values to one or more columns in a row.
+
+        The `data` argument is a dictionary that maps columns to the values
+        to append. If a column did not exist, it is created with the given
+        value.
+
+        :param str row: the row key
+        :param dict data: the values to append
+        :param bool include_timestamp: whether timestamps are returned
+
+        :return: mapping of columns to their values after appending
+        :rtype: dict
+        """
+        # The server returns the cells without their names, sorted by
+        # family and qualifier, so send the columns in that same order.
+        columns = sorted(
+            data, key=lambda c: c.split(b':' if isinstance(c, bytes) else ':'))
+        cells = self.connection.client.append(TAppend(
+            table=self.name,
+            row=row,
+            columns=columns,
+            values=[data[column] for column in columns],
+        ))
+        return {
+            column: (cell.value, cell.timestamp) if include_timestamp
+            else cell.value
+            for column, cell in zip(columns, cells)
+        }
 
     def batch(self, timestamp=None, batch_size=None, transaction=False,
               wal=True):

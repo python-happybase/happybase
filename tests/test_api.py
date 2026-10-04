@@ -175,6 +175,20 @@ def test_atomic_counters():
     assert 10 == table.counter_dec(row, column, -7)
 
 
+def test_append():
+    row = b'row-with-append'
+
+    assert {b'cf1:c1': b'a'} == table.append(row, {b'cf1:c1': b'a'})
+    assert {b'cf1:c1': b'ab', b'cf2:c2': b'x'} == table.append(
+        row, {b'cf2:c2': b'x', b'cf1:c1': b'b'})
+    assert {b'cf1:c1': b'ab', b'cf2:c2': b'x'} == table.row(row)
+
+    value, timestamp = table.append(
+        row, {b'cf1:c1': b'c'}, include_timestamp=True)[b'cf1:c1']
+    assert b'abc' == value
+    assert isinstance(timestamp, int)
+
+
 def test_batch():
     with pytest.raises(TypeError):
         table.batch(timestamp='invalid')

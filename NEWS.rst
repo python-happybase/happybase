@@ -12,6 +12,7 @@ Release date: *not yet released*
 * Add :py:meth:`ConnectionPool.close` and support using the pool as a
   context manager
   (`issue 229 <https://github.com/python-happybase/happybase/issues/229>`_)
+* Add :py:meth:`Table.append`
 
 
 HappyBase 1.3.0
